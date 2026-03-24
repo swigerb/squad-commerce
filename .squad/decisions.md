@@ -480,6 +480,87 @@ Orchestrator has empty `AllowedTools` list — delegates only, never calls tools
 
 ---
 
+### 2026-03-24: A2UI Expansion — Decision Audit Trail and Agent Pipeline Visualization
+**By:** Satya Nadella (Lead Dev) & Clippy (User Advocate)  
+**Date:** 2026-03-24  
+**Status:** ✅ Implemented
+
+**Context:** Brian requested two new A2UI observability components to provide transparency into agent workflows and decision-making processes:
+1. **Decision Audit Trail Viewer** — chronological log of all agent actions, human decisions, and protocol interactions
+2. **Agent Pipeline Visualizer** — real-time visualization of multi-stage workflows showing agent execution progress
+
+**Backend Implementation (Satya Nadella):**
+
+**Data Contracts:**
+- `DecisionAuditTrailData`: SessionId, Entries[], GeneratedAt
+- `AuditEntry`: Id, AgentName, Action, Protocol, Timestamp, Duration, Status, Details, TraceId, AffectedSkus[], AffectedStores[], DecisionOutcome
+- `AgentPipelineData`: SessionId, WorkflowName, Stages[], OverallStatus, TotalDuration, StartedAt, CompletedAt
+- `PipelineStage`: Order, AgentName, StageName, Status, Protocol, Duration, StartedAt, CompletedAt, ToolsUsed[], OutputPayloads[], ErrorMessage
+
+**Persistence Layer:**
+- `AuditEntryEntity` — maps AuditEntry to SQLite table with CSV serialization for arrays
+- `AuditRepository` — async CRUD operations, indexed on SessionId and Timestamp
+- `DatabaseSeeder` — 7 demo audit entries showing complete workflow
+
+**Orchestrator Integration:**
+- `ChiefSoftwareArchitectAgent` records audit entry at each workflow step
+- `PricingEndpoints` record human decisions (approve/reject/modify)
+- Both A2UI payloads included in OrchestratorResult
+
+**UI Implementation (Clippy):**
+
+**DecisionAuditTrail.razor:**
+- Vertical timeline with chronological entries (newest at top)
+- Agent role-based emoji (🔧 MarketIntel, 📦 Inventory, 💰 Pricing, 🏗️ Orchestrator)
+- Protocol badges (MCP/A2A/AGUI/Internal) with color coding
+- Expandable details showing TraceId, affected SKUs/stores, decision outcomes
+- WCAG AA accessible, keyboard navigable
+
+**AgentPipelineVisualizer.razor:**
+- Horizontal pipeline with stage cards
+- Animated progress bar at top
+- Each stage shows: order, agent, protocol, status badge, duration, tools, output payloads
+- Real-time status indicators: ⏳ Pending, 🔄 Running, ✅ Completed, ❌ Failed, ⏭️ Skipped
+- Responsive layout (horizontal on desktop, vertical on mobile)
+
+**A2UIRenderer Integration:**
+- Added cases for `"DecisionAuditTrail"` and `"AgentPipelineVisualizer"`
+
+**Rationale:**
+- Persistent audit trail enables compliance tracking and debugging
+- Real-time pipeline visualization shows workflow transparency
+- EF Core + SQLite enables persistence across restarts
+- CSV serialization for arrays simplifies schema (small arrays typical)
+
+**Testing:**
+- All 160 tests passing
+- In-memory EF Core DbContext for testing
+- SystemSmokeTests verifies AuditRepository DI registration
+
+**Impact:**
+- Full traceability of agent decisions for compliance
+- Real-time observability into multi-stage workflows
+- Foundation for audit trail filtering API and compliance exports
+- Performance analysis (identify slow stages, bottlenecks)
+
+**Files Created:**
+- `src/SquadCommerce.Contracts/A2UI/DecisionAuditTrailData.cs`
+- `src/SquadCommerce.Contracts/A2UI/AgentPipelineData.cs`
+- `src/SquadCommerce.Mcp/Data/Entities/AuditEntryEntity.cs`
+- `src/SquadCommerce.Mcp/Data/AuditRepository.cs`
+- `src/SquadCommerce.Web/Components/A2UI/DecisionAuditTrail.razor`
+- `src/SquadCommerce.Web/Components/A2UI/AgentPipelineVisualizer.razor`
+
+**Files Modified:**
+- `src/SquadCommerce.Mcp/Data/SquadCommerceDbContext.cs`
+- `src/SquadCommerce.Mcp/Data/DatabaseSeeder.cs`
+- `src/SquadCommerce.Mcp/McpServerSetup.cs`
+- `src/SquadCommerce.Agents/Orchestrator/ChiefSoftwareArchitectAgent.cs`
+- `src/SquadCommerce.Api/Endpoints/PricingEndpoints.cs`
+- `src/SquadCommerce.Web/Components/A2UI/A2UIRenderer.razor`
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus
