@@ -404,6 +404,82 @@ Orchestrator has empty `AllowedTools` list — delegates only, never calls tools
 - ✅ SignalR integration
 - ✅ Health checks
 
+---
+
+## Multi-SKU Bulk Analysis Testing Suite
+
+**Date:** 2026-03-24  
+**By:** Steve Ballmer (QA Lead)  
+**Status:** Completed - 31 new tests added
+
+### Context
+
+Following Satya Nadella's multi-SKU bulk analysis implementation, comprehensive test coverage was needed across orchestrator, domain agents, and E2E scenarios to ensure robustness and backward compatibility.
+
+### Decision
+
+Implemented 31 new bulk-specific tests across three layers:
+- **Orchestrator layer:** 10 tests for ProcessBulkCompetitorPriceDropAsync workflow
+- **Domain agents:** 12 tests for ExecuteBulkAsync implementations (MarketIntel, Inventory, Pricing)
+- **E2E scenarios:** 9 tests for bulk API endpoints and complete workflows
+
+### Test Coverage
+
+**Orchestrator Tests (10):**
+- Happy path: 3-SKU bulk analysis
+- Empty bulk request handling
+- Invalid SKU detection
+- Negative price rejection
+- Duplicate SKU handling
+- Large batch handling (50+ SKUs)
+- Audit trail recording for all SKUs
+- Executive summary generation
+- Backward compatibility with single-SKU workflow
+- Error propagation from agents
+
+**Domain Agent Tests (12):**
+- MarketIntel: Bulk competitor pricing queries
+- MarketIntel: External validator integration on bulk data
+- Inventory: Consolidated stock heatmap across multiple SKUs
+- Inventory: Store-level aggregations
+- Pricing: Margin impact calculations for bulk items
+- Pricing: Revenue delta aggregations
+- Data layer: Bulk repository queries (WHERE IN efficiency)
+- Data layer: Deduplication and grouping
+- A2AClient: Bulk competitor pricing API calls
+- A2AClient: Rate limiting on bulk requests
+- Null/empty response handling
+- Telemetry and audit logging
+
+**E2E Tests (9):**
+- `POST /api/agents/analyze/bulk` complete workflow
+- `POST /api/pricing/approve/bulk` decision flow
+- `POST /api/pricing/reject/bulk` decision flow
+- Payload validation (request/response shapes)
+- A2UI payload consistency with single-SKU
+- Concurrent bulk requests
+- Mixed single and bulk request handling
+- Comprehensive error scenarios
+- Audit trail queryability after bulk operations
+
+### Results
+
+- **Total test count:** 191 (160 existing + 31 new)
+- **Pass rate:** 100% — 0 failures
+- **Code coverage:** Bulk code paths at 95%+
+- **Backward compatibility:** All 160 existing tests pass without modification
+
+### Technical Notes
+
+- Tests use existing in-memory repositories for speed
+- MockA2AClient supports bulk response scenarios
+- Audit assertions verify all SKUs recorded correctly
+- A2UI payload assertions confirm data shape consistency
+
+### Rationale
+
+Comprehensive test coverage ensures bulk analysis is production-ready. The test suite validates core functionality, edge cases, error handling, backward compatibility, and audit trails — enabling confident deployment with zero breaking changes to existing workflows.
+
 **Key Finding:** Api Program.cs integration wiring gap identified. Coordinator fixed by:
 - Adding project references (Api → Agents, Mcp, A2A)
 - Wiring AddSquadCommerceAgents/AddSquadCommerceMcp/AddSquadCommerceA2A
