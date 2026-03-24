@@ -43,32 +43,7 @@ Every step is traced with **OpenTelemetry**, streamed to the UI via **AG-UI**, a
 
 ### Agent Architecture
 
-```
-┌─────────────────────────────────────────────────────┐
-│              ChiefSoftwareArchitect                  │
-│           (MAF Graph-based Orchestrator)             │
-├──────────┬──────────┬──────────┬────────────────────┤
-│          │          │          │                      │
-▼          ▼          ▼          ▼                      ▼
-┌────────┐┌────────┐┌────────┐┌──────────┐    ┌──────────────┐
-│Inventory││Pricing ││Market  ││Compliance│    │External Vendor│
-│ Agent  ││ Agent  ││ Intel  ││  Agent   │    │   Agent (A2A) │
-│        ││        ││ Agent  ││          │    │               │
-│ [MCP]  ││ [MCP]  ││ [A2A]  ││ [Entra]  │    │  [A2A Proto]  │
-└────────┘└────────┘└────────┘└──────────┘    └──────────────┘
-     │          │          │          │
-     ▼          ▼          ▼          ▼
-┌─────────────────────────────────────────────┐
-│           SignalR Hub (Real-time)            │
-│         AG-UI Streaming + Sidecar           │
-├─────────────────────────────────────────────┤
-│           Blazor Frontend (A2UI)            │
-│  ┌──────────┐ ┌──────────┐ ┌─────────────┐ │
-│  │ Heatmap  │ │ Pricing  │ │ Market Grid │ │
-│  │Component │ │  Chart   │ │  Component  │ │
-│  └──────────┘ └──────────┘ └─────────────┘ │
-└─────────────────────────────────────────────┘
-```
+![Squad Commerce Agent Architecture](docs/squad-commerce-architecture.png)
 
 ### A2UI Components
 
