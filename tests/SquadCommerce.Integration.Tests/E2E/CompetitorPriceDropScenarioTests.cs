@@ -23,8 +23,8 @@ public class CompetitorPriceDropScenarioTests
     public async Task Should_ProduceApprovalRecommendation_When_CompetitorDropsPrice()
     {
         // Arrange - Build full agent stack with real implementations
-        var inventoryRepo = new InventoryRepository();
-        var pricingRepo = new PricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(
             pricingRepo,
@@ -94,8 +94,8 @@ public class CompetitorPriceDropScenarioTests
     public async Task Should_ExecutePriceUpdate_When_ManagerApproves()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
 
         var sku = "SKU-1002"; // USB-C Cable
         var storeId = "SEA-001";
@@ -134,7 +134,7 @@ public class CompetitorPriceDropScenarioTests
     public async Task Should_LogDecision_When_ManagerRejects()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
+        var pricingRepo = new InMemoryPricingRepository();
         var sku = "SKU-1003"; // Laptop Stand
         var storeId = "PDX-002";
 
@@ -156,8 +156,8 @@ public class CompetitorPriceDropScenarioTests
     public async Task Should_RetriggerPricing_When_ManagerModifies()
     {
         // Arrange
-        var inventoryRepo = new InventoryRepository();
-        var pricingRepo = new PricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
 
         var pricingAgent = new PricingAgent(
             pricingRepo,
@@ -192,8 +192,8 @@ public class CompetitorPriceDropScenarioTests
     public async Task Should_HandleMultiStoreScenario_When_CompetitorDropsPrice()
     {
         // Arrange - All 5 stores scenario
-        var inventoryRepo = new InventoryRepository();
-        var pricingRepo = new PricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(
             pricingRepo,

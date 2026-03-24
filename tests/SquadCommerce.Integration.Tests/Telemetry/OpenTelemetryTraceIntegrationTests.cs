@@ -29,7 +29,7 @@ public class OpenTelemetryTraceIntegrationTests
         };
         ActivitySource.AddActivityListener(listener);
 
-        var inventoryRepo = new InventoryRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
 
         // Act - Execute agent (should emit activity/span)
@@ -58,7 +58,7 @@ public class OpenTelemetryTraceIntegrationTests
         };
         ActivitySource.AddActivityListener(listener);
 
-        var pricingRepo = new PricingRepository();
+        var pricingRepo = new InMemoryPricingRepository();
         
         // Act - Repository call represents MCP tool invocation
         using var activity = new ActivitySource("SquadCommerce.Mcp").StartActivity("GetCurrentPrice");
@@ -116,8 +116,8 @@ public class OpenTelemetryTraceIntegrationTests
         ActivitySource.AddActivityListener(listener);
 
         // Full orchestrator with all agents
-        var inventoryRepo = new InventoryRepository();
-        var pricingRepo = new PricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
 

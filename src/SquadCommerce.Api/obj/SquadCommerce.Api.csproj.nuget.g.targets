@@ -3,5 +3,6 @@
   <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
     <Import Project="$(NuGetPackageRoot)microsoft.extensions.telemetry.abstractions\10.1.0\buildTransitive\net8.0\Microsoft.Extensions.Telemetry.Abstractions.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.extensions.telemetry.abstractions\10.1.0\buildTransitive\net8.0\Microsoft.Extensions.Telemetry.Abstractions.targets')" />
     <Import Project="$(NuGetPackageRoot)microsoft.extensions.http.resilience\10.1.0\buildTransitive\net8.0\Microsoft.Extensions.Http.Resilience.targets" Condition="Exists('$(NuGetPackageRoot)microsoft.extensions.http.resilience\10.1.0\buildTransitive\net8.0\Microsoft.Extensions.Http.Resilience.targets')" />
+    <Import Project="$(NuGetPackageRoot)sqlitepclraw.lib.e_sqlite3\2.1.11\buildTransitive\net9.0\SQLitePCLRaw.lib.e_sqlite3.targets" Condition="Exists('$(NuGetPackageRoot)sqlitepclraw.lib.e_sqlite3\2.1.11\buildTransitive\net9.0\SQLitePCLRaw.lib.e_sqlite3.targets')" />
   </ImportGroup>
 </Project>

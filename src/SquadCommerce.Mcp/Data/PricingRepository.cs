@@ -20,12 +20,13 @@ public sealed record StorePricing(
 /// <summary>
 /// In-memory repository for pricing data implementing Contracts interface.
 /// Thread-safe with realistic demo data for 5 stores and 8 SKUs.
+/// Renamed to InMemoryPricingRepository for test usage.
 /// </summary>
-public sealed class PricingRepository : IPricingRepository
+public sealed class InMemoryPricingRepository : IPricingRepository, IPricingRepositoryInternal
 {
     private readonly ConcurrentDictionary<string, StorePricing> _pricingData;
 
-    public PricingRepository()
+    public InMemoryPricingRepository()
     {
         // Realistic demo data: 5 stores, 8 SKUs with cost and margin (40 records)
         var data = new List<StorePricing>
@@ -161,19 +162,21 @@ public sealed class PricingRepository : IPricingRepository
     /// <summary>
     /// Gets cost for margin calculations (internal helper).
     /// </summary>
-    public decimal? GetCost(string storeId, string sku)
+    public Task<decimal?> GetCostAsync(string storeId, string sku, CancellationToken cancellationToken = default)
     {
         var key = $"{storeId}:{sku}";
-        return _pricingData.TryGetValue(key, out var pricing) ? pricing.Cost : null;
+        decimal? result = _pricingData.TryGetValue(key, out var pricing) ? pricing.Cost : null;
+        return Task.FromResult(result);
     }
 
     /// <summary>
     /// Gets all pricing for a SKU across stores (internal helper).
     /// </summary>
-    public IReadOnlyList<StorePricing> GetAllPricingForSku(string sku)
+    public Task<IReadOnlyList<StorePricing>> GetAllPricingForSkuAsync(string sku, CancellationToken cancellationToken = default)
     {
-        return _pricingData.Values
+        var results = _pricingData.Values
             .Where(p => p.Sku.Equals(sku, StringComparison.OrdinalIgnoreCase))
             .ToList();
+        return Task.FromResult<IReadOnlyList<StorePricing>>(results);
     }
 }

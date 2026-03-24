@@ -20,8 +20,8 @@ public class ChiefSoftwareArchitectAgentCoverageTests
     public async Task Should_HandleAllAgentsSuccess_When_WorkflowCompletes()
     {
         // Arrange
-        var inventoryRepo = new InventoryRepository();
-        var pricingRepo = new PricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
 
@@ -51,8 +51,8 @@ public class ChiefSoftwareArchitectAgentCoverageTests
     public async Task Should_CaptureWorkflowDuration_When_OrchestrationCompletes()
     {
         // Arrange
-        var inventoryRepo = new InventoryRepository();
-        var pricingRepo = new PricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
 
@@ -82,8 +82,8 @@ public class ChiefSoftwareArchitectAgentCoverageTests
     public async Task Should_IncludeAllAgentResultsInSynthesis_When_Summarizing()
     {
         // Arrange
-        var inventoryRepo = new InventoryRepository();
-        var pricingRepo = new PricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
 

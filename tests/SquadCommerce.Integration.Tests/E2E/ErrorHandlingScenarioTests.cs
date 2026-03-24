@@ -25,7 +25,7 @@ public class ErrorHandlingScenarioTests
             .Setup(r => r.GetCurrentPriceAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ThrowsAsync(new InvalidOperationException("Database connection failed"));
 
-        var inventoryRepo = new InventoryRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
 
         var pricingAgent = new PricingAgent(
             mockPricingRepo.Object,
@@ -52,8 +52,8 @@ public class ErrorHandlingScenarioTests
             .Setup(c => c.GetCompetitorPricingAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new List<CompetitorPricing>()); // Empty result = A2A failure
 
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var validator = new ExternalDataValidator(
             pricingRepo,
             inventoryRepo,
@@ -87,8 +87,8 @@ public class ErrorHandlingScenarioTests
             mockInventoryRepo.Object,
             NullLogger<InventoryAgent>.Instance);
 
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
 
         var pricingAgent = new PricingAgent(
             pricingRepo,
@@ -143,8 +143,8 @@ public class ErrorHandlingScenarioTests
     public async Task Should_RejectExternalData_When_PriceDeltaExceeds50Percent()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var validator = new ExternalDataValidator(
             pricingRepo,
             inventoryRepo,
@@ -172,8 +172,8 @@ public class ErrorHandlingScenarioTests
     public async Task Should_ValidateReasonablePrice_When_WithinThreshold()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var validator = new ExternalDataValidator(
             pricingRepo,
             inventoryRepo,
@@ -200,7 +200,7 @@ public class ErrorHandlingScenarioTests
     public async Task Should_HandleInvalidSku_When_SkuNotFound()
     {
         // Arrange
-        var inventoryRepo = new InventoryRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var inventoryAgent = new InventoryAgent(
             inventoryRepo,
             NullLogger<InventoryAgent>.Instance);
@@ -220,7 +220,7 @@ public class ErrorHandlingScenarioTests
     public async Task Should_RejectPriceBelowCost_When_UpdatingPricing()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
+        var pricingRepo = new InMemoryPricingRepository();
         var sku = "SKU-1001"; // Wireless Mouse, Cost = $15.00
         var storeId = "SEA-001";
         var belowCostPrice = 10.00m; // Below cost!

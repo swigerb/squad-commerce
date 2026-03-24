@@ -48,6 +48,9 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Initialize database (ensure created and seeded)
+await app.UseSquadCommerceDatabaseAsync();
+
 app.MapDefaultEndpoints();
 
 app.UseHttpsRedirection();

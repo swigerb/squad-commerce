@@ -16,3 +16,5 @@ C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Mcp\bin\Debug\net1
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Mcp\obj\Debug\net10.0\SquadCom.9DF3C578.Up2Date
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Mcp\bin\Debug\net10.0\SquadCommerce.ServiceDefaults.dll
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Mcp\bin\Debug\net10.0\SquadCommerce.ServiceDefaults.pdb
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Mcp\bin\Debug\net10.0\SquadCommerce.Mcp.runtimeconfig.json
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Mcp\obj\Debug\net10.0\SquadCommerce.Mcp.genruntimeconfig.cache

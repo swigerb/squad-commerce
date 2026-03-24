@@ -7,11 +7,11 @@ namespace SquadCommerce.Mcp.Tests.Data;
 
 public class PricingRepositoryTests
 {
-    private readonly PricingRepository _repository;
+    private readonly InMemoryPricingRepository _repository;
 
     public PricingRepositoryTests()
     {
-        _repository = new PricingRepository();
+        _repository = new InMemoryPricingRepository();
     }
 
     [Fact]

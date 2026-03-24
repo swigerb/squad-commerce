@@ -39,8 +39,8 @@ public class SystemSmokeTests
         services.AddLogging(builder => builder.AddConsole());
         
         // Register repositories
-        services.AddSingleton<IInventoryRepository, SquadCommerce.Mcp.Data.InventoryRepository>();
-        services.AddSingleton<IPricingRepository, SquadCommerce.Mcp.Data.PricingRepository>();
+        services.AddSingleton<IInventoryRepository, SquadCommerce.Mcp.Data.InMemoryInventoryRepository>();
+        services.AddSingleton<IPricingRepository, SquadCommerce.Mcp.Data.InMemoryPricingRepository>();
         
         // Register A2A components
         services.AddHttpClient<IA2AClient, SquadCommerce.A2A.A2AClient>();
@@ -80,8 +80,8 @@ public class SystemSmokeTests
         // Arrange
         var services = new ServiceCollection();
         services.AddLogging();
-        services.AddSingleton<IInventoryRepository, SquadCommerce.Mcp.Data.InventoryRepository>();
-        services.AddSingleton<IPricingRepository, SquadCommerce.Mcp.Data.PricingRepository>();
+        services.AddSingleton<IInventoryRepository, SquadCommerce.Mcp.Data.InMemoryInventoryRepository>();
+        services.AddSingleton<IPricingRepository, SquadCommerce.Mcp.Data.InMemoryPricingRepository>();
 
         var serviceProvider = services.BuildServiceProvider();
 
@@ -92,16 +92,16 @@ public class SystemSmokeTests
         // Assert
         inventoryRepo.Should().NotBeNull("IInventoryRepository should be registered");
         pricingRepo.Should().NotBeNull("IPricingRepository should be registered");
-        inventoryRepo.Should().BeOfType<SquadCommerce.Mcp.Data.InventoryRepository>();
-        pricingRepo.Should().BeOfType<SquadCommerce.Mcp.Data.PricingRepository>();
+        inventoryRepo.Should().BeOfType<SquadCommerce.Mcp.Data.InMemoryInventoryRepository>();
+        pricingRepo.Should().BeOfType<SquadCommerce.Mcp.Data.InMemoryPricingRepository>();
     }
 
     [Fact]
     public void Should_HaveDemoData_When_RepositoriesCreated()
     {
         // Arrange
-        var inventoryRepo = new SquadCommerce.Mcp.Data.InventoryRepository();
-        var pricingRepo = new SquadCommerce.Mcp.Data.PricingRepository();
+        var inventoryRepo = new SquadCommerce.Mcp.Data.InMemoryInventoryRepository();
+        var pricingRepo = new SquadCommerce.Mcp.Data.InMemoryPricingRepository();
 
         // Act - Query demo data
         var inventoryTask = inventoryRepo.GetInventoryLevelsAsync("SKU-1001", CancellationToken.None);

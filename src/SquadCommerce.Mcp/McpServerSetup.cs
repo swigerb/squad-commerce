@@ -1,4 +1,6 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Mcp.Data;
 using SquadCommerce.Mcp.Tools;
@@ -12,24 +14,52 @@ public static class McpServerSetup
 {
     /// <summary>
     /// Registers MCP infrastructure, tools, and repositories.
-    /// Provides a clean abstraction layer that can be swapped for real ModelContextProtocol package later.
+    /// Uses EF Core + SQLite for data persistence.
     /// </summary>
     /// <param name="services">The service collection</param>
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddSquadCommerceMcp(this IServiceCollection services)
     {
-        // Register repositories with Contracts interfaces (in-memory for demo)
-        services.AddSingleton<IInventoryRepository, InventoryRepository>();
-        services.AddSingleton<IPricingRepository, PricingRepository>();
+        // Register DbContext with SQLite
+        services.AddDbContext<SquadCommerceDbContext>(options =>
+            options.UseSqlite("Data Source=squadcommerce.db"));
 
-        // Register MCP tools as services
-        services.AddSingleton<GetInventoryLevelsTool>();
-        services.AddSingleton<UpdateStorePricingTool>();
+        // Register database seeder
+        services.AddScoped<DatabaseSeeder>();
 
-        // Register MCP tool registry for discovery
+        // Register repositories with Contracts interfaces (SQLite via EF Core)
+        services.AddScoped<IInventoryRepository, SqliteInventoryRepository>();
+        services.AddScoped<IPricingRepository, SqlitePricingRepository>();
+
+        // Register MCP tools as scoped (they depend on scoped repositories)
+        services.AddScoped<GetInventoryLevelsTool>();
+        services.AddScoped<UpdateStorePricingTool>();
+
+        // Register MCP tool registry for discovery (singleton, no dependencies on scoped services)
         services.AddSingleton<IMcpToolRegistry, McpToolRegistry>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Ensures the database is created and seeded with demo data.
+    /// Call this after building the host/app.
+    /// </summary>
+    /// <param name="host">The host instance</param>
+    /// <returns>The host for chaining</returns>
+    public static async Task<IHost> UseSquadCommerceDatabaseAsync(this IHost host)
+    {
+        using var scope = host.Services.CreateScope();
+        var context = scope.ServiceProvider.GetRequiredService<SquadCommerceDbContext>();
+        var seeder = scope.ServiceProvider.GetRequiredService<DatabaseSeeder>();
+
+        // Create database and schema
+        await context.Database.EnsureCreatedAsync();
+
+        // Seed demo data (idempotent)
+        await seeder.SeedAsync();
+
+        return host;
     }
 }
 
@@ -75,18 +105,15 @@ public sealed record ToolParameter(
 
 /// <summary>
 /// Default implementation of MCP tool registry.
+/// Uses service provider for scoped tool resolution.
 /// </summary>
 internal sealed class McpToolRegistry : IMcpToolRegistry
 {
-    private readonly GetInventoryLevelsTool _getInventoryLevelsTool;
-    private readonly UpdateStorePricingTool _updateStorePricingTool;
+    private readonly IServiceProvider _serviceProvider;
 
-    public McpToolRegistry(
-        GetInventoryLevelsTool getInventoryLevelsTool,
-        UpdateStorePricingTool updateStorePricingTool)
+    public McpToolRegistry(IServiceProvider serviceProvider)
     {
-        _getInventoryLevelsTool = getInventoryLevelsTool ?? throw new ArgumentNullException(nameof(getInventoryLevelsTool));
-        _updateStorePricingTool = updateStorePricingTool ?? throw new ArgumentNullException(nameof(updateStorePricingTool));
+        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     }
 
     public ToolSchema GetToolSchema(string toolName)
@@ -118,13 +145,15 @@ internal sealed class McpToolRegistry : IMcpToolRegistry
 
     public async Task<object> InvokeToolAsync(string toolName, IDictionary<string, object?> parameters, CancellationToken cancellationToken = default)
     {
+        using var scope = _serviceProvider.CreateScope();
+        
         return toolName switch
         {
-            "GetInventoryLevels" => await _getInventoryLevelsTool.ExecuteAsync(
+            "GetInventoryLevels" => await scope.ServiceProvider.GetRequiredService<GetInventoryLevelsTool>().ExecuteAsync(
                 parameters.TryGetValue("sku", out var skuVal) ? skuVal?.ToString() : null,
                 parameters.TryGetValue("storeId", out var storeIdVal) ? storeIdVal?.ToString() : null,
                 cancellationToken),
-            "UpdateStorePricing" => await _updateStorePricingTool.ExecuteAsync(
+            "UpdateStorePricing" => await scope.ServiceProvider.GetRequiredService<UpdateStorePricingTool>().ExecuteAsync(
                 parameters.TryGetValue("storeId", out var storeIdVal2) && storeIdVal2 != null ? storeIdVal2.ToString() : throw new ArgumentException("storeId is required"),
                 parameters.TryGetValue("sku", out var skuVal2) && skuVal2 != null ? skuVal2.ToString() : throw new ArgumentException("sku is required"),
                 parameters.TryGetValue("newPrice", out var priceVal) && priceVal != null ? Convert.ToDecimal(priceVal) : throw new ArgumentException("newPrice is required"),

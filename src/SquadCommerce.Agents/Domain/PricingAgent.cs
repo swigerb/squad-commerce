@@ -81,9 +81,9 @@ public sealed class PricingAgent : IDomainAgent
                     storeCount++;
 
                     // Try to get cost (using internal helper if available)
-                    if (_pricingRepository is Mcp.Data.PricingRepository repo)
+                    if (_pricingRepository is Mcp.Data.IPricingRepositoryInternal repoInternal)
                     {
-                        var cost = repo.GetCost(storeId, sku);
+                        var cost = await repoInternal.GetCostAsync(storeId, sku, cancellationToken);
                         if (cost.HasValue)
                         {
                             totalCost += cost.Value;

@@ -6,11 +6,11 @@ namespace SquadCommerce.Mcp.Tests.Data;
 
 public class InventoryRepositoryTests
 {
-    private readonly InventoryRepository _repository;
+    private readonly InMemoryInventoryRepository _repository;
 
     public InventoryRepositoryTests()
     {
-        _repository = new InventoryRepository();
+        _repository = new InMemoryInventoryRepository();
     }
 
     [Fact]

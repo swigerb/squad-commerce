@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SquadCommerce.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+44711630139252e0fa43191509238dee17c2e8df")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+880c16519fabb554804aa5cf16f739989af4a5ec")]
 [assembly: System.Reflection.AssemblyProductAttribute("SquadCommerce.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SquadCommerce.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

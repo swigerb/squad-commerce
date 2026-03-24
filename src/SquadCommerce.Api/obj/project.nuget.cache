@@ -1,13 +1,21 @@
 {
   "version": 2,
-  "dgSpecHash": "u47+SqN+qIY=",
+  "dgSpecHash": "jMc7p9i526g=",
   "success": true,
   "projectFilePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Api\\SquadCommerce.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.aspnetcore.signalr\\1.2.9\\microsoft.aspnetcore.signalr.1.2.9.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.data.sqlite.core\\10.0.5\\microsoft.data.sqlite.core.10.0.5.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore\\10.0.5\\microsoft.entityframeworkcore.10.0.5.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\10.0.5\\microsoft.entityframeworkcore.abstractions.10.0.5.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore.analyzers\\10.0.5\\microsoft.entityframeworkcore.analyzers.10.0.5.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\10.0.5\\microsoft.entityframeworkcore.relational.10.0.5.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore.sqlite\\10.0.5\\microsoft.entityframeworkcore.sqlite.10.0.5.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore.sqlite.core\\10.0.5\\microsoft.entityframeworkcore.sqlite.core.10.0.5.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.ambientmetadata.application\\10.1.0\\microsoft.extensions.ambientmetadata.application.10.1.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.compliance.abstractions\\10.1.0\\microsoft.extensions.compliance.abstractions.10.1.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.dependencyinjection.autoactivation\\10.1.0\\microsoft.extensions.dependencyinjection.autoactivation.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.dependencymodel\\10.0.5\\microsoft.extensions.dependencymodel.10.0.5.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.diagnostics.exceptionsummarization\\10.1.0\\microsoft.extensions.diagnostics.exceptionsummarization.10.1.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.http.diagnostics\\10.1.0\\microsoft.extensions.http.diagnostics.10.1.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.http.resilience\\10.1.0\\microsoft.extensions.http.resilience.10.1.0.nupkg.sha512",
@@ -26,7 +34,11 @@
     "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry.instrumentation.runtime\\1.14.0\\opentelemetry.instrumentation.runtime.1.14.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\polly.core\\8.4.2\\polly.core.8.4.2.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\polly.extensions\\8.4.2\\polly.extensions.8.4.2.nupkg.sha512",
-    "C:\\Users\\brswig\\.nuget\\packages\\polly.ratelimiting\\8.4.2\\polly.ratelimiting.8.4.2.nupkg.sha512"
+    "C:\\Users\\brswig\\.nuget\\packages\\polly.ratelimiting\\8.4.2\\polly.ratelimiting.8.4.2.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.11\\sqlitepclraw.bundle_e_sqlite3.2.1.11.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\sqlitepclraw.core\\2.1.11\\sqlitepclraw.core.2.1.11.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.11\\sqlitepclraw.lib.e_sqlite3.2.1.11.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\sqlitepclraw.provider.e_sqlite3\\2.1.11\\sqlitepclraw.provider.e_sqlite3.2.1.11.nupkg.sha512"
   ],
   "logs": [
     {

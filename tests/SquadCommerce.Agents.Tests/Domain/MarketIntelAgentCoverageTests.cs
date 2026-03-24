@@ -18,8 +18,8 @@ public class MarketIntelAgentCoverageTests
     public async Task Should_ValidateAllCompetitorPrices_When_Querying()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
@@ -41,8 +41,8 @@ public class MarketIntelAgentCoverageTests
     public async Task Should_IncludeOurPriceInComparison_When_Generating()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
@@ -66,8 +66,8 @@ public class MarketIntelAgentCoverageTests
     public async Task Should_CalculatePriceDelta_When_ComparingToCompetitors()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
@@ -92,8 +92,8 @@ public class MarketIntelAgentCoverageTests
     public async Task Should_MapSkuToProductName_When_GeneratingGrid(string sku, string expectedName)
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
@@ -112,8 +112,8 @@ public class MarketIntelAgentCoverageTests
     public async Task Should_IdentifyLowestCompetitorPrice_When_Analyzing()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
@@ -138,8 +138,8 @@ public class MarketIntelAgentCoverageTests
     public async Task Should_IncludeValidationNote_When_PricesVerified()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         

@@ -16,8 +16,8 @@ public class PricingAgentCoverageTests
     public async Task Should_CalculateFourScenarios_When_ProposingPricing()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var agent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
 
         // Act
@@ -38,8 +38,8 @@ public class PricingAgentCoverageTests
     public async Task Should_CalculateMarginForEachScenario_When_AnalyzingPricing()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var agent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
 
         // Act
@@ -59,8 +59,8 @@ public class PricingAgentCoverageTests
     public async Task Should_CalculateRevenueImpact_When_ProjectingScenarios()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var agent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
 
         // Act
@@ -87,8 +87,8 @@ public class PricingAgentCoverageTests
     public async Task Should_IncludeCompetitorPriceInPayload_When_Calculating(string sku, double competitorPriceDouble)
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var agent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
 
         var competitorPrice = (decimal)competitorPriceDouble;
@@ -109,8 +109,8 @@ public class PricingAgentCoverageTests
     public async Task Should_IncludeMarginDeltaInSummary_When_Analyzing()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var agent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
 
         // Act
@@ -127,8 +127,8 @@ public class PricingAgentCoverageTests
     public async Task Should_ProjectVolumeUplift_When_LoweringPrice()
     {
         // Arrange
-        var pricingRepo = new PricingRepository();
-        var inventoryRepo = new InventoryRepository();
+        var pricingRepo = new InMemoryPricingRepository();
+        var inventoryRepo = new InMemoryInventoryRepository();
         var agent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
 
         // Act

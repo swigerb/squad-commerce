@@ -19,8 +19,9 @@ public sealed record InventoryLevel(
 /// <summary>
 /// In-memory repository for inventory data implementing Contracts interface.
 /// Thread-safe with realistic demo data for 5 stores and 8 SKUs.
+/// Renamed to InMemoryInventoryRepository for test usage.
 /// </summary>
-public sealed class InventoryRepository : IInventoryRepository
+public sealed class InMemoryInventoryRepository : IInventoryRepository
 {
     private readonly ConcurrentDictionary<string, InventoryLevel> _inventoryData;
     private static readonly Dictionary<string, string> StoreNames = new()
@@ -44,7 +45,7 @@ public sealed class InventoryRepository : IInventoryRepository
         ["SKU-1008"] = "Monitor 27-inch"
     };
 
-    public InventoryRepository()
+    public InMemoryInventoryRepository()
     {
         // Realistic demo data: 5 stores, 8 SKUs (40 records)
         // Thread-safe using ConcurrentDictionary

@@ -16,7 +16,7 @@ public class InventoryAgentCoverageTests
     public async Task Should_CalculateStockStatus_When_UnitsAboveReorderPoint()
     {
         // Arrange
-        var repo = new InventoryRepository();
+        var repo = new InMemoryInventoryRepository();
         var agent = new InventoryAgent(repo, NullLogger<InventoryAgent>.Instance);
 
         // Act - Query SKU with high stock
@@ -33,7 +33,7 @@ public class InventoryAgentCoverageTests
     public async Task Should_IdentifyLowStock_When_BelowReorderPoint()
     {
         // Arrange
-        var repo = new InventoryRepository();
+        var repo = new InMemoryInventoryRepository();
         var agent = new InventoryAgent(repo, NullLogger<InventoryAgent>.Instance);
 
         // Act - Query SKU with some low stock stores
@@ -55,7 +55,7 @@ public class InventoryAgentCoverageTests
     public async Task Should_ReturnFiveStores_When_ValidSkuProvided(string sku)
     {
         // Arrange
-        var repo = new InventoryRepository();
+        var repo = new InMemoryInventoryRepository();
         var agent = new InventoryAgent(repo, NullLogger<InventoryAgent>.Instance);
 
         // Act
@@ -73,7 +73,7 @@ public class InventoryAgentCoverageTests
     public async Task Should_IncludeStoreNames_When_GeneratingHeatmap()
     {
         // Arrange
-        var repo = new InventoryRepository();
+        var repo = new InMemoryInventoryRepository();
         var agent = new InventoryAgent(repo, NullLogger<InventoryAgent>.Instance);
 
         // Act
@@ -94,7 +94,7 @@ public class InventoryAgentCoverageTests
     public async Task Should_CalculateTotalUnits_When_SummarizingInventory()
     {
         // Arrange
-        var repo = new InventoryRepository();
+        var repo = new InMemoryInventoryRepository();
         var agent = new InventoryAgent(repo, NullLogger<InventoryAgent>.Instance);
 
         // Act
