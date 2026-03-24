@@ -1,0 +1,44 @@
+{
+  "agents": {
+    "bill-gates": {
+      "persistent_name": "Bill Gates",
+      "universe": "Microsoft Legends",
+      "role": "Lead",
+      "created_at": "2026-03-24T12:36:41Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "satya-nadella": {
+      "persistent_name": "Satya Nadella",
+      "universe": "Microsoft Legends",
+      "role": "Lead Dev",
+      "created_at": "2026-03-24T12:36:41Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "steve-ballmer": {
+      "persistent_name": "Steve Ballmer",
+      "universe": "Microsoft Legends",
+      "role": "Tester",
+      "created_at": "2026-03-24T12:36:41Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "clippy": {
+      "persistent_name": "Clippy",
+      "universe": "Microsoft Legends",
+      "role": "User Advocate / AG-UI Expert",
+      "created_at": "2026-03-24T12:36:41Z",
+      "legacy_named": false,
+      "status": "active"
+    },
+    "anders": {
+      "persistent_name": "Anders",
+      "universe": "Microsoft Legends",
+      "role": "Backend Dev",
+      "created_at": "2026-03-24T12:36:41Z",
+      "legacy_named": false,
+      "status": "active"
+    }
+  }
+}
