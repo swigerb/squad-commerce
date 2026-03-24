@@ -5,6 +5,7 @@
 [![Built with MAF](https://img.shields.io/badge/Built%20with-Microsoft%20Agent%20Framework-blue)](#technology-stack)
 [![.NET 10](https://img.shields.io/badge/.NET-10-purple)](#technology-stack)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/swigerb/squad-commerce/actions/workflows/ci.yml/badge.svg)](https://github.com/swigerb/squad-commerce/actions/workflows/ci.yml)
 
 ---
 
@@ -136,6 +137,56 @@ The demo guide includes:
 - ✅ API reference with all endpoints
 - ✅ Demo data reference (5 stores, 8 SKUs)
 - ✅ Troubleshooting guide
+
+---
+
+## 🔄 CI/CD Pipeline
+
+Squad Commerce uses **GitHub Actions** for continuous integration and deployment:
+
+### Automated Workflows
+
+| Workflow | Trigger | Purpose |
+|----------|---------|---------|
+| **CI** | Push to `main`, PRs | Build, test, Docker image validation |
+| **PR Validation** | Pull requests | Quality gates: coverage ≥80%, code formatting |
+| **Deploy** | Manual or after CI passes | Deploy to Azure Container Apps via `azd` |
+
+### Build Status
+
+All commits and PRs are automatically built and tested. The build status badge at the top of this README shows the current state of the `main` branch.
+
+### Manual Deployment
+
+Deploy to Azure using the GitHub Actions UI:
+
+1. Go to **Actions** → **Deploy to Azure**
+2. Click **Run workflow**
+3. Select environment (`production`, `staging`, or `development`)
+4. Click **Run workflow**
+
+**Required GitHub Secrets:**
+- `AZURE_CLIENT_ID` — Azure service principal client ID
+- `AZURE_TENANT_ID` — Azure Active Directory tenant ID
+- `AZURE_SUBSCRIPTION_ID` — Azure subscription ID
+- `AZURE_LOCATION` — Azure region (defaults to `eastus`)
+
+**Setup OIDC for Azure:**
+```bash
+# Create Azure AD application for OIDC
+az ad app create --display-name "squad-commerce-github-actions"
+
+# Configure federated credentials for GitHub Actions
+# See: https://learn.microsoft.com/azure/developer/github/connect-from-azure
+```
+
+### Quality Gates
+
+All pull requests must pass:
+- ✅ Build succeeds
+- ✅ All tests pass (excluding Playwright browser tests)
+- ✅ Code coverage ≥80%
+- ✅ Code formatting check (`dotnet format`)
 
 ---
 

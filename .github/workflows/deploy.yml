@@ -1,0 +1,90 @@
+name: Deploy to Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+          - development
+  workflow_run:
+    workflows: ["CI"]
+    types:
+      - completed
+    branches: [main]
+
+env:
+  DOTNET_VERSION: '10.0.x'
+  AZURE_ENV_NAME: ${{ inputs.environment || 'production' }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'workflow_dispatch' || (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main')
+    environment: ${{ inputs.environment || 'production' }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup .NET 10 SDK
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Install Azure Developer CLI
+      run: |
+        curl -fsSL https://aka.ms/install-azd.sh | bash
+
+    - name: Log in to Azure using OIDC
+      uses: azure/login@v2
+      with:
+        client-id: ${{ secrets.AZURE_CLIENT_ID }}
+        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+    - name: Configure Azure Developer CLI
+      run: |
+        azd auth login --client-id "${{ secrets.AZURE_CLIENT_ID }}" \
+                       --federated-credential-provider "github" \
+                       --tenant-id "${{ secrets.AZURE_TENANT_ID }}"
+
+    - name: Set Azure environment
+      run: |
+        if azd env list | grep -q "${{ env.AZURE_ENV_NAME }}"; then
+          echo "Environment ${{ env.AZURE_ENV_NAME }} already exists"
+          azd env select ${{ env.AZURE_ENV_NAME }}
+        else
+          echo "Creating new environment ${{ env.AZURE_ENV_NAME }}"
+          azd env new ${{ env.AZURE_ENV_NAME }}
+        fi
+
+    - name: Deploy to Azure
+      run: |
+        azd up --no-prompt
+      env:
+        AZURE_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+        AZURE_LOCATION: ${{ secrets.AZURE_LOCATION || 'eastus' }}
+
+    - name: Deployment Summary
+      if: always()
+      run: |
+        echo "### Deployment Summary 🚀" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "- **Environment:** ${{ env.AZURE_ENV_NAME }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Resources deployed:**" >> $GITHUB_STEP_SUMMARY
+        echo "- Azure Container Registry" >> $GITHUB_STEP_SUMMARY
+        echo "- Container Apps Environment" >> $GITHUB_STEP_SUMMARY
+        echo "- API and Web Container Apps" >> $GITHUB_STEP_SUMMARY
+        echo "- Log Analytics Workspace" >> $GITHUB_STEP_SUMMARY

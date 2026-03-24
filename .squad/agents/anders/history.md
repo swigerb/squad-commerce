@@ -437,3 +437,112 @@ Backend developer for squad-commerce. Responsible for ASP.NET Core infrastructur
 - OpenTelemetry export configured for Aspire Dashboard
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
+
+
+### 2025-01-23: GitHub Actions CI/CD Pipeline Implementation
+
+**Task: Create complete CI/CD pipeline with build, test, quality gates, and Azure deployment**
+
+**Files Created:**
+
+1. **.github/workflows/ci.yml** — Continuous Integration:
+   - Triggers: push to `main`, pull requests to `main`
+   - Job: `build-and-test` — runs on `ubuntu-latest`
+   - Steps: checkout, setup .NET 10, restore, build (Release), test with coverage
+   - Test filter: `FullyQualifiedName!~Playwright` (excludes browser tests from CI)
+   - Uploads test results as artifact (retention: 30 days)
+   - Uploads code coverage as artifact (retention: 30 days)
+   - Posts test report to PR using `dorny/test-reporter@v1`
+   - Job: `docker-build` — builds both Docker images (API + Web)
+   - Only runs on push to `main` after tests pass
+   - Verifies images built successfully
+
+2. **.github/workflows/deploy.yml** — Azure Deployment:
+   - Triggers: `workflow_dispatch` (manual with environment input), after CI passes on `main`
+   - Job: `deploy` — runs on `ubuntu-latest` with production environment
+   - Steps: checkout, setup .NET 10, install azd, login to Azure via OIDC
+   - Uses federated credentials (`azure/login@v2` with OIDC)
+   - Creates/selects azd environment based on input (production/staging/development)
+   - Runs `azd up --no-prompt` to deploy to Azure Container Apps
+   - Requires secrets: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`, `AZURE_LOCATION`
+   - Posts deployment summary to GitHub Actions summary
+
+3. **.github/workflows/pr-validation.yml** — PR Quality Gates:
+   - Triggers: pull requests to `main`
+   - Job: `quality-gates` — runs on `ubuntu-latest`
+   - Steps: checkout, setup .NET 10, restore, build (Release), test with coverage
+   - Uses `irongut/CodeCoverageSummary@v1.3.0` to generate coverage report
+   - Enforces coverage threshold: ≥80% (fails if below)
+   - Runs `dotnet format --verify-no-changes` to check code formatting
+   - Posts coverage summary to PR using `marocchino/sticky-pull-request-comment@v2`
+   - Posts quality gates summary to GitHub Actions summary
+
+4. **.github/PULL_REQUEST_TEMPLATE.md** — PR Checklist:
+   - Comprehensive checklist: type of change, testing, code quality
+   - Specific checks for Squad Commerce: A2UI accessibility, OpenTelemetry traces, MCP tool validation, A2A protocol testing
+   - Sections: Description, Type of Change, Checklist, Testing, Related Issues, Screenshots, Additional Notes
+
+**README Updates:**
+
+1. **Build Status Badge** — Added CI badge to top of README (4th badge)
+2. **CI/CD Section** — New section after Demo Walkthrough:
+   - Table of all 3 workflows with triggers and purposes
+   - Manual deployment instructions (GitHub Actions UI)
+   - Required GitHub Secrets documentation with descriptions
+   - OIDC setup instructions (link to Azure docs)
+   - Quality gates list: build, tests, coverage ≥80%, code formatting
+
+**Architecture Decisions:**
+
+1. **Playwright Exclusion** — Excluded from CI using `FullyQualifiedName!~Playwright` filter:
+   - Browser tests require browser installation (Playwright, Chromium, etc.)
+   - CI runs on headless Ubuntu without GUI — not suitable for browser automation
+   - Browser tests should run locally or in dedicated E2E test environments
+   - All unit/integration tests still run in CI
+
+2. **Docker Build Only on Main** — Docker images built only after CI passes on `main`:
+   - PRs don't need Docker builds (wastes CI time)
+   - Docker validation ensures Dockerfiles work before merge
+   - Production deployments use images from `main` branch
+
+3. **OIDC over Service Principal Secrets** — Azure login uses federated credentials:
+   - More secure than storing long-lived client secrets
+   - GitHub automatically rotates short-lived tokens
+   - Requires Azure AD app registration with federated credential
+   - See: https://learn.microsoft.com/azure/developer/github/connect-from-azure
+
+4. **Coverage Threshold: 80%** — Enforced in PR validation:
+   - Balances code quality with developer velocity
+   - Squad Commerce is a showcase — 80% demonstrates quality without blocking progress
+   - Can be raised to 90% for critical projects
+
+5. **Code Formatting Check (Non-Blocking in CI)** — `dotnet format --verify-no-changes`:
+   - Runs in PR validation but doesn't fail the build (continue-on-error: true)
+   - Posts warning to PR summary if formatting issues detected
+   - Developers should run `dotnet format` locally before pushing
+   - Will be enforced (blocking) once team establishes formatting conventions
+
+6. **Test Results as Artifacts** — Uploaded for 30 days:
+   - Allows historical test result analysis
+   - Code coverage trends can be tracked over time
+   - Useful for debugging flaky tests
+
+**Patterns Applied:**
+
+- **Multi-stage CI** — build-and-test runs first, docker-build waits for success
+- **Artifact Retention** — test results and coverage stored for 30 days
+- **PR Comments** — test report and coverage summary posted to PR for visibility
+- **Workflow Dispatch** — manual deployment with environment selection
+- **OIDC Authentication** — federated credentials for secure Azure login
+- **GitHub Actions Summary** — deployment and quality gates results posted to summary page
+- **Conventional Commits** — PR template encourages structured commit messages
+
+**Build Verification:** ✅ Solution builds successfully with `dotnet build SquadCommerce.slnx --configuration Release`
+
+**Notes:**
+- .NET 10 SDK version `10.0.x` may need adjustment when .NET 10 is officially released
+- If .NET 10 requires preview feed, add `global.json` with SDK version and `nuget.config` with preview feed URL
+- Workflow permissions configured: `contents: read`, `pull-requests: write`, `checks: write`, `id-token: write` (for OIDC)
+- All workflows use `actions/checkout@v4` and `actions/setup-dotnet@v4` for consistency
+- Docker build context is repo root (`.`) as Dockerfiles reference solution file and multiple projects
+- Future enhancement: Add deployment smoke tests (health check after azd up completes)
