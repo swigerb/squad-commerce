@@ -39,7 +39,16 @@ builder.Services.AddCors(options =>
 {
     options.AddDefaultPolicy(policy =>
     {
-        policy.WithOrigins("https://localhost:7001", "http://localhost:5001")
+        // Local development origins
+        var localOrigins = new[] { "https://localhost:7001", "http://localhost:5001" };
+        
+        // Azure Container Apps: allow web service origin dynamically
+        var azureWebOrigin = builder.Configuration["AllowedOrigins:Web"];
+        var allowedOrigins = string.IsNullOrEmpty(azureWebOrigin) 
+            ? localOrigins 
+            : localOrigins.Concat(new[] { azureWebOrigin }).ToArray();
+
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials(); // Required for SignalR

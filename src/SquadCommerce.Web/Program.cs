@@ -10,7 +10,13 @@ builder.Services.AddRazorComponents()
 // Register HTTP client for AG-UI streaming
 builder.Services.AddHttpClient<AgUiStreamService>(client =>
 {
-    var apiBaseUrl = builder.Configuration["Api:BaseUrl"] ?? "https://localhost:7001";
+    // In Azure Container Apps, service discovery is via environment variables
+    // Format: services__<service-name>__https__0 or services__<service-name>__http__0
+    var apiBaseUrl = builder.Configuration["services:api:https:0"] 
+                     ?? builder.Configuration["services:api:http:0"]
+                     ?? builder.Configuration["Api:BaseUrl"] 
+                     ?? "https://localhost:7001";
+    
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromMinutes(5); // Long timeout for streaming
 });

@@ -1,0 +1,89 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "SquadCommerce.Web/1.0.0": {
+        "dependencies": {
+          "Microsoft.AspNetCore.SignalR.Client": "10.0.5",
+          "SquadCommerce.Contracts": "1.0.0"
+        },
+        "runtime": {
+          "SquadCommerce.Web.dll": {}
+        }
+      },
+      "Microsoft.AspNetCore.Http.Connections.Client/10.0.5": {
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.Http.Connections.Client.dll": {
+            "assemblyVersion": "10.0.5.0",
+            "fileVersion": "10.0.526.15411"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.SignalR.Client/10.0.5": {
+        "dependencies": {
+          "Microsoft.AspNetCore.Http.Connections.Client": "10.0.5",
+          "Microsoft.AspNetCore.SignalR.Client.Core": "10.0.5"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.SignalR.Client.dll": {
+            "assemblyVersion": "10.0.5.0",
+            "fileVersion": "10.0.526.15411"
+          }
+        }
+      },
+      "Microsoft.AspNetCore.SignalR.Client.Core/10.0.5": {
+        "runtime": {
+          "lib/net10.0/Microsoft.AspNetCore.SignalR.Client.Core.dll": {
+            "assemblyVersion": "10.0.5.0",
+            "fileVersion": "10.0.526.15411"
+          }
+        }
+      },
+      "SquadCommerce.Contracts/1.0.0": {
+        "runtime": {
+          "SquadCommerce.Contracts.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "SquadCommerce.Web/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "Microsoft.AspNetCore.Http.Connections.Client/10.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-z4Iny9wOi2D3h/YVPELyb2aMakFQIwiAeCHl1T8giCoUHgql+HtvKKldGxQC6/g4niuLBipi7O6zQT34O9/Rcw==",
+      "path": "microsoft.aspnetcore.http.connections.client/10.0.5",
+      "hashPath": "microsoft.aspnetcore.http.connections.client.10.0.5.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.SignalR.Client/10.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-2v+Qi63UGm8hu9RAAfWeim3H9ovnxDiPx2MyLQI8nsWrgP+76Z7oiKj+kpVCR1N5QU9bF94RV0lZ/7OJH1LXUA==",
+      "path": "microsoft.aspnetcore.signalr.client/10.0.5",
+      "hashPath": "microsoft.aspnetcore.signalr.client.10.0.5.nupkg.sha512"
+    },
+    "Microsoft.AspNetCore.SignalR.Client.Core/10.0.5": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-A2+sApRgxWSxzD0Q5eRqElPPzqIqOljYCzt/mtC/KIjlTNLvVWoQn2amNnX3o7BrbaSdI1yeFcyKVal7zVgcSw==",
+      "path": "microsoft.aspnetcore.signalr.client.core/10.0.5",
+      "hashPath": "microsoft.aspnetcore.signalr.client.core.10.0.5.nupkg.sha512"
+    },
+    "SquadCommerce.Contracts/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

@@ -1,0 +1,12 @@
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\bin\Release\net10.0\SquadCommerce.Contracts.deps.json
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\bin\Release\net10.0\SquadCommerce.Contracts.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\bin\Release\net10.0\SquadCommerce.Contracts.pdb
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\obj\Release\net10.0\SquadCommerce.Contracts.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\obj\Release\net10.0\SquadCommerce.Contracts.AssemblyInfoInputs.cache
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\obj\Release\net10.0\SquadCommerce.Contracts.AssemblyInfo.cs
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\obj\Release\net10.0\SquadCommerce.Contracts.csproj.CoreCompileInputs.cache
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\obj\Release\net10.0\SquadCommerce.Contracts.sourcelink.json
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\obj\Release\net10.0\SquadCommerce.Contracts.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\obj\Release\net10.0\refint\SquadCommerce.Contracts.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\obj\Release\net10.0\SquadCommerce.Contracts.pdb
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Contracts\obj\Release\net10.0\ref\SquadCommerce.Contracts.dll

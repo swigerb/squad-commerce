@@ -5,3 +5,4 @@
 .squad/sessions/
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
+.azure

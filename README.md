@@ -99,6 +99,26 @@ dotnet run --project src/SquadCommerce.AppHost
 
 The Aspire Dashboard will open automatically, giving you full visibility into agent orchestration, traces, and metrics.
 
+### ☁️ Deploying to Azure
+
+Squad-Commerce supports **one-command deployment** to Azure Container Apps using Azure Developer CLI (`azd`):
+
+```bash
+# Prerequisites: Azure CLI, azd CLI, Docker Desktop
+az login
+azd up
+```
+
+This provisions:
+- **Azure Container Registry** (private image registry)
+- **Container Apps Environment** with built-in Aspire Dashboard
+- **API and Web Container Apps** with HTTPS ingress and service discovery
+- **Log Analytics** for centralized observability
+
+**📖 See [docs/DEPLOY.md](docs/DEPLOY.md) for comprehensive deployment guide.**
+
+**💰 Estimated cost:** $5-15/month for demo deployment.
+
 ### 📖 Demo Walkthrough
 
 **New to Squad Commerce?** Follow our comprehensive step-by-step demo guide:
