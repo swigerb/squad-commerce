@@ -504,3 +504,24 @@ Lead developer for squad-commerce. Responsible for MAF agent orchestration, A2A 
 - Implement audit trail export (CSV, JSON) for compliance reporting
 - Add pipeline visualization animations (stage transitions)
 
+
+### 2026-03-24: Multi-SKU Bulk Analysis Implementation
+**What:** Expanded system from single-SKU to multi-SKU bulk analysis for handling competitor scenarios where multiple SKUs drop in price simultaneously (e.g., category-wide sales).
+
+**Changes Implemented:**
+1. **New Models** - Added BulkAnalysisRequest, CompetitorSkuPrice models in AgentEndpoints for bulk operations
+2. **Domain Agent Bulk Methods** - Added ExecuteBulkAsync to InventoryAgent, PricingAgent, and MarketIntelAgent for processing multiple SKUs in one call
+3. **Orchestrator Bulk Workflow** - Added ProcessBulkCompetitorPriceDropAsync to ChiefSoftwareArchitectAgent following same 3-stage pattern (MarketIntel → Inventory → Pricing → Synthesize)
+4. **Repository Bulk Support** - Added GetBulkInventoryLevelsAsync, GetBulkPricingAsync to both SQLite and in-memory repositories
+5. **A2A Bulk Handshake** - Added GetBulkCompetitorPricingAsync to A2AClient for querying multiple SKUs via external agents
+6. **New API Endpoints** - Added POST /api/agents/analyze/bulk, POST /api/pricing/approve/bulk, POST /api/pricing/reject/bulk
+7. **A2UI Consolidation** - Bulk methods return consolidated A2UI payloads with aggregate metrics (total revenue impact, average margin change, stores affected)
+8. **Executive Summary** - BuildBulkExecutiveSummary highlights highest-impact SKUs and aggregate business impact
+
+**Key Patterns:**
+- Full backward compatibility - all existing single-SKU endpoints and methods remain unchanged
+- Aggregate metrics: total revenue impact across all SKUs, average margin change, number of stores affected
+- A2UI payloads use the same data shapes as single-SKU (just more items), ensuring existing Blazor components work without modification
+- Bulk operations use same telemetry spans and audit trail as single-SKU operations
+
+**Why:** Enables retailers to respond to competitor category-wide sales events (e.g., "TechMart drops all peripheral prices by 15%") with a single bulk analysis instead of running 20 individual analyses.

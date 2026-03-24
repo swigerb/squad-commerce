@@ -259,6 +259,62 @@ public sealed class A2AClient : IA2AClient
 
         return competitors;
     }
+
+    /// <summary>
+    /// Queries external competitor pricing for multiple SKUs via A2A protocol (bulk operation).
+    /// </summary>
+    public async Task<IReadOnlyList<CompetitorPricing>> GetBulkCompetitorPricingAsync(IReadOnlyList<string> skus, CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        using var activity = SquadCommerceTelemetry.StartA2ASpan("ExternalVendor", "BulkHandshake");
+        activity?.SetTag("a2a.target.agent", "ExternalVendor");
+        activity?.SetTag("a2a.request.type", "GetBulkCompetitorPricing");
+        activity?.SetTag("a2a.sku_count", skus.Count);
+        
+        SquadCommerceTelemetry.A2AHandshakeCount.Add(1,
+            new KeyValuePair<string, object?>("a2a.target.agent", "ExternalVendor"));
+
+        _logger.LogInformation("A2AClient querying competitor pricing for {Count} SKUs", skus.Count);
+
+        try
+        {
+            var allResults = new List<CompetitorPricing>();
+            
+            // For demo: query each SKU and aggregate results
+            foreach (var sku in skus)
+            {
+                var mockData = await GetMockCompetitorDataAsync(sku, cancellationToken);
+                allResults.AddRange(mockData);
+            }
+
+            _logger.LogInformation("Retrieved {Count} total competitor prices for {SkuCount} SKUs", allResults.Count, skus.Count);
+            
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.A2AHandshakeDuration.Record(duration,
+                new KeyValuePair<string, object?>("a2a.target.agent", "ExternalVendor"));
+            
+            activity?.SetTag("a2a.response.status", "success");
+            activity?.SetTag("a2a.response.count", allResults.Count);
+            
+            return allResults;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "A2AClient bulk query failed for {Count} SKUs", skus.Count);
+            
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            activity?.SetTag("a2a.response.status", "error");
+            
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.A2AHandshakeDuration.Record(duration,
+                new KeyValuePair<string, object?>("a2a.target.agent", "ExternalVendor"));
+            
+            throw;
+        }
+    }
 }
 
 /// <summary>

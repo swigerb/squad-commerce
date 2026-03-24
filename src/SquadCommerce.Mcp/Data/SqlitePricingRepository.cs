@@ -121,4 +121,20 @@ public sealed class SqlitePricingRepository : IPricingRepository, IPricingReposi
             p.LastUpdated
         )).ToList();
     }
+
+    /// <summary>
+    /// Gets average pricing for multiple SKUs across all stores (bulk operation).
+    /// </summary>
+    public async Task<IReadOnlyDictionary<string, decimal>> GetBulkPricingAsync(IReadOnlyList<string> skus, CancellationToken cancellationToken = default)
+    {
+        var skuLower = skus.Select(s => s.ToLower()).ToList();
+        
+        var results = await _context.Pricing
+            .Where(p => skuLower.Contains(p.Sku.ToLower()))
+            .GroupBy(p => p.Sku)
+            .Select(g => new { Sku = g.Key, AvgPrice = g.Average(p => p.CurrentPrice) })
+            .ToListAsync(cancellationToken);
+
+        return results.ToDictionary(r => r.Sku, r => r.AvgPrice);
+    }
 }

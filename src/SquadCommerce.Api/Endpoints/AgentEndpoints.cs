@@ -25,6 +25,10 @@ public static class AgentEndpoints
         group.MapPost("/analyze", TriggerAnalysis)
             .WithName("TriggerAnalysis")
             .WithSummary("Trigger competitor price drop analysis scenario");
+
+        group.MapPost("/analyze/bulk", TriggerBulkAnalysis)
+            .WithName("TriggerBulkAnalysis")
+            .WithSummary("Trigger bulk competitor price drop analysis for multiple SKUs");
         
         return app;
     }
@@ -172,6 +176,114 @@ public static class AgentEndpoints
             StreamUrl = $"/api/agui?sessionId={sessionId}"
         });
     }
+
+    /// <summary>
+    /// Triggers bulk competitor price drop analysis for multiple SKUs.
+    /// </summary>
+    private static async Task<Results<Accepted<AnalysisResponse>, BadRequest<string>>> TriggerBulkAnalysis(
+        BulkAnalysisRequest request,
+        IAgUiStreamWriter streamWriter,
+        IServiceProvider serviceProvider,
+        SquadCommerceMetrics metrics,
+        ILogger<BulkAnalysisRequest> logger,
+        CancellationToken cancellationToken)
+    {
+        // Validate request
+        if (request.Items == null || request.Items.Count == 0)
+        {
+            return TypedResults.BadRequest("At least one SKU item is required.");
+        }
+
+        if (request.Items.Any(i => string.IsNullOrWhiteSpace(i.Sku)))
+        {
+            return TypedResults.BadRequest("All SKU items must have a valid SKU.");
+        }
+
+        if (request.Items.Any(i => i.CompetitorPrice <= 0))
+        {
+            return TypedResults.BadRequest("All competitor prices must be greater than zero.");
+        }
+
+        var sessionId = Guid.NewGuid().ToString();
+        logger.LogInformation("Starting bulk competitor price drop analysis: SessionId={SessionId}, Competitor={Competitor}, Items={ItemCount}, TraceId={TraceId}", 
+            sessionId, request.CompetitorName, request.Items.Count, Activity.Current?.TraceId.ToString());
+
+        // Orchestrate bulk analysis workflow in background
+        _ = Task.Run(async () =>
+        {
+            var stopwatch = Stopwatch.StartNew();
+            
+            try
+            {
+                using var scope = serviceProvider.CreateScope();
+                var orchestrator = scope.ServiceProvider.GetRequiredService<ChiefSoftwareArchitectAgent>();
+                
+                logger.LogInformation("Invoking ChiefSoftwareArchitectAgent for bulk analysis session {SessionId}", sessionId);
+                
+                await streamWriter.WriteStatusUpdateAsync(sessionId, $"ChiefSoftwareArchitect orchestrating bulk analysis for {request.Items.Count} SKUs...", cancellationToken);
+                
+                var items = request.Items.Select(i => (i.Sku, i.CompetitorPrice)).ToList();
+                var result = await orchestrator.ProcessBulkCompetitorPriceDropAsync(
+                    request.CompetitorName, 
+                    items, 
+                    cancellationToken);
+                
+                if (!result.Success)
+                {
+                    logger.LogError("Bulk orchestration failed for session {SessionId}: {ErrorMessage}", sessionId, result.ErrorMessage);
+                    await streamWriter.WriteStatusUpdateAsync(sessionId, $"Error: {result.ErrorMessage}", cancellationToken);
+                    await streamWriter.WriteTextDeltaAsync(sessionId, $"Bulk analysis failed: {result.ErrorMessage}", cancellationToken);
+                    await streamWriter.WriteDoneAsync(sessionId, cancellationToken);
+                    
+                    stopwatch.Stop();
+                    metrics.RecordAgentInvocation("ChiefSoftwareArchitect", stopwatch.Elapsed.TotalMilliseconds, false);
+                    return;
+                }
+                
+                // Stream A2UI payloads
+                foreach (var agentResult in result.AgentResults)
+                {
+                    if (agentResult.A2UIPayload != null)
+                    {
+                        await streamWriter.WriteA2UIPayloadAsync(sessionId, agentResult.A2UIPayload, cancellationToken);
+                        logger.LogInformation("Streamed A2UI payload for session {SessionId}", sessionId);
+                    }
+                }
+                
+                await streamWriter.WriteTextDeltaAsync(sessionId, result.ExecutiveSummary, cancellationToken);
+                await streamWriter.WriteDoneAsync(sessionId, cancellationToken);
+
+                stopwatch.Stop();
+                logger.LogInformation("Bulk analysis workflow completed: SessionId={SessionId}, Duration={DurationMs}ms", 
+                    sessionId, stopwatch.Elapsed.TotalMilliseconds);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error during bulk analysis workflow for session {SessionId}", sessionId);
+                
+                try
+                {
+                    await streamWriter.WriteStatusUpdateAsync(sessionId, $"Error: {ex.Message}", cancellationToken);
+                    await streamWriter.WriteTextDeltaAsync(sessionId, $"An unexpected error occurred: {ex.Message}", cancellationToken);
+                    await streamWriter.WriteDoneAsync(sessionId, cancellationToken);
+                }
+                catch
+                {
+                    // Best effort
+                }
+                
+                stopwatch.Stop();
+                metrics.RecordAgentInvocation("ChiefSoftwareArchitect", stopwatch.Elapsed.TotalMilliseconds, false);
+            }
+        }, cancellationToken);
+
+        return TypedResults.Accepted($"/api/agui?sessionId={sessionId}", new AnalysisResponse
+        {
+            SessionId = sessionId,
+            Message = $"Bulk analysis started for {request.Items.Count} SKUs. Connect to AG-UI stream to receive updates.",
+            StreamUrl = $"/api/agui?sessionId={sessionId}"
+        });
+    }
 }
 
 public sealed record AgentListResponse
@@ -201,6 +313,18 @@ public sealed record AnalysisRequest
     public required string Sku { get; init; }
     public string? CompetitorName { get; init; }
     public decimal? CompetitorPrice { get; init; }
+}
+
+public sealed record BulkAnalysisRequest
+{
+    public required string CompetitorName { get; init; }
+    public required IReadOnlyList<CompetitorSkuPrice> Items { get; init; }
+}
+
+public sealed record CompetitorSkuPrice
+{
+    public required string Sku { get; init; }
+    public required decimal CompetitorPrice { get; init; }
 }
 
 public sealed record AnalysisResponse

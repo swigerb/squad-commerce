@@ -145,6 +145,24 @@ public sealed class InMemoryInventoryRepository : IInventoryRepository
         return Task.FromResult<InventorySnapshot?>(snapshot);
     }
 
+    public Task<IReadOnlyList<InventorySnapshot>> GetBulkInventoryLevelsAsync(IReadOnlyList<string> skus, CancellationToken cancellationToken = default)
+    {
+        var results = _inventoryData.Values
+            .Where(i => skus.Any(sku => sku.Equals(i.Sku, StringComparison.OrdinalIgnoreCase)))
+            .Select(i => new InventorySnapshot
+            {
+                StoreId = i.StoreId,
+                Sku = i.Sku,
+                UnitsOnHand = i.QuantityOnHand,
+                ReorderPoint = i.ReorderThreshold,
+                UnitsOnOrder = 0,
+                LastUpdated = i.LastRestocked
+            })
+            .ToList();
+
+        return Task.FromResult<IReadOnlyList<InventorySnapshot>>(results);
+    }
+
     /// <summary>
     /// Gets store name by ID for enriching responses.
     /// </summary>

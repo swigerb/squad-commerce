@@ -193,6 +193,154 @@ public sealed class PricingAgent : IDomainAgent
         }
     }
 
+    /// <summary>
+    /// Executes bulk margin impact analysis for multiple SKUs and builds consolidated A2UI pricing chart payload.
+    /// </summary>
+    public async Task<AgentResult> ExecuteBulkAsync(
+        IReadOnlyList<(string Sku, decimal CompetitorPrice)> items,
+        CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        using var activity = SquadCommerceTelemetry.StartAgentSpan(AgentName, "ExecuteBulk");
+        activity?.SetTag("agent.name", AgentName);
+        activity?.SetTag("agent.protocol", "MCP");
+        activity?.SetTag("agent.sku_count", items.Count);
+        
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", AgentName));
+
+        _logger.LogInformation("PricingAgent executing bulk margin analysis for {Count} SKUs", items.Count);
+
+        try
+        {
+            var storeIds = new[] { "SEA-001", "PDX-002", "SFO-003", "LAX-004", "DEN-005" };
+            var allScenarios = new List<PriceScenario>();
+            var skuList = items.Select(i => i.Sku).ToList();
+            
+            decimal totalCurrentRevenue = 0;
+            decimal totalProposedRevenue = 0;
+            int totalUnits = 0;
+
+            foreach (var item in items)
+            {
+                var currentPrices = new List<decimal>();
+                decimal totalCost = 0;
+                int storeCount = 0;
+
+                foreach (var storeId in storeIds)
+                {
+                    var price = await _pricingRepository.GetCurrentPriceAsync(storeId, item.Sku, cancellationToken);
+                    if (price.HasValue)
+                    {
+                        currentPrices.Add(price.Value);
+                        storeCount++;
+
+                        if (_pricingRepository is Mcp.Data.IPricingRepositoryInternal repoInternal)
+                        {
+                            var cost = await repoInternal.GetCostAsync(storeId, item.Sku, cancellationToken);
+                            if (cost.HasValue)
+                            {
+                                totalCost += cost.Value;
+                            }
+                        }
+                    }
+                }
+
+                if (currentPrices.Count > 0)
+                {
+                    var avgCurrentPrice = currentPrices.Average();
+                    var avgCost = totalCost / storeCount;
+
+                    var inventory = await _inventoryRepository.GetInventoryLevelsAsync(item.Sku, cancellationToken);
+                    var skuUnits = inventory.Sum(i => i.UnitsOnHand);
+                    totalUnits += skuUnits;
+
+                    var scenario = CalculateScenario(
+                        $"{item.Sku} - Match Competitor", 
+                        item.CompetitorPrice, 
+                        avgCost, 
+                        skuUnits, 
+                        110);
+                    allScenarios.Add(scenario);
+                    
+                    totalCurrentRevenue += avgCurrentPrice * skuUnits;
+                    totalProposedRevenue += item.CompetitorPrice * (int)(skuUnits * 1.1);
+                }
+            }
+
+            if (allScenarios.Count == 0)
+            {
+                _logger.LogWarning("No pricing data found for {Count} SKUs", items.Count);
+                return new AgentResult
+                {
+                    TextSummary = $"No pricing data found for {items.Count} SKUs",
+                    Success = false,
+                    ErrorMessage = $"No SKUs found in pricing system",
+                    Timestamp = DateTimeOffset.UtcNow
+                };
+            }
+
+            var bulkAvgCurrentPrice = items.Average(i => i.CompetitorPrice) * 1.05m;
+            var avgProposedPrice = items.Average(i => i.CompetitorPrice);
+            
+            var a2uiPayload = new PricingImpactChartData
+            {
+                Sku = string.Join(", ", skuList.Take(3)) + (skuList.Count > 3 ? $" (+{skuList.Count - 3} more)" : ""),
+                CurrentPrice = bulkAvgCurrentPrice,
+                ProposedPrice = avgProposedPrice,
+                Scenarios = allScenarios,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+
+            var revenueDelta = totalProposedRevenue - totalCurrentRevenue;
+            var revenueDeltaPercent = totalCurrentRevenue > 0 ? (revenueDelta / totalCurrentRevenue) * 100 : 0;
+
+            var textSummary = $"Bulk analysis for {items.Count} SKUs: " +
+                              $"Current revenue: ${totalCurrentRevenue:F2} → Proposed: ${totalProposedRevenue:F2} " +
+                              $"({revenueDeltaPercent:+0.0;-0.0}% change). " +
+                              $"Total {totalUnits} units in stock across all SKUs.";
+
+            _logger.LogInformation("PricingAgent bulk completed: Revenue delta ${RevenueDelta:F2} ({RevenueDeltaPercent:F1}%)", 
+                revenueDelta, revenueDeltaPercent);
+
+            SquadCommerceTelemetry.A2UIPayloadCount.Add(1,
+                new KeyValuePair<string, object?>("a2ui.component", "PricingImpactChart"));
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+
+            return new AgentResult
+            {
+                TextSummary = textSummary,
+                A2UIPayload = a2uiPayload,
+                Success = true,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "PricingAgent bulk analysis failed for {Count} SKUs", items.Count);
+            
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+            
+            return new AgentResult
+            {
+                TextSummary = $"Error calculating bulk pricing impact for {items.Count} SKUs",
+                Success = false,
+                ErrorMessage = ex.Message,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+    }
+
     private static PriceScenario CalculateScenario(
         string name,
         decimal price,

@@ -191,6 +191,139 @@ public sealed class MarketIntelAgent : IDomainAgent
         }
     }
 
+    /// <summary>
+    /// Executes bulk A2A competitor pricing query with validation and builds consolidated A2UI comparison grid.
+    /// </summary>
+    public async Task<AgentResult> ExecuteBulkAsync(
+        IReadOnlyList<(string Sku, decimal OurPrice)> items,
+        CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        using var activity = SquadCommerceTelemetry.StartAgentSpan(AgentName, "ExecuteBulk");
+        activity?.SetTag("agent.name", AgentName);
+        activity?.SetTag("agent.protocol", "A2A");
+        activity?.SetTag("agent.sku_count", items.Count);
+        
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", AgentName));
+
+        _logger.LogInformation("MarketIntelAgent executing bulk A2A query for {Count} SKUs", items.Count);
+
+        try
+        {
+            var skuList = items.Select(i => i.Sku).ToList();
+            var competitorPrices = await _a2aClient.GetBulkCompetitorPricingAsync(skuList, cancellationToken);
+
+            if (competitorPrices.Count == 0)
+            {
+                _logger.LogWarning("No competitor pricing data retrieved for {Count} SKUs", items.Count);
+                return new AgentResult
+                {
+                    TextSummary = $"No competitor pricing available for {items.Count} SKUs",
+                    Success = false,
+                    ErrorMessage = "Bulk A2A query returned no results",
+                    Timestamp = DateTimeOffset.UtcNow
+                };
+            }
+
+            _logger.LogInformation("Retrieved {Count} total competitor prices for {SkuCount} SKUs", competitorPrices.Count, items.Count);
+
+            var validationResults = await _validator.ValidatePricingBatchAsync(competitorPrices, cancellationToken);
+
+            var validatedPrices = competitorPrices
+                .Zip(validationResults, (price, validation) => new { Price = price, Validation = validation })
+                .Where(x => x.Validation.ConfidenceLevel is "High" or "Medium")
+                .Select(x => x.Price)
+                .ToList();
+
+            if (validatedPrices.Count == 0)
+            {
+                _logger.LogWarning("All competitor prices failed validation for {Count} SKUs", items.Count);
+                return new AgentResult
+                {
+                    TextSummary = $"Competitor prices for {items.Count} SKUs could not be verified",
+                    Success = false,
+                    ErrorMessage = "No high-confidence competitor pricing data available after validation",
+                    Timestamp = DateTimeOffset.UtcNow
+                };
+            }
+
+            _logger.LogInformation("Validation complete: {Validated} of {Total} prices passed validation",
+                validatedPrices.Count, competitorPrices.Count);
+
+            var competitorPriceData = validatedPrices
+                .GroupBy(p => p.CompetitorName)
+                .Select(g => new CompetitorPrice
+                {
+                    CompetitorName = g.Key,
+                    Price = g.Average(p => p.Price),
+                    Source = g.First().Source,
+                    Verified = true,
+                    LastUpdated = g.Max(p => p.LastUpdated)
+                }).ToList();
+
+            var avgOurPrice = items.Average(i => i.OurPrice);
+
+            var a2uiPayload = new MarketComparisonGridData
+            {
+                Sku = string.Join(", ", skuList.Take(3)) + (skuList.Count > 3 ? $" (+{skuList.Count - 3} more)" : ""),
+                ProductName = $"Bulk Analysis ({items.Count} products)",
+                Competitors = competitorPriceData,
+                OurPrice = avgOurPrice,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+
+            var lowestCompetitorPrice = validatedPrices.Min(p => p.Price);
+            var avgCompetitorPrice = validatedPrices.Average(p => p.Price);
+            var priceDelta = avgOurPrice - lowestCompetitorPrice;
+            var priceDeltaPercent = (priceDelta / avgOurPrice) * 100;
+
+            var textSummary = $"Bulk analysis for {items.Count} SKUs: {validatedPrices.Count} verified competitor prices. " +
+                              $"Lowest: ${lowestCompetitorPrice:F2}, Avg: ${avgCompetitorPrice:F2}, " +
+                              $"Our avg price: ${avgOurPrice:F2} ({(priceDelta > 0 ? "+" : "")}{priceDeltaPercent:F1}% vs lowest). " +
+                              $"All prices validated via A2A protocol with ExternalDataValidator.";
+
+            _logger.LogInformation("MarketIntelAgent bulk completed: Lowest ${Lowest:F2}, Avg ${Avg:F2}, OurAvg ${Our:F2}",
+                lowestCompetitorPrice, avgCompetitorPrice, avgOurPrice);
+
+            SquadCommerceTelemetry.A2UIPayloadCount.Add(1,
+                new KeyValuePair<string, object?>("a2ui.component", "MarketComparisonGrid"));
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+
+            return new AgentResult
+            {
+                TextSummary = textSummary,
+                A2UIPayload = a2uiPayload,
+                Success = true,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "MarketIntelAgent bulk query failed for {Count} SKUs", items.Count);
+            
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+            
+            return new AgentResult
+            {
+                TextSummary = $"Error retrieving bulk competitor pricing for {items.Count} SKUs",
+                Success = false,
+                ErrorMessage = ex.Message,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+    }
+
     private static string GetProductName(string sku) => sku switch
     {
         "SKU-1001" => "Wireless Mouse",

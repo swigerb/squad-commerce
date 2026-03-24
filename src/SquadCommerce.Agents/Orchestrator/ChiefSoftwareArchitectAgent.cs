@@ -272,6 +272,225 @@ public sealed class ChiefSoftwareArchitectAgent
         }
     }
 
+    /// <summary>
+    /// Orchestrates a bulk competitor price response workflow for multiple SKUs.
+    /// </summary>
+    public async Task<OrchestratorResult> ProcessBulkCompetitorPriceDropAsync(
+        string competitorName,
+        IReadOnlyList<(string Sku, decimal CompetitorPrice)> items,
+        CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+        var sessionId = $"session-{Guid.NewGuid():N}";
+        
+        using var activity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "OrchestrateBulk");
+        activity?.SetTag("agent.name", "ChiefSoftwareArchitect");
+        activity?.SetTag("agent.protocol", "AGUI");
+        activity?.SetTag("agent.sku_count", items.Count);
+        activity?.SetTag("agent.competitor", competitorName);
+        activity?.SetTag("agent.session_id", sessionId);
+        
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+        _logger.LogInformation(
+            "Orchestrator starting bulk competitor price response workflow: Competitor {Competitor}, Items {ItemCount}, SessionId {SessionId}",
+            competitorName,
+            items.Count,
+            sessionId);
+
+        var results = new List<AgentResult>();
+        var pipelineStages = new List<PipelineStage>();
+
+        var skuList = items.Select(i => i.Sku).ToArray();
+        await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Initiated bulk competitor price response workflow", 
+            "AGUI", startTime, TimeSpan.Zero, "Success", 
+            $"Bulk request from {competitorName} for {items.Count} SKUs", 
+            activity?.TraceId.ToString(), skuList, null, null, cancellationToken);
+
+        try
+        {
+            // Step 1: Validate competitor claims via A2A (MarketIntelAgent)
+            _logger.LogInformation("Step 1: Delegating to MarketIntelAgent for bulk competitor validation");
+            
+            var stage1Start = DateTimeOffset.UtcNow;
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 1,
+                AgentName = "MarketIntelAgent",
+                StageName = "Bulk Market Intelligence",
+                Status = "Running",
+                Protocol = "A2A",
+                StartedAt = stage1Start
+            });
+
+            var marketIntelItems = items.Select(i => (i.Sku, i.CompetitorPrice)).ToList();
+            var marketIntelResult = await _marketIntelAgent.ExecuteBulkAsync(marketIntelItems, cancellationToken);
+            results.Add(marketIntelResult);
+
+            var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
+            await RecordAuditEntryAsync(sessionId, "MarketIntelAgent", "Queried bulk competitor pricing via A2A",
+                "A2A", stage1Start, stage1Duration, marketIntelResult.Success ? "Success" : "Failed",
+                marketIntelResult.TextSummary, activity?.TraceId.ToString(), skuList, null, null, cancellationToken);
+
+            pipelineStages[0] = pipelineStages[0] with
+            {
+                Status = marketIntelResult.Success ? "Completed" : "Failed",
+                Duration = stage1Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = marketIntelResult.A2UIPayload != null ? new[] { "MarketComparisonGrid" } : null,
+                ErrorMessage = marketIntelResult.ErrorMessage
+            };
+
+            if (!marketIntelResult.Success)
+            {
+                _logger.LogWarning("MarketIntelAgent failed - aborting bulk workflow");
+                return await BuildFailureResultAsync(sessionId, results, pipelineStages, "Failed to validate bulk competitor pricing", startTime, cancellationToken);
+            }
+
+            // Step 2: Get bulk inventory snapshot (InventoryAgent)
+            _logger.LogInformation("Step 2: Delegating to InventoryAgent for bulk inventory snapshot");
+            
+            var stage2Start = DateTimeOffset.UtcNow;
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 2,
+                AgentName = "InventoryAgent",
+                StageName = "Bulk Inventory Analysis",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage2Start,
+                ToolsUsed = new[] { "GetInventoryLevels" }
+            });
+
+            var inventoryResult = await _inventoryAgent.ExecuteBulkAsync(skuList, cancellationToken);
+            results.Add(inventoryResult);
+
+            var stage2Duration = DateTimeOffset.UtcNow - stage2Start;
+            await RecordAuditEntryAsync(sessionId, "InventoryAgent", "Retrieved bulk inventory snapshot",
+                "MCP", stage2Start, stage2Duration, inventoryResult.Success ? "Success" : "Warning",
+                inventoryResult.TextSummary, activity?.TraceId.ToString(), skuList, 
+                new[] { "SEA-001", "PDX-002", "SFO-003", "LAX-004", "DEN-005" }, null, cancellationToken);
+
+            pipelineStages[1] = pipelineStages[1] with
+            {
+                Status = inventoryResult.Success ? "Completed" : "Failed",
+                Duration = stage2Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = inventoryResult.A2UIPayload != null ? new[] { "RetailStockHeatmap" } : null,
+                ErrorMessage = inventoryResult.ErrorMessage
+            };
+
+            if (!inventoryResult.Success)
+            {
+                _logger.LogWarning("InventoryAgent failed - continuing with limited data");
+            }
+
+            // Step 3: Calculate bulk margin impact (PricingAgent)
+            _logger.LogInformation("Step 3: Delegating to PricingAgent for bulk margin impact analysis");
+            
+            var stage3Start = DateTimeOffset.UtcNow;
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 3,
+                AgentName = "PricingAgent",
+                StageName = "Bulk Pricing Calculation",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage3Start,
+                ToolsUsed = new[] { "GetInventoryLevels" }
+            });
+
+            var pricingResult = await _pricingAgent.ExecuteBulkAsync(items, cancellationToken);
+            results.Add(pricingResult);
+
+            var stage3Duration = DateTimeOffset.UtcNow - stage3Start;
+            await RecordAuditEntryAsync(sessionId, "PricingAgent", "Calculated bulk margin impact scenarios",
+                "MCP", stage3Start, stage3Duration, pricingResult.Success ? "Success" : "Failed",
+                pricingResult.TextSummary, activity?.TraceId.ToString(), skuList, null, null, cancellationToken);
+
+            pipelineStages[2] = pipelineStages[2] with
+            {
+                Status = pricingResult.Success ? "Completed" : "Failed",
+                Duration = stage3Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = pricingResult.A2UIPayload != null ? new[] { "PricingImpactChart" } : null,
+                ErrorMessage = pricingResult.ErrorMessage
+            };
+
+            if (!pricingResult.Success)
+            {
+                _logger.LogWarning("PricingAgent failed - aborting bulk workflow");
+                return await BuildFailureResultAsync(sessionId, results, pipelineStages, "Failed to calculate bulk pricing impact", startTime, cancellationToken);
+            }
+
+            // Step 4: Synthesize final response
+            _logger.LogInformation("Step 4: Synthesizing bulk orchestrator response");
+            
+            using var synthesizeActivity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "Synthesize");
+            synthesizeActivity?.SetTag("agent.result_count", results.Count);
+            
+            var synthesizeStart = DateTimeOffset.UtcNow;
+            var executiveSummary = BuildBulkExecutiveSummary(competitorName, items, results);
+            var synthesizeDuration = DateTimeOffset.UtcNow - synthesizeStart;
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Synthesized bulk orchestrator response",
+                "AGUI", synthesizeStart, synthesizeDuration, "Success",
+                $"Generated bulk executive summary with {results.Count} A2UI payloads for {items.Count} SKUs", 
+                activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            var duration = DateTimeOffset.UtcNow - startTime;
+            
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration.TotalMilliseconds,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+            
+            _logger.LogInformation(
+                "Orchestrator bulk workflow completed successfully in {Duration}ms",
+                duration.TotalMilliseconds);
+
+            var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+            var pipelineData = new AgentPipelineData
+            {
+                SessionId = sessionId,
+                WorkflowName = "BulkCompetitorPriceDropWorkflow",
+                Stages = pipelineStages,
+                OverallStatus = "Completed",
+                TotalDuration = duration,
+                StartedAt = startTime,
+                CompletedAt = DateTimeOffset.UtcNow
+            };
+
+            return new OrchestratorResult
+            {
+                Success = true,
+                ExecutiveSummary = executiveSummary,
+                AgentResults = results,
+                AuditTrailData = auditTrailData,
+                PipelineData = pipelineData,
+                Timestamp = DateTimeOffset.UtcNow,
+                WorkflowDuration = duration
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Orchestrator bulk workflow failed");
+            
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Bulk workflow execution failed",
+                "AGUI", DateTimeOffset.UtcNow, TimeSpan.Zero, "Failed",
+                ex.Message, activity?.TraceId.ToString(), null, null, null, cancellationToken);
+            
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+            
+            return await BuildFailureResultAsync(sessionId, results, pipelineStages, $"Bulk orchestration error: {ex.Message}", startTime, cancellationToken);
+        }
+    }
+
     private static string BuildExecutiveSummary(string sku, decimal competitorPrice, List<AgentResult> results)
     {
         var summary = $"## Competitor Price Response Analysis for {sku}\n\n";
@@ -285,6 +504,26 @@ public sealed class ChiefSoftwareArchitectAgent
 
         summary += "**Recommendation:** Review the pricing impact scenarios above and select the optimal strategy. " +
                    "All competitor data has been validated via A2A protocol and cross-referenced against internal benchmarks.";
+
+        return summary;
+    }
+
+    private static string BuildBulkExecutiveSummary(string competitorName, IReadOnlyList<(string Sku, decimal CompetitorPrice)> items, List<AgentResult> results)
+    {
+        var summary = $"## Bulk Competitor Price Response Analysis\n\n";
+        summary += $"**Competitor:** {competitorName}\n";
+        summary += $"**SKUs Analyzed:** {items.Count}\n";
+        summary += $"**Average Competitor Price:** ${items.Average(i => i.CompetitorPrice):F2}\n\n";
+
+        foreach (var result in results)
+        {
+            summary += $"### {result.GetType().Name}\n";
+            summary += $"{result.TextSummary}\n\n";
+        }
+
+        summary += $"**Recommendation:** Review the consolidated pricing impact scenarios above. " +
+                   $"This bulk analysis covers {items.Count} SKUs with total projected revenue impact across all stores. " +
+                   $"All competitor data has been validated via A2A protocol and cross-referenced against internal benchmarks.";
 
         return summary;
     }

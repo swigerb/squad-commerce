@@ -80,4 +80,26 @@ public sealed class SqliteInventoryRepository : IInventoryRepository
 
         return entity ?? sku;
     }
+
+    /// <summary>
+    /// Gets inventory levels for multiple SKUs across all stores (bulk operation).
+    /// </summary>
+    public async Task<IReadOnlyList<InventorySnapshot>> GetBulkInventoryLevelsAsync(IReadOnlyList<string> skus, CancellationToken cancellationToken = default)
+    {
+        var skuLower = skus.Select(s => s.ToLower()).ToList();
+        
+        var query = _context.Inventory
+            .Where(i => skuLower.Contains(i.Sku.ToLower()))
+            .Select(i => new InventorySnapshot
+            {
+                StoreId = i.StoreId,
+                Sku = i.Sku,
+                UnitsOnHand = i.QuantityOnHand,
+                ReorderPoint = i.ReorderThreshold,
+                UnitsOnOrder = 0,
+                LastUpdated = i.LastRestocked
+            });
+
+        return await query.ToListAsync(cancellationToken);
+    }
 }

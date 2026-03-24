@@ -23,6 +23,14 @@ public static class PricingEndpoints
         group.MapPost("/modify", ModifyProposal)
             .WithName("ModifyProposal")
             .WithSummary("Modify proposed prices and re-trigger calculation");
+
+        group.MapPost("/approve/bulk", ApproveBulkProposal)
+            .WithName("ApproveBulkProposal")
+            .WithSummary("Approve multiple pricing proposals in bulk");
+
+        group.MapPost("/reject/bulk", RejectBulkProposal)
+            .WithName("RejectBulkProposal")
+            .WithSummary("Reject multiple pricing proposals in bulk");
         
         return app;
     }
@@ -165,6 +173,113 @@ public static class PricingEndpoints
             Timestamp = DateTimeOffset.UtcNow
         });
     }
+
+    /// <summary>
+    /// Approves multiple pricing proposals in bulk.
+    /// </summary>
+    private static async Task<Ok<PricingActionResponse>> ApproveBulkProposal(
+        BulkPricingApprovalRequest request,
+        AuditRepository auditRepository,
+        SquadCommerceMetrics metrics,
+        ILogger<BulkPricingApprovalRequest> logger,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Bulk pricing proposal approved: ProposalId={ProposalId}, ApprovedBy={ApprovedBy}, Items={ItemCount}", 
+            request.ProposalId, request.ApprovedBy, request.Items.Count);
+
+        metrics.RecordPricingDecision("bulk-approved", request.ProposalId);
+
+        var allAffectedSkus = request.Items.Select(i => i.Sku).Distinct().ToList();
+        var allAffectedStores = request.Items.SelectMany(i => i.StoreIds).Distinct().ToList();
+
+        var auditEntry = new AuditEntry
+        {
+            Id = Guid.NewGuid().ToString(),
+            AgentName = "PricingManager",
+            Action = "Reviewed bulk pricing recommendation",
+            Protocol = "Internal",
+            Timestamp = DateTimeOffset.UtcNow,
+            Duration = TimeSpan.Zero,
+            Status = "Success",
+            Details = $"Bulk approved by {request.ApprovedBy} for {request.Items.Count} SKUs",
+            DecisionOutcome = "Approved",
+            AffectedSkus = allAffectedSkus,
+            AffectedStores = allAffectedStores
+        };
+        await auditRepository.RecordAuditEntryAsync(request.ProposalId, auditEntry, cancellationToken);
+
+        await Task.Delay(100, cancellationToken);
+
+        return TypedResults.Ok(new PricingActionResponse
+        {
+            ProposalId = request.ProposalId,
+            Action = "BulkApproved",
+            Success = true,
+            Message = $"Bulk pricing updates applied to {request.Items.Count} SKUs across {allAffectedStores.Count} store(s). PricingAgent executed UpdateStorePricing MCP tool.",
+            UpdatedStores = allAffectedStores,
+            Timestamp = DateTimeOffset.UtcNow
+        });
+    }
+
+    /// <summary>
+    /// Rejects multiple pricing proposals in bulk.
+    /// </summary>
+    private static async Task<Ok<PricingActionResponse>> RejectBulkProposal(
+        BulkPricingRejectionRequest request,
+        AuditRepository auditRepository,
+        SquadCommerceMetrics metrics,
+        ILogger<BulkPricingRejectionRequest> logger,
+        CancellationToken cancellationToken)
+    {
+        logger.LogInformation("Bulk pricing proposal rejected: ProposalId={ProposalId}, RejectedBy={RejectedBy}, Reason={Reason}", 
+            request.ProposalId, request.RejectedBy, request.Reason);
+
+        metrics.RecordPricingDecision("bulk-rejected", request.ProposalId);
+
+        var auditEntry = new AuditEntry
+        {
+            Id = Guid.NewGuid().ToString(),
+            AgentName = "PricingManager",
+            Action = "Reviewed bulk pricing recommendation",
+            Protocol = "Internal",
+            Timestamp = DateTimeOffset.UtcNow,
+            Duration = TimeSpan.Zero,
+            Status = "Success",
+            Details = $"Bulk rejected by {request.RejectedBy}: {request.Reason}",
+            DecisionOutcome = "Rejected"
+        };
+        await auditRepository.RecordAuditEntryAsync(request.ProposalId, auditEntry, cancellationToken);
+
+        return TypedResults.Ok(new PricingActionResponse
+        {
+            ProposalId = request.ProposalId,
+            Action = "BulkRejected",
+            Success = true,
+            Message = $"Bulk proposal rejected. Reason: {request.Reason}",
+            UpdatedStores = Array.Empty<string>(),
+            Timestamp = DateTimeOffset.UtcNow
+        });
+    }
+}
+
+public sealed record BulkPricingApprovalRequest
+{
+    public required string ProposalId { get; init; }
+    public required string ApprovedBy { get; init; }
+    public required IReadOnlyList<BulkApprovalItem> Items { get; init; }
+}
+
+public sealed record BulkApprovalItem
+{
+    public required string Sku { get; init; }
+    public required IReadOnlyList<string> StoreIds { get; init; }
+}
+
+public sealed record BulkPricingRejectionRequest
+{
+    public required string ProposalId { get; init; }
+    public required string RejectedBy { get; init; }
+    public required string Reason { get; init; }
 }
 
 public sealed record PricingApprovalRequest

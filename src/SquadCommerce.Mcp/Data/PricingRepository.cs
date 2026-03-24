@@ -179,4 +179,14 @@ public sealed class InMemoryPricingRepository : IPricingRepository, IPricingRepo
             .ToList();
         return Task.FromResult<IReadOnlyList<StorePricing>>(results);
     }
+
+    public Task<IReadOnlyDictionary<string, decimal>> GetBulkPricingAsync(IReadOnlyList<string> skus, CancellationToken cancellationToken = default)
+    {
+        var results = _pricingData.Values
+            .Where(p => skus.Any(sku => sku.Equals(p.Sku, StringComparison.OrdinalIgnoreCase)))
+            .GroupBy(p => p.Sku)
+            .ToDictionary(g => g.Key, g => g.Average(p => p.CurrentPrice));
+
+        return Task.FromResult<IReadOnlyDictionary<string, decimal>>(results);
+    }
 }
