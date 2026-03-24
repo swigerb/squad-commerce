@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Contracts.Models;
+using SquadCommerce.Observability;
 
 namespace SquadCommerce.Mcp.Tools;
 
@@ -48,6 +50,20 @@ public sealed class UpdateStorePricingTool
     /// <returns>Success/failure result with updated pricing info</returns>
     public async Task<object> ExecuteAsync(string storeId, string sku, decimal newPrice, CancellationToken cancellationToken = default)
     {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        // Create MCP tool span
+        var parameters = new { storeId, sku, newPrice };
+        using var activity = SquadCommerceTelemetry.StartToolSpan(Name, parameters);
+        activity?.SetTag("mcp.tool.name", Name);
+        activity?.SetTag("mcp.store_id", storeId);
+        activity?.SetTag("mcp.sku", sku);
+        activity?.SetTag("mcp.new_price", newPrice);
+        
+        // Record tool call count
+        SquadCommerceTelemetry.McpToolCallCount.Add(1,
+            new KeyValuePair<string, object?>("mcp.tool.name", Name));
+
         try
         {
             _logger.LogInformation(
@@ -60,18 +76,36 @@ public sealed class UpdateStorePricingTool
             if (string.IsNullOrWhiteSpace(storeId))
             {
                 _logger.LogWarning("UpdateStorePricing called without storeId");
+                
+                // Record duration
+                var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+                SquadCommerceTelemetry.McpToolCallDuration.Record(duration,
+                    new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                
                 return new { Success = false, Error = "storeId is required" };
             }
 
             if (string.IsNullOrWhiteSpace(sku))
             {
                 _logger.LogWarning("UpdateStorePricing called without sku");
+                
+                // Record duration
+                var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+                SquadCommerceTelemetry.McpToolCallDuration.Record(duration,
+                    new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                
                 return new { Success = false, Error = "sku is required" };
             }
 
             if (newPrice <= 0)
             {
                 _logger.LogWarning("UpdateStorePricing called with invalid price: {NewPrice}", newPrice);
+                
+                // Record duration
+                var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+                SquadCommerceTelemetry.McpToolCallDuration.Record(duration,
+                    new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                
                 return new { Success = false, Error = "newPrice must be greater than zero" };
             }
 
@@ -127,6 +161,11 @@ public sealed class UpdateStorePricingTool
                 currentPrice.Value,
                 updatedPrice);
 
+            // Record duration
+            var successDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.McpToolCallDuration.Record(successDuration,
+                new KeyValuePair<string, object?>("mcp.tool.name", Name));
+
             return new
             {
                 Success = true,
@@ -142,6 +181,17 @@ public sealed class UpdateStorePricingTool
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing UpdateStorePricing");
+            
+            // Set error status on span
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            
+            // Record duration even on error
+            var errorDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.McpToolCallDuration.Record(errorDuration,
+                new KeyValuePair<string, object?>("mcp.tool.name", Name));
+            
             return new
             {
                 Success = false,

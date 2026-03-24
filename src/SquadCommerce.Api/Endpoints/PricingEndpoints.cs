@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using SquadCommerce.Observability;
 
 namespace SquadCommerce.Api.Endpoints;
 
@@ -29,11 +30,15 @@ public static class PricingEndpoints
     /// </summary>
     private static async Task<Ok<PricingActionResponse>> ApproveProposal(
         PricingApprovalRequest request,
+        SquadCommerceMetrics metrics,
         ILogger<PricingApprovalRequest> logger,
         CancellationToken cancellationToken)
     {
         logger.LogInformation("Pricing proposal approved: ProposalId={ProposalId}, ApprovedBy={ApprovedBy}", 
             request.ProposalId, request.ApprovedBy);
+
+        // Record pricing decision metric
+        metrics.RecordPricingDecision("approved", request.ProposalId);
 
         // Mock implementation - will invoke PricingAgent.UpdateStorePricing via MCP
         await Task.Delay(100, cancellationToken);
@@ -54,10 +59,14 @@ public static class PricingEndpoints
     /// </summary>
     private static Ok<PricingActionResponse> RejectProposal(
         PricingRejectionRequest request,
+        SquadCommerceMetrics metrics,
         ILogger<PricingRejectionRequest> logger)
     {
         logger.LogInformation("Pricing proposal rejected: ProposalId={ProposalId}, RejectedBy={RejectedBy}, Reason={Reason}", 
             request.ProposalId, request.RejectedBy, request.Reason);
+
+        // Record pricing decision metric
+        metrics.RecordPricingDecision("rejected", request.ProposalId);
 
         return TypedResults.Ok(new PricingActionResponse
         {
@@ -75,11 +84,15 @@ public static class PricingEndpoints
     /// </summary>
     private static async Task<Accepted<PricingActionResponse>> ModifyProposal(
         PricingModificationRequest request,
+        SquadCommerceMetrics metrics,
         ILogger<PricingModificationRequest> logger,
         CancellationToken cancellationToken)
     {
         logger.LogInformation("Pricing proposal modified: ProposalId={ProposalId}, ModifiedBy={ModifiedBy}, ModifiedPrices={Count}", 
             request.ProposalId, request.ModifiedBy, request.ModifiedPrices.Count);
+
+        // Record pricing decision metric
+        metrics.RecordPricingDecision("modified", request.ProposalId);
 
         // Mock implementation - will re-invoke PricingAgent with new prices
         await Task.Delay(100, cancellationToken);

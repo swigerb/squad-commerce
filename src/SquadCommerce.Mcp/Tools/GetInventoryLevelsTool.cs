@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.Contracts.Interfaces;
+using SquadCommerce.Observability;
 
 namespace SquadCommerce.Mcp.Tools;
 
@@ -46,6 +48,17 @@ public sealed class GetInventoryLevelsTool
     /// <returns>JSON-serializable inventory data with structured errors on failure</returns>
     public async Task<object> ExecuteAsync(string? sku = null, string? storeId = null, CancellationToken cancellationToken = default)
     {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        // Create MCP tool span
+        var parameters = new { sku, storeId };
+        using var activity = SquadCommerceTelemetry.StartToolSpan(Name, parameters);
+        activity?.SetTag("mcp.tool.name", Name);
+        
+        // Record tool call count
+        SquadCommerceTelemetry.McpToolCallCount.Add(1,
+            new KeyValuePair<string, object?>("mcp.tool.name", Name));
+
         try
         {
             _logger.LogInformation(
@@ -61,6 +74,14 @@ public sealed class GetInventoryLevelsTool
                 if (levels.Count == 0)
                 {
                     _logger.LogWarning("No inventory found for SKU {Sku}", sku);
+                    
+                    // Record duration
+                    var emptyDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+                    SquadCommerceTelemetry.McpToolCallDuration.Record(emptyDuration,
+                        new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                    
+                    activity?.SetTag("mcp.result.count", 0);
+                    
                     return new
                     {
                         Success = true,
@@ -71,6 +92,14 @@ public sealed class GetInventoryLevelsTool
                 }
 
                 _logger.LogInformation("Found {Count} inventory records for SKU {Sku}", levels.Count, sku);
+                
+                // Record duration
+                var skuDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+                SquadCommerceTelemetry.McpToolCallDuration.Record(skuDuration,
+                    new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                
+                activity?.SetTag("mcp.result.count", levels.Count);
+                
                 return new
                 {
                     Success = true,
@@ -119,6 +148,14 @@ public sealed class GetInventoryLevelsTool
                 if (storeInventory.Count == 0)
                 {
                     _logger.LogWarning("No inventory found for StoreId {StoreId}", storeId);
+                    
+                    // Record duration
+                    var storeDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+                    SquadCommerceTelemetry.McpToolCallDuration.Record(storeDuration,
+                        new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                    
+                    activity?.SetTag("mcp.result.count", 0);
+                    
                     return new
                     {
                         Success = true,
@@ -129,6 +166,14 @@ public sealed class GetInventoryLevelsTool
                 }
 
                 _logger.LogInformation("Found {Count} inventory records for StoreId {StoreId}", storeInventory.Count, storeId);
+                
+                // Record duration
+                var storeFoundDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+                SquadCommerceTelemetry.McpToolCallDuration.Record(storeFoundDuration,
+                    new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                
+                activity?.SetTag("mcp.result.count", storeInventory.Count);
+                
                 return new
                 {
                     Success = true,
@@ -140,6 +185,12 @@ public sealed class GetInventoryLevelsTool
 
             // No filters - this would be expensive in production, but OK for demo
             _logger.LogWarning("GetInventoryLevels called without filters - returning limited results");
+            
+            // Record duration
+            var noFilterDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.McpToolCallDuration.Record(noFilterDuration,
+                new KeyValuePair<string, object?>("mcp.tool.name", Name));
+            
             return new
             {
                 Success = false,
@@ -150,6 +201,17 @@ public sealed class GetInventoryLevelsTool
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error executing GetInventoryLevels");
+            
+            // Set error status on span
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            
+            // Record duration even on error
+            var errorDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.McpToolCallDuration.Record(errorDuration,
+                new KeyValuePair<string, object?>("mcp.tool.name", Name));
+            
             return new
             {
                 Success = false,

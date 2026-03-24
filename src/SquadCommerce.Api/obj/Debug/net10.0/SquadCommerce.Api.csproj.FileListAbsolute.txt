@@ -55,3 +55,9 @@ C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Api\obj\Debug\net1
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Api\obj\Debug\net10.0\SquadCommerce.Api.pdb
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Api\obj\Debug\net10.0\SquadCommerce.Api.genruntimeconfig.cache
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Api\obj\Debug\net10.0\ref\SquadCommerce.Api.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Api\bin\Debug\net10.0\SquadCommerce.A2A.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Api\bin\Debug\net10.0\SquadCommerce.Agents.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Api\bin\Debug\net10.0\SquadCommerce.Mcp.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Api\bin\Debug\net10.0\SquadCommerce.Agents.pdb
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Api\bin\Debug\net10.0\SquadCommerce.Mcp.pdb
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Api\bin\Debug\net10.0\SquadCommerce.A2A.pdb

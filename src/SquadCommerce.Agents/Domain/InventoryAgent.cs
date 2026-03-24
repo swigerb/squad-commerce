@@ -1,6 +1,8 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.Contracts.A2UI;
 using SquadCommerce.Contracts.Interfaces;
+using SquadCommerce.Observability;
 
 namespace SquadCommerce.Agents.Domain;
 
@@ -37,6 +39,18 @@ public sealed class InventoryAgent : IDomainAgent
     /// <returns>Agent result with RetailStockHeatmap A2UI payload</returns>
     public async Task<AgentResult> ExecuteAsync(string sku, CancellationToken cancellationToken = default)
     {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        // Create agent invocation span
+        using var activity = SquadCommerceTelemetry.StartAgentSpan(AgentName, "Execute");
+        activity?.SetTag("agent.name", AgentName);
+        activity?.SetTag("agent.protocol", "MCP");
+        activity?.SetTag("agent.sku", sku);
+        
+        // Record invocation count
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1, 
+            new KeyValuePair<string, object?>("agent.name", AgentName));
+
         _logger.LogInformation("InventoryAgent executing for SKU: {Sku}", sku);
 
         try
@@ -84,6 +98,15 @@ public sealed class InventoryAgent : IDomainAgent
                 totalUnits,
                 lowStockCount);
 
+            // Record A2UI payload emission
+            SquadCommerceTelemetry.A2UIPayloadCount.Add(1,
+                new KeyValuePair<string, object?>("a2ui.component", "RetailStockHeatmap"));
+
+            // Record invocation duration
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+
             return new AgentResult
             {
                 TextSummary = textSummary,
@@ -95,6 +118,17 @@ public sealed class InventoryAgent : IDomainAgent
         catch (Exception ex)
         {
             _logger.LogError(ex, "InventoryAgent failed for SKU {Sku}", sku);
+            
+            // Set error status on span
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            
+            // Record duration even on error
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+            
             return new AgentResult
             {
                 TextSummary = $"Error querying inventory for SKU {sku}",

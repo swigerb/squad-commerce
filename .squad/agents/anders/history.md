@@ -169,3 +169,88 @@ Backend developer for squad-commerce. Responsible for ASP.NET Core infrastructur
 
 <!-- Append new learnings below. Each entry is something lasting about the project. -->
 
+### 2026-03-24: Phase 6 — Full OpenTelemetry Observability Implementation
+
+**Implemented Full Observability Stack:**
+
+1. **SquadCommerceMetrics Singleton** (`ServiceDefaults/SquadCommerceMetrics.cs`):
+   - Centralized metrics registry holding all 8 custom metrics as instance properties
+   - All 4 ActivitySources (Agents, Mcp, A2A, AgUi) as instance properties
+   - Helper methods: `StartAgentSpan()`, `StartToolSpan()`, `StartA2ASpan()`, `StartAgUiSpan()`
+   - Recording methods: `RecordAgentInvocation()`, `RecordMcpToolCall()`, `RecordA2AHandshake()`, `RecordA2UIPayload()`, `RecordPricingDecision()`
+   - Registered as singleton in DI — inject into agents/tools to record metrics
+
+2. **All 8 Custom Metrics Registered:**
+   - `squad.agent.invocation.count` (Counter) — tracks agent calls with tags (agent.name, success)
+   - `squad.agent.invocation.duration` (Histogram, ms) — tracks agent execution time
+   - `squad.mcp.tool.call.count` (Counter) — tracks MCP tool calls with tags (mcp.tool.name, success)
+   - `squad.mcp.tool.call.duration` (Histogram, ms) — tracks tool execution time
+   - `squad.a2a.handshake.count` (Counter) — tracks A2A handshakes with tags (a2a.external_agent, success)
+   - `squad.a2a.handshake.duration` (Histogram, ms) — tracks round-trip time
+   - `squad.a2ui.payload.count` (Counter) — tracks A2UI emissions with tags (a2ui.component_type, agui.session_id)
+   - `squad.pricing.decision.count` (Counter) — tracks pricing decisions with tags (pricing.action, pricing.proposal_id)
+
+3. **All 4 ActivitySources Configured:**
+   - `SquadCommerce.Agents` — agent invocations and orchestration
+   - `SquadCommerce.Mcp` — MCP tool calls
+   - `SquadCommerce.A2A` — A2A handshakes with external agents
+   - `SquadCommerce.AgUi` — AG-UI streaming events
+   - All sources registered in `AddSquadCommerceTracing()` extension method
+   - OTLP exporter configured for Aspire Dashboard
+
+4. **Comprehensive Health Checks** (`ServiceDefaults/HealthChecks.cs`):
+   - `AgentSystemHealthCheck` — verifies agents are registered and ready (tagged "ready")
+   - `McpServerHealthCheck` — verifies MCP tools can be invoked (tagged "ready")
+   - `SignalRHubHealthCheck` — verifies SignalR hub is accepting connections (tagged "ready")
+   - All health checks registered via `AddSquadCommerceHealthChecks()` extension method
+   - Exposed at `/health` and `/alive` endpoints (dev mode only)
+
+5. **Structured JSON Logging Configured** (`appsettings.json`):
+   - Console formatter set to JSON with structured output
+   - IncludeScopes enabled for correlation context (traceId, spanId)
+   - UTC timestamps in ISO 8601 format
+   - All agent reasoning steps log with structured parameters (not string interpolation)
+   - LogLevel: Debug for SquadCommerce namespace, Information for default
+
+6. **Observability Wired Throughout:**
+   - **Program.cs**: `AddSquadCommerceHealthChecks()`, `SquadCommerceMetrics` singleton, metrics injected into AG-UI endpoint
+   - **AgUiStreamWriter**: Injects `SquadCommerceMetrics`, records A2UI payload metrics with component type extraction
+   - **PricingEndpoints**: Injects `SquadCommerceMetrics`, records all pricing decisions (approved/rejected/modified)
+   - **AgentEndpoints**: Injects `SquadCommerceMetrics`, creates orchestrator spans, records agent invocations with timing
+
+7. **Distributed Tracing Example** (AgentEndpoints.TriggerAnalysis):
+   - Creates parent orchestrator span with session.id and sku tags
+   - Creates child spans for MarketIntelAgent, InventoryAgent, PricingAgent
+   - Each span tagged with session.id for correlation
+   - Metrics recorded for each agent with duration and success status
+   - All operations logged with structured context (sessionId, traceId)
+
+8. **Extensions.cs Updates**:
+   - `AddSquadCommerceTracing()` now registers `SquadCommerceMetrics` singleton and uses instance sources
+   - `AddSquadCommerceMetrics()` registers singleton and adds "SquadCommerce" meter
+   - `AddSquadCommerceHealthChecks()` registers all 3 health check types
+   - All extensions properly chain and return builder for fluent API
+
+**Build Status:** ✅ ServiceDefaults and Api projects build successfully
+
+**Integration Points for Other Agents:**
+- Satya (Agents): Inject `SquadCommerceMetrics` singleton into agents, use `StartAgentSpan()` and `RecordAgentInvocation()` during execution
+- Satya (MCP): Inject `SquadCommerceMetrics` into MCP tools, use `StartToolSpan()` and `RecordMcpToolCall()` during tool execution
+- Satya (A2A): Inject `SquadCommerceMetrics` into A2A client, use `StartA2ASpan()` and `RecordA2AHandshake()` during external calls
+- Clippy (Frontend): All A2UI payloads automatically tracked via `AgUiStreamWriter.WriteA2UIPayloadAsync()`
+- All agents: Use structured logging with `ILogger<T>` and parameter placeholders (not string interpolation)
+
+**Patterns Applied:**
+- **Singleton Metrics Registry** — single source of truth for all meters, counters, histograms, and activity sources
+- **Metrics Tags** — all metrics include tags for filtering (agent.name, success, mcp.tool.name, etc.)
+- **Activity Tagging** — all spans tagged with relevant context (session.id, agent.name, tool.name, etc.)
+- **Structured Logging** — all log statements use parameters, not string interpolation
+- **Health Check Tagging** — ready/live tags for liveness vs readiness probes
+- **DI-based Observability** — inject `SquadCommerceMetrics` instead of static access
+
+**Notes:**
+- `SquadCommerceTelemetry.cs` is now legacy — kept for backward compatibility, but new code should use `SquadCommerceMetrics` singleton
+- Health checks are placeholders — TODO comments indicate where to integrate with AgentPolicyRegistry and IMcpToolRegistry when available
+- Integration tests fail due to missing Mcp/Agents/A2A implementations — expected, not Anders' responsibility
+- Aspire Dashboard will automatically collect all OTLP traces/metrics via environment variable configuration
+

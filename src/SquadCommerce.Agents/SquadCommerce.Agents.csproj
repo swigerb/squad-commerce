@@ -15,6 +15,7 @@
     <ProjectReference Include="..\SquadCommerce.Contracts\SquadCommerce.Contracts.csproj" />
     <ProjectReference Include="..\SquadCommerce.Mcp\SquadCommerce.Mcp.csproj" />
     <ProjectReference Include="..\SquadCommerce.A2A\SquadCommerce.A2A.csproj" />
+    <ProjectReference Include="..\SquadCommerce.ServiceDefaults\SquadCommerce.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

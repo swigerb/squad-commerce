@@ -14,3 +14,5 @@ C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\bin\Debug\net1
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\bin\Debug\net10.0\SquadCommerce.Contracts.pdb
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCommerce.A2A.csproj.AssemblyReference.cache
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCom.760E8783.Up2Date
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\bin\Debug\net10.0\SquadCommerce.ServiceDefaults.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\bin\Debug\net10.0\SquadCommerce.ServiceDefaults.pdb

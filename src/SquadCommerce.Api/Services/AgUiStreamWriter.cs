@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Threading.Channels;
+using SquadCommerce.Observability;
 
 namespace SquadCommerce.Api.Services;
 
@@ -10,10 +11,12 @@ public sealed class AgUiStreamWriter : IAgUiStreamWriter
 {
     private readonly ConcurrentDictionary<string, Channel<AgUiEvent>> _sessions = new();
     private readonly ILogger<AgUiStreamWriter> _logger;
+    private readonly SquadCommerceMetrics _metrics;
 
-    public AgUiStreamWriter(ILogger<AgUiStreamWriter> logger)
+    public AgUiStreamWriter(ILogger<AgUiStreamWriter> logger, SquadCommerceMetrics metrics)
     {
         _logger = logger;
+        _metrics = metrics;
     }
 
     public async Task WriteTextDeltaAsync(string sessionId, string text, CancellationToken cancellationToken = default)
@@ -36,8 +39,17 @@ public sealed class AgUiStreamWriter : IAgUiStreamWriter
 
     public async Task WriteA2UIPayloadAsync(string sessionId, object payload, CancellationToken cancellationToken = default)
     {
+        using var activity = _metrics.StartAgUiSpan(sessionId, "a2ui_payload");
+        
         var evt = new AgUiEvent { Type = "a2ui_payload", Data = payload };
         await WriteEventAsync(sessionId, evt, cancellationToken);
+
+        // Extract component type from payload for metrics
+        var componentType = ExtractComponentType(payload);
+        _metrics.RecordA2UIPayload(componentType, sessionId);
+        
+        _logger.LogInformation("A2UI payload emitted: SessionId={SessionId}, ComponentType={ComponentType}", 
+            sessionId, componentType);
     }
 
     public async Task WriteDoneAsync(string sessionId, CancellationToken cancellationToken = default)
@@ -62,5 +74,21 @@ public sealed class AgUiStreamWriter : IAgUiStreamWriter
         var channel = _sessions.GetOrAdd(sessionId, _ => Channel.CreateUnbounded<AgUiEvent>());
         await channel.Writer.WriteAsync(evt, cancellationToken);
         _logger.LogDebug("AG-UI event written: Session={SessionId}, Type={Type}", sessionId, evt.Type);
+    }
+
+    private static string ExtractComponentType(object payload)
+    {
+        // Try to extract RenderAs property for A2UI payloads
+        var payloadType = payload.GetType();
+        var renderAsProp = payloadType.GetProperty("RenderAs");
+        if (renderAsProp != null)
+        {
+            var value = renderAsProp.GetValue(payload);
+            if (value is string componentType)
+            {
+                return componentType;
+            }
+        }
+        return "unknown";
     }
 }

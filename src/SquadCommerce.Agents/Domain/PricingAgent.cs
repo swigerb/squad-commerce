@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.Contracts.A2UI;
 using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Contracts.Models;
+using SquadCommerce.Observability;
 
 namespace SquadCommerce.Agents.Domain;
 
@@ -44,6 +46,19 @@ public sealed class PricingAgent : IDomainAgent
         decimal competitorPrice,
         CancellationToken cancellationToken = default)
     {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        // Create agent invocation span
+        using var activity = SquadCommerceTelemetry.StartAgentSpan(AgentName, "Execute");
+        activity?.SetTag("agent.name", AgentName);
+        activity?.SetTag("agent.protocol", "MCP");
+        activity?.SetTag("agent.sku", sku);
+        activity?.SetTag("agent.competitor_price", competitorPrice);
+        
+        // Record invocation count
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", AgentName));
+
         _logger.LogInformation(
             "PricingAgent executing margin analysis: SKU {Sku}, CompetitorPrice ${CompetitorPrice:F2}",
             sku,
@@ -137,6 +152,15 @@ public sealed class PricingAgent : IDomainAgent
                 currentMargin,
                 proposedMargin);
 
+            // Record A2UI payload emission
+            SquadCommerceTelemetry.A2UIPayloadCount.Add(1,
+                new KeyValuePair<string, object?>("a2ui.component", "PricingImpactChart"));
+
+            // Record invocation duration
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+
             return new AgentResult
             {
                 TextSummary = textSummary,
@@ -148,6 +172,17 @@ public sealed class PricingAgent : IDomainAgent
         catch (Exception ex)
         {
             _logger.LogError(ex, "PricingAgent failed for SKU {Sku}", sku);
+            
+            // Set error status on span
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            
+            // Record duration even on error
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+            
             return new AgentResult
             {
                 TextSummary = $"Error calculating pricing impact for SKU {sku}",

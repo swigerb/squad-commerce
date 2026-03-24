@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.ServiceDiscovery;
@@ -91,10 +92,15 @@ public static class Extensions
     public static TBuilder AddSquadCommerceTracing<TBuilder>(this TBuilder builder, TracerProviderBuilder tracing) 
         where TBuilder : IHostApplicationBuilder
     {
-        tracing.AddSource(SquadCommerceTelemetry.Agents.Name)
-               .AddSource(SquadCommerceTelemetry.Mcp.Name)
-               .AddSource(SquadCommerceTelemetry.A2A.Name)
-               .AddSource(SquadCommerceTelemetry.AgUi.Name);
+        // Register SquadCommerceMetrics singleton if not already registered
+        builder.Services.TryAddSingleton<SquadCommerceMetrics>();
+
+        var metrics = builder.Services.BuildServiceProvider().GetRequiredService<SquadCommerceMetrics>();
+        
+        tracing.AddSource(metrics.Agents.Name)
+               .AddSource(metrics.Mcp.Name)
+               .AddSource(metrics.A2A.Name)
+               .AddSource(metrics.AgUi.Name);
 
         return builder;
     }
@@ -102,10 +108,27 @@ public static class Extensions
     /// <summary>
     /// Adds Squad-Commerce custom metrics.
     /// </summary>
-    public static TBuilder AddSquadCommerceMetrics<TBuilder>(this TBuilder builder, MeterProviderBuilder metrics)
+    public static TBuilder AddSquadCommerceMetrics<TBuilder>(this TBuilder builder, MeterProviderBuilder metricsBuilder)
         where TBuilder : IHostApplicationBuilder
     {
-        metrics.AddMeter("SquadCommerce");
+        // Register SquadCommerceMetrics singleton if not already registered
+        builder.Services.TryAddSingleton<SquadCommerceMetrics>();
+
+        metricsBuilder.AddMeter("SquadCommerce");
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds Squad-Commerce health checks for agent system, MCP server, and SignalR hub.
+    /// </summary>
+    public static TBuilder AddSquadCommerceHealthChecks<TBuilder>(this TBuilder builder)
+        where TBuilder : IHostApplicationBuilder
+    {
+        builder.Services.AddHealthChecks()
+            .AddCheck<AgentSystemHealthCheck>("agent_system", tags: ["ready"])
+            .AddCheck<McpServerHealthCheck>("mcp_server", tags: ["ready"])
+            .AddCheck<SignalRHubHealthCheck>("signalr_hub", tags: ["ready"]);
 
         return builder;
     }

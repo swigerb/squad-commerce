@@ -2,11 +2,31 @@ using SquadCommerce.Api.Endpoints;
 using SquadCommerce.Api.Hubs;
 using SquadCommerce.Api.Middleware;
 using SquadCommerce.Api.Services;
+using SquadCommerce.Agents.Registration;
+using SquadCommerce.Mcp;
+using SquadCommerce.A2A;
+using SquadCommerce.Observability;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// Aspire service defaults (includes OpenTelemetry tracing and metrics)
 builder.AddServiceDefaults();
+
+// Register Squad-Commerce observability
+builder.AddSquadCommerceHealthChecks();
+
+// Register Squad-Commerce metrics singleton
+builder.Services.AddSingleton<SquadCommerceMetrics>();
+
+// Register MCP infrastructure (repositories + tools)
+builder.Services.AddSquadCommerceMcp();
+
+// Register A2A infrastructure (client + server)
+builder.Services.AddSquadCommerceA2A();
+
+// Register MAF agents (orchestrator + domain agents + policies)
+builder.Services.AddSquadCommerceAgents();
 
 // Register AG-UI stream writer
 builder.Services.AddSingleton<IAgUiStreamWriter, AgUiStreamWriter>();
@@ -40,11 +60,13 @@ app.UseMiddleware<EntraIdScopeMiddleware>();
 app.MapHub<AgentHub>("/hubs/agent");
 
 // AG-UI SSE streaming endpoint
-app.MapGet("/api/agui", async (string sessionId, IAgUiStreamWriter streamWriter, HttpContext context, CancellationToken cancellationToken) =>
+app.MapGet("/api/agui", async (string sessionId, IAgUiStreamWriter streamWriter, SquadCommerceMetrics metrics, HttpContext context, CancellationToken cancellationToken) =>
 {
     context.Response.Headers["Content-Type"] = "text/event-stream";
     context.Response.Headers["Cache-Control"] = "no-cache";
     context.Response.Headers["Connection"] = "keep-alive";
+
+    using var activity = metrics.StartAgUiSpan(sessionId, "stream_connection");
 
     try
     {

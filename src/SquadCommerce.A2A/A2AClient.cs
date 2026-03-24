@@ -1,8 +1,10 @@
+using System.Diagnostics;
 using System.Net;
 using System.Net.Http.Json;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Contracts.Models;
+using SquadCommerce.Observability;
 
 namespace SquadCommerce.A2A;
 
@@ -39,14 +41,55 @@ public sealed class A2AClient : IA2AClient
     /// </summary>
     public async Task<IReadOnlyList<CompetitorPricing>> GetCompetitorPricingAsync(string sku, CancellationToken cancellationToken = default)
     {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        // Create A2A handshake span
+        using var activity = SquadCommerceTelemetry.StartA2ASpan("ExternalVendor", "Handshake");
+        activity?.SetTag("a2a.target.agent", "ExternalVendor");
+        activity?.SetTag("a2a.request.type", "GetCompetitorPricing");
+        activity?.SetTag("a2a.sku", sku);
+        
+        // Record handshake count
+        SquadCommerceTelemetry.A2AHandshakeCount.Add(1,
+            new KeyValuePair<string, object?>("a2a.target.agent", "ExternalVendor"));
+
         _logger.LogInformation("A2AClient querying competitor pricing for SKU {Sku}", sku);
 
-        // For demo: simulate A2A call to external vendor agents
-        // In production, this would discover agent cards and query multiple vendors
-        var mockCompetitors = await GetMockCompetitorDataAsync(sku, cancellationToken);
+        try
+        {
+            // For demo: simulate A2A call to external vendor agents
+            // In production, this would discover agent cards and query multiple vendors
+            var mockCompetitors = await GetMockCompetitorDataAsync(sku, cancellationToken);
 
-        _logger.LogInformation("Retrieved {Count} competitor prices for SKU {Sku}", mockCompetitors.Count, sku);
-        return mockCompetitors;
+            _logger.LogInformation("Retrieved {Count} competitor prices for SKU {Sku}", mockCompetitors.Count, sku);
+            
+            // Record handshake duration
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.A2AHandshakeDuration.Record(duration,
+                new KeyValuePair<string, object?>("a2a.target.agent", "ExternalVendor"));
+            
+            activity?.SetTag("a2a.response.status", "success");
+            activity?.SetTag("a2a.response.count", mockCompetitors.Count);
+            
+            return mockCompetitors;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "A2AClient failed for SKU {Sku}", sku);
+            
+            // Set error status on span
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            activity?.SetTag("a2a.response.status", "error");
+            
+            // Record duration even on error
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.A2AHandshakeDuration.Record(duration,
+                new KeyValuePair<string, object?>("a2a.target.agent", "ExternalVendor"));
+            
+            throw;
+        }
     }
 
     /// <summary>

@@ -1,7 +1,9 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.A2A.Validation;
 using SquadCommerce.Contracts.A2UI;
 using SquadCommerce.Contracts.Interfaces;
+using SquadCommerce.Observability;
 
 namespace SquadCommerce.Agents.Domain;
 
@@ -47,6 +49,19 @@ public sealed class MarketIntelAgent : IDomainAgent
         decimal ourPrice,
         CancellationToken cancellationToken = default)
     {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        // Create agent invocation span
+        using var activity = SquadCommerceTelemetry.StartAgentSpan(AgentName, "Execute");
+        activity?.SetTag("agent.name", AgentName);
+        activity?.SetTag("agent.protocol", "A2A");
+        activity?.SetTag("agent.sku", sku);
+        activity?.SetTag("agent.our_price", ourPrice);
+        
+        // Record invocation count
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", AgentName));
+
         _logger.LogInformation(
             "MarketIntelAgent executing A2A query: SKU {Sku}, OurPrice ${OurPrice:F2}",
             sku,
@@ -135,6 +150,15 @@ public sealed class MarketIntelAgent : IDomainAgent
                 avgCompetitorPrice,
                 ourPrice);
 
+            // Record A2UI payload emission
+            SquadCommerceTelemetry.A2UIPayloadCount.Add(1,
+                new KeyValuePair<string, object?>("a2ui.component", "MarketComparisonGrid"));
+
+            // Record invocation duration
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+
             return new AgentResult
             {
                 TextSummary = textSummary,
@@ -146,6 +170,17 @@ public sealed class MarketIntelAgent : IDomainAgent
         catch (Exception ex)
         {
             _logger.LogError(ex, "MarketIntelAgent failed for SKU {Sku}", sku);
+            
+            // Set error status on span
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            
+            // Record duration even on error
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+            
             return new AgentResult
             {
                 TextSummary = $"Error retrieving competitor pricing for SKU {sku}",

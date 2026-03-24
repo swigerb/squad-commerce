@@ -1,1 +1,8 @@
-{ }
+{
+  "SquadCommerce.A2A, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.A2A",
+  "SquadCommerce.Agents, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Agents",
+  "SquadCommerce.Api, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Api",
+  "SquadCommerce.Contracts, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Contracts",
+  "SquadCommerce.Mcp, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Mcp",
+  "SquadCommerce.ServiceDefaults, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.ServiceDefaults"
+}

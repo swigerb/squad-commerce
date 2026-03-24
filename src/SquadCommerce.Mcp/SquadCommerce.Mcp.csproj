@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SquadCommerce.Contracts\SquadCommerce.Contracts.csproj" />
+    <ProjectReference Include="..\SquadCommerce.ServiceDefaults\SquadCommerce.ServiceDefaults.csproj" />
   </ItemGroup>
 
 </Project>

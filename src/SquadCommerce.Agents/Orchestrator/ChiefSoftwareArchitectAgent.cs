@@ -1,5 +1,7 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.Agents.Domain;
+using SquadCommerce.Observability;
 
 namespace SquadCommerce.Agents.Orchestrator;
 
@@ -48,12 +50,24 @@ public sealed class ChiefSoftwareArchitectAgent
         decimal competitorPrice,
         CancellationToken cancellationToken = default)
     {
+        var startTime = DateTimeOffset.UtcNow;
+        
+        // Create parent orchestrator span that wraps entire workflow
+        using var activity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "Orchestrate");
+        activity?.SetTag("agent.name", "ChiefSoftwareArchitect");
+        activity?.SetTag("agent.protocol", "AGUI");
+        activity?.SetTag("agent.sku", sku);
+        activity?.SetTag("agent.competitor_price", competitorPrice);
+        
+        // Record invocation count
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
         _logger.LogInformation(
             "Orchestrator starting competitor price response workflow: SKU {Sku}, CompetitorPrice ${CompetitorPrice:F2}",
             sku,
             competitorPrice);
 
-        var startTime = DateTimeOffset.UtcNow;
         var results = new List<AgentResult>();
 
         try
@@ -98,9 +112,19 @@ public sealed class ChiefSoftwareArchitectAgent
 
             // Step 4: Synthesize final response
             _logger.LogInformation("Step 4: Synthesizing orchestrator response");
+            
+            // Create synthesize span as child of orchestrate
+            using var synthesizeActivity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "Synthesize");
+            synthesizeActivity?.SetTag("agent.result_count", results.Count);
+            
             var executiveSummary = BuildExecutiveSummary(sku, competitorPrice, results);
 
             var duration = DateTimeOffset.UtcNow - startTime;
+            
+            // Record orchestrator invocation duration
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration.TotalMilliseconds,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+            
             _logger.LogInformation(
                 "Orchestrator workflow completed successfully in {Duration}ms",
                 duration.TotalMilliseconds);
@@ -117,6 +141,17 @@ public sealed class ChiefSoftwareArchitectAgent
         catch (Exception ex)
         {
             _logger.LogError(ex, "Orchestrator workflow failed");
+            
+            // Set error status on span
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+            
+            // Record duration even on error
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+            
             return BuildFailureResult(results, $"Orchestration error: {ex.Message}", startTime);
         }
     }

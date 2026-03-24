@@ -18,3 +18,5 @@ C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Agents\bin\Debug\n
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Agents\bin\Debug\net10.0\SquadCommerce.Mcp.dll
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Agents\bin\Debug\net10.0\SquadCommerce.Mcp.pdb
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Agents\bin\Debug\net10.0\SquadCommerce.A2A.pdb
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Agents\bin\Debug\net10.0\SquadCommerce.ServiceDefaults.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Agents\bin\Debug\net10.0\SquadCommerce.ServiceDefaults.pdb
