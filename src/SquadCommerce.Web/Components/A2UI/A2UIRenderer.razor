@@ -18,6 +18,12 @@
             case "MarketComparisonGrid":
                 <MarketComparisonGrid Data="Payload" />
                 break;
+            case "DecisionAuditTrail":
+                <DecisionAuditTrail Data="Payload" />
+                break;
+            case "AgentPipelineVisualizer":
+                <AgentPipelineVisualizer Data="Payload" />
+                break;
             default:
                 <div class="alert alert-warning" role="alert">
                     <strong>Unknown A2UI component:</strong> @Payload.RenderAs

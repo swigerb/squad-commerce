@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.Agents.Domain;
+using SquadCommerce.Contracts.A2UI;
+using SquadCommerce.Mcp.Data;
 using SquadCommerce.Observability;
 
 namespace SquadCommerce.Agents.Orchestrator;
@@ -24,17 +26,20 @@ public sealed class ChiefSoftwareArchitectAgent
     private readonly InventoryAgent _inventoryAgent;
     private readonly PricingAgent _pricingAgent;
     private readonly MarketIntelAgent _marketIntelAgent;
+    private readonly AuditRepository _auditRepository;
     private readonly ILogger<ChiefSoftwareArchitectAgent> _logger;
 
     public ChiefSoftwareArchitectAgent(
         InventoryAgent inventoryAgent,
         PricingAgent pricingAgent,
         MarketIntelAgent marketIntelAgent,
+        AuditRepository auditRepository,
         ILogger<ChiefSoftwareArchitectAgent> logger)
     {
         _inventoryAgent = inventoryAgent ?? throw new ArgumentNullException(nameof(inventoryAgent));
         _pricingAgent = pricingAgent ?? throw new ArgumentNullException(nameof(pricingAgent));
         _marketIntelAgent = marketIntelAgent ?? throw new ArgumentNullException(nameof(marketIntelAgent));
+        _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -51,6 +56,7 @@ public sealed class ChiefSoftwareArchitectAgent
         CancellationToken cancellationToken = default)
     {
         var startTime = DateTimeOffset.UtcNow;
+        var sessionId = $"session-{Guid.NewGuid():N}";
         
         // Create parent orchestrator span that wraps entire workflow
         using var activity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "Orchestrate");
@@ -58,38 +64,97 @@ public sealed class ChiefSoftwareArchitectAgent
         activity?.SetTag("agent.protocol", "AGUI");
         activity?.SetTag("agent.sku", sku);
         activity?.SetTag("agent.competitor_price", competitorPrice);
+        activity?.SetTag("agent.session_id", sessionId);
         
         // Record invocation count
         SquadCommerceTelemetry.AgentInvocationCount.Add(1,
             new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
 
         _logger.LogInformation(
-            "Orchestrator starting competitor price response workflow: SKU {Sku}, CompetitorPrice ${CompetitorPrice:F2}",
+            "Orchestrator starting competitor price response workflow: SKU {Sku}, CompetitorPrice ${CompetitorPrice:F2}, SessionId {SessionId}",
             sku,
-            competitorPrice);
+            competitorPrice,
+            sessionId);
 
         var results = new List<AgentResult>();
+        var pipelineStages = new List<PipelineStage>();
+
+        // Record workflow initiation
+        await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Initiated competitor price response workflow", 
+            "AGUI", startTime, TimeSpan.Zero, "Success", $"User request for SKU {sku} at ${competitorPrice:F2}", 
+            activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
 
         try
         {
             // Step 1: Validate competitor claim via A2A (MarketIntelAgent)
             _logger.LogInformation("Step 1: Delegating to MarketIntelAgent for competitor validation");
-            var marketIntelResult = await _marketIntelAgent.ExecuteAsync(
-                sku,
-                competitorPrice,
-                cancellationToken);
+            
+            var stage1Start = DateTimeOffset.UtcNow;
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 1,
+                AgentName = "MarketIntelAgent",
+                StageName = "Market Intelligence",
+                Status = "Running",
+                Protocol = "A2A",
+                StartedAt = stage1Start
+            });
+
+            var marketIntelResult = await _marketIntelAgent.ExecuteAsync(sku, competitorPrice, cancellationToken);
             results.Add(marketIntelResult);
+
+            var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
+            await RecordAuditEntryAsync(sessionId, "MarketIntelAgent", "Queried competitor pricing via A2A",
+                "A2A", stage1Start, stage1Duration, marketIntelResult.Success ? "Success" : "Failed",
+                marketIntelResult.TextSummary, activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
+
+            pipelineStages[0] = pipelineStages[0] with
+            {
+                Status = marketIntelResult.Success ? "Completed" : "Failed",
+                Duration = stage1Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = marketIntelResult.A2UIPayload != null ? new[] { "MarketComparisonGrid" } : null,
+                ErrorMessage = marketIntelResult.ErrorMessage
+            };
 
             if (!marketIntelResult.Success)
             {
                 _logger.LogWarning("MarketIntelAgent failed - aborting workflow");
-                return BuildFailureResult(results, "Failed to validate competitor pricing", startTime);
+                return await BuildFailureResultAsync(sessionId, results, pipelineStages, "Failed to validate competitor pricing", startTime, cancellationToken);
             }
 
             // Step 2: Get inventory snapshot (InventoryAgent)
             _logger.LogInformation("Step 2: Delegating to InventoryAgent for inventory snapshot");
+            
+            var stage2Start = DateTimeOffset.UtcNow;
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 2,
+                AgentName = "InventoryAgent",
+                StageName = "Inventory Analysis",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage2Start,
+                ToolsUsed = new[] { "GetInventoryLevels" }
+            });
+
             var inventoryResult = await _inventoryAgent.ExecuteAsync(sku, cancellationToken);
             results.Add(inventoryResult);
+
+            var stage2Duration = DateTimeOffset.UtcNow - stage2Start;
+            await RecordAuditEntryAsync(sessionId, "InventoryAgent", "Retrieved inventory snapshot",
+                "MCP", stage2Start, stage2Duration, inventoryResult.Success ? "Success" : "Warning",
+                inventoryResult.TextSummary, activity?.TraceId.ToString(), new[] { sku }, 
+                new[] { "SEA-001", "PDX-002", "SFO-003", "LAX-004", "DEN-005" }, null, cancellationToken);
+
+            pipelineStages[1] = pipelineStages[1] with
+            {
+                Status = inventoryResult.Success ? "Completed" : "Failed",
+                Duration = stage2Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = inventoryResult.A2UIPayload != null ? new[] { "RetailStockHeatmap" } : null,
+                ErrorMessage = inventoryResult.ErrorMessage
+            };
 
             if (!inventoryResult.Success)
             {
@@ -98,16 +163,40 @@ public sealed class ChiefSoftwareArchitectAgent
 
             // Step 3: Calculate margin impact (PricingAgent)
             _logger.LogInformation("Step 3: Delegating to PricingAgent for margin impact analysis");
-            var pricingResult = await _pricingAgent.ExecuteAsync(
-                sku,
-                competitorPrice,
-                cancellationToken);
+            
+            var stage3Start = DateTimeOffset.UtcNow;
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 3,
+                AgentName = "PricingAgent",
+                StageName = "Pricing Calculation",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage3Start,
+                ToolsUsed = new[] { "GetInventoryLevels" }
+            });
+
+            var pricingResult = await _pricingAgent.ExecuteAsync(sku, competitorPrice, cancellationToken);
             results.Add(pricingResult);
+
+            var stage3Duration = DateTimeOffset.UtcNow - stage3Start;
+            await RecordAuditEntryAsync(sessionId, "PricingAgent", "Calculated margin impact scenarios",
+                "MCP", stage3Start, stage3Duration, pricingResult.Success ? "Success" : "Failed",
+                pricingResult.TextSummary, activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
+
+            pipelineStages[2] = pipelineStages[2] with
+            {
+                Status = pricingResult.Success ? "Completed" : "Failed",
+                Duration = stage3Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = pricingResult.A2UIPayload != null ? new[] { "PricingImpactChart" } : null,
+                ErrorMessage = pricingResult.ErrorMessage
+            };
 
             if (!pricingResult.Success)
             {
                 _logger.LogWarning("PricingAgent failed - aborting workflow");
-                return BuildFailureResult(results, "Failed to calculate pricing impact", startTime);
+                return await BuildFailureResultAsync(sessionId, results, pipelineStages, "Failed to calculate pricing impact", startTime, cancellationToken);
             }
 
             // Step 4: Synthesize final response
@@ -117,7 +206,14 @@ public sealed class ChiefSoftwareArchitectAgent
             using var synthesizeActivity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "Synthesize");
             synthesizeActivity?.SetTag("agent.result_count", results.Count);
             
+            var synthesizeStart = DateTimeOffset.UtcNow;
             var executiveSummary = BuildExecutiveSummary(sku, competitorPrice, results);
+            var synthesizeDuration = DateTimeOffset.UtcNow - synthesizeStart;
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Synthesized orchestrator response",
+                "AGUI", synthesizeStart, synthesizeDuration, "Success",
+                $"Generated executive summary with {results.Count} A2UI payloads", 
+                activity?.TraceId.ToString(), null, null, null, cancellationToken);
 
             var duration = DateTimeOffset.UtcNow - startTime;
             
@@ -129,11 +225,26 @@ public sealed class ChiefSoftwareArchitectAgent
                 "Orchestrator workflow completed successfully in {Duration}ms",
                 duration.TotalMilliseconds);
 
+            // Build A2UI payloads for audit trail and pipeline visualization
+            var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+            var pipelineData = new AgentPipelineData
+            {
+                SessionId = sessionId,
+                WorkflowName = "CompetitorPriceDropWorkflow",
+                Stages = pipelineStages,
+                OverallStatus = "Completed",
+                TotalDuration = duration,
+                StartedAt = startTime,
+                CompletedAt = DateTimeOffset.UtcNow
+            };
+
             return new OrchestratorResult
             {
                 Success = true,
                 ExecutiveSummary = executiveSummary,
                 AgentResults = results,
+                AuditTrailData = auditTrailData,
+                PipelineData = pipelineData,
                 Timestamp = DateTimeOffset.UtcNow,
                 WorkflowDuration = duration
             };
@@ -147,12 +258,17 @@ public sealed class ChiefSoftwareArchitectAgent
             activity?.SetTag("error.message", ex.Message);
             activity?.SetTag("error.type", ex.GetType().Name);
             
+            // Record error audit entry
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Workflow execution failed",
+                "AGUI", DateTimeOffset.UtcNow, TimeSpan.Zero, "Failed",
+                ex.Message, activity?.TraceId.ToString(), null, null, null, cancellationToken);
+            
             // Record duration even on error
             var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
             SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
                 new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
             
-            return BuildFailureResult(results, $"Orchestration error: {ex.Message}", startTime);
+            return await BuildFailureResultAsync(sessionId, results, pipelineStages, $"Orchestration error: {ex.Message}", startTime, cancellationToken);
         }
     }
 
@@ -186,6 +302,85 @@ public sealed class ChiefSoftwareArchitectAgent
             WorkflowDuration = duration
         };
     }
+
+    private async Task<OrchestratorResult> BuildFailureResultAsync(
+        string sessionId,
+        List<AgentResult> results,
+        List<PipelineStage> stages,
+        string errorMessage,
+        DateTimeOffset startTime,
+        CancellationToken cancellationToken)
+    {
+        var duration = DateTimeOffset.UtcNow - startTime;
+        var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+        var pipelineData = new AgentPipelineData
+        {
+            SessionId = sessionId,
+            WorkflowName = "CompetitorPriceDropWorkflow",
+            Stages = stages,
+            OverallStatus = "Failed",
+            TotalDuration = duration,
+            StartedAt = startTime,
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+
+        return new OrchestratorResult
+        {
+            Success = false,
+            ExecutiveSummary = $"Workflow failed: {errorMessage}",
+            AgentResults = results,
+            AuditTrailData = auditTrailData,
+            PipelineData = pipelineData,
+            ErrorMessage = errorMessage,
+            Timestamp = DateTimeOffset.UtcNow,
+            WorkflowDuration = duration
+        };
+    }
+
+    private async Task RecordAuditEntryAsync(
+        string sessionId,
+        string agentName,
+        string action,
+        string protocol,
+        DateTimeOffset timestamp,
+        TimeSpan duration,
+        string status,
+        string? details,
+        string? traceId,
+        IReadOnlyList<string>? affectedSkus,
+        IReadOnlyList<string>? affectedStores,
+        string? decisionOutcome,
+        CancellationToken cancellationToken)
+    {
+        var entry = new AuditEntry
+        {
+            Id = Guid.NewGuid().ToString(),
+            AgentName = agentName,
+            Action = action,
+            Protocol = protocol,
+            Timestamp = timestamp,
+            Duration = duration,
+            Status = status,
+            Details = details,
+            TraceId = traceId,
+            AffectedSkus = affectedSkus,
+            AffectedStores = affectedStores,
+            DecisionOutcome = decisionOutcome
+        };
+
+        await _auditRepository.RecordAuditEntryAsync(sessionId, entry, cancellationToken);
+    }
+
+    private async Task<DecisionAuditTrailData> BuildAuditTrailDataAsync(string sessionId, CancellationToken cancellationToken)
+    {
+        var entries = await _auditRepository.GetAuditTrailAsync(sessionId, cancellationToken);
+        return new DecisionAuditTrailData
+        {
+            SessionId = sessionId,
+            Entries = entries,
+            GeneratedAt = DateTimeOffset.UtcNow
+        };
+    }
 }
 
 /// <summary>
@@ -207,6 +402,16 @@ public sealed record OrchestratorResult
     /// Individual results from each agent execution.
     /// </summary>
     public required IReadOnlyList<AgentResult> AgentResults { get; init; }
+
+    /// <summary>
+    /// Decision audit trail A2UI payload showing chronological agent actions.
+    /// </summary>
+    public DecisionAuditTrailData? AuditTrailData { get; init; }
+
+    /// <summary>
+    /// Agent pipeline visualization A2UI payload showing workflow stages.
+    /// </summary>
+    public AgentPipelineData? PipelineData { get; init; }
 
     /// <summary>
     /// Error message if Success is false.

@@ -16,6 +16,7 @@ public sealed class SquadCommerceDbContext : DbContext
 
     public DbSet<InventoryEntity> Inventory => Set<InventoryEntity>();
     public DbSet<PricingEntity> Pricing => Set<PricingEntity>();
+    public DbSet<AuditEntryEntity> AuditEntries => Set<AuditEntryEntity>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -50,6 +51,32 @@ public sealed class SquadCommerceDbContext : DbContext
             entity.Property(e => e.Cost).HasPrecision(10, 2).IsRequired();
             entity.Property(e => e.MarginPercent).HasPrecision(5, 2).IsRequired();
             entity.Property(e => e.LastUpdated).IsRequired();
+        });
+
+        // Configure primary key for AuditEntries
+        modelBuilder.Entity<AuditEntryEntity>(entity =>
+        {
+            entity.ToTable("AuditEntries");
+            entity.HasKey(e => e.Id);
+
+            entity.Property(e => e.Id).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.SessionId).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.AgentName).HasMaxLength(100).IsRequired();
+            entity.Property(e => e.Action).HasMaxLength(200).IsRequired();
+            entity.Property(e => e.Protocol).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Timestamp).IsRequired();
+            entity.Property(e => e.DurationMs).IsRequired();
+            entity.Property(e => e.Status).HasMaxLength(20).IsRequired();
+            entity.Property(e => e.Details).HasMaxLength(1000);
+            entity.Property(e => e.TraceId).HasMaxLength(50);
+            entity.Property(e => e.DecisionOutcome).HasMaxLength(200);
+            entity.Property(e => e.AffectedSkusCsv).HasMaxLength(500);
+            entity.Property(e => e.AffectedStoresCsv).HasMaxLength(500);
+
+            // Index on SessionId for fast retrieval
+            entity.HasIndex(e => e.SessionId);
+            // Index on Timestamp for recent entries queries
+            entity.HasIndex(e => e.Timestamp);
         });
     }
 }

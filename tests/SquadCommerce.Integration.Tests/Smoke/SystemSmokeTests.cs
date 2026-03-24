@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.Agents.Domain;
@@ -41,6 +42,11 @@ public class SystemSmokeTests
         // Register repositories
         services.AddSingleton<IInventoryRepository, SquadCommerce.Mcp.Data.InMemoryInventoryRepository>();
         services.AddSingleton<IPricingRepository, SquadCommerce.Mcp.Data.InMemoryPricingRepository>();
+        
+        // Register audit repository with in-memory DbContext
+        services.AddDbContext<SquadCommerce.Mcp.Data.SquadCommerceDbContext>(options =>
+            options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+        services.AddScoped<SquadCommerce.Mcp.Data.AuditRepository>();
         
         // Register A2A components
         services.AddHttpClient<IA2AClient, SquadCommerce.A2A.A2AClient>();

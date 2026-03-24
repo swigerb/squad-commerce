@@ -7,6 +7,7 @@ using SquadCommerce.Agents.Orchestrator;
 using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Contracts.Models;
 using SquadCommerce.Mcp.Data;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace SquadCommerce.Integration.Tests.E2E;
@@ -122,10 +123,12 @@ public class ErrorHandlingScenarioTests
             validator,
             NullLogger<MarketIntelAgent>.Instance);
 
+        var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             failingInventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            auditRepo,
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Orchestrator should continue even when InventoryAgent fails
@@ -251,5 +254,13 @@ public class ErrorHandlingScenarioTests
         // Verify price unchanged
         var stillOriginalPrice = await pricingRepo.GetCurrentPriceAsync(storeId, sku, CancellationToken.None);
         stillOriginalPrice.Should().Be(currentPrice.Value);
+    }
+    private static AuditRepository CreateInMemoryAuditRepository()
+    {
+        var options = new DbContextOptionsBuilder<SquadCommerceDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        var context = new SquadCommerceDbContext(options);
+        return new AuditRepository(context, NullLogger<AuditRepository>.Instance);
     }
 }

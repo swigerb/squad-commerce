@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using SquadCommerce.Contracts.A2UI;
+using SquadCommerce.Mcp.Data;
 using SquadCommerce.Observability;
 
 namespace SquadCommerce.Api.Endpoints;
@@ -30,6 +32,7 @@ public static class PricingEndpoints
     /// </summary>
     private static async Task<Ok<PricingActionResponse>> ApproveProposal(
         PricingApprovalRequest request,
+        AuditRepository auditRepository,
         SquadCommerceMetrics metrics,
         ILogger<PricingApprovalRequest> logger,
         CancellationToken cancellationToken)
@@ -39,6 +42,22 @@ public static class PricingEndpoints
 
         // Record pricing decision metric
         metrics.RecordPricingDecision("approved", request.ProposalId);
+
+        // Record audit entry for human decision
+        var auditEntry = new AuditEntry
+        {
+            Id = Guid.NewGuid().ToString(),
+            AgentName = "PricingManager",
+            Action = "Reviewed pricing recommendation",
+            Protocol = "Internal",
+            Timestamp = DateTimeOffset.UtcNow,
+            Duration = TimeSpan.Zero,
+            Status = "Success",
+            Details = $"Approved by {request.ApprovedBy}",
+            DecisionOutcome = "Approved",
+            AffectedStores = request.StoreIds
+        };
+        await auditRepository.RecordAuditEntryAsync(request.ProposalId, auditEntry, cancellationToken);
 
         // Mock implementation - will invoke PricingAgent.UpdateStorePricing via MCP
         await Task.Delay(100, cancellationToken);
@@ -57,16 +76,33 @@ public static class PricingEndpoints
     /// <summary>
     /// Rejects a pricing proposal. Logs the rejection with no further action.
     /// </summary>
-    private static Ok<PricingActionResponse> RejectProposal(
+    private static async Task<Ok<PricingActionResponse>> RejectProposal(
         PricingRejectionRequest request,
+        AuditRepository auditRepository,
         SquadCommerceMetrics metrics,
-        ILogger<PricingRejectionRequest> logger)
+        ILogger<PricingRejectionRequest> logger,
+        CancellationToken cancellationToken)
     {
         logger.LogInformation("Pricing proposal rejected: ProposalId={ProposalId}, RejectedBy={RejectedBy}, Reason={Reason}", 
             request.ProposalId, request.RejectedBy, request.Reason);
 
         // Record pricing decision metric
         metrics.RecordPricingDecision("rejected", request.ProposalId);
+
+        // Record audit entry for human decision
+        var auditEntry = new AuditEntry
+        {
+            Id = Guid.NewGuid().ToString(),
+            AgentName = "PricingManager",
+            Action = "Reviewed pricing recommendation",
+            Protocol = "Internal",
+            Timestamp = DateTimeOffset.UtcNow,
+            Duration = TimeSpan.Zero,
+            Status = "Success",
+            Details = $"Rejected by {request.RejectedBy}: {request.Reason}",
+            DecisionOutcome = "Rejected"
+        };
+        await auditRepository.RecordAuditEntryAsync(request.ProposalId, auditEntry, cancellationToken);
 
         return TypedResults.Ok(new PricingActionResponse
         {
@@ -84,6 +120,7 @@ public static class PricingEndpoints
     /// </summary>
     private static async Task<Accepted<PricingActionResponse>> ModifyProposal(
         PricingModificationRequest request,
+        AuditRepository auditRepository,
         SquadCommerceMetrics metrics,
         ILogger<PricingModificationRequest> logger,
         CancellationToken cancellationToken)
@@ -94,6 +131,27 @@ public static class PricingEndpoints
         // Record pricing decision metric
         metrics.RecordPricingDecision("modified", request.ProposalId);
 
+        // Record audit entry for human decision
+        var modifiedSkus = request.ModifiedPrices.Select(p => p.Sku).Distinct().ToList();
+        var modifiedStores = request.ModifiedPrices.Select(p => p.StoreId).Distinct().ToList();
+        var priceDetails = string.Join(", ", request.ModifiedPrices.Select(p => $"{p.Sku} @ {p.StoreId}: ${p.NewPrice:F2}"));
+
+        var auditEntry = new AuditEntry
+        {
+            Id = Guid.NewGuid().ToString(),
+            AgentName = "PricingManager",
+            Action = "Modified pricing recommendation",
+            Protocol = "Internal",
+            Timestamp = DateTimeOffset.UtcNow,
+            Duration = TimeSpan.Zero,
+            Status = "Success",
+            Details = $"Modified by {request.ModifiedBy}: {priceDetails}",
+            DecisionOutcome = "Modified",
+            AffectedSkus = modifiedSkus,
+            AffectedStores = modifiedStores
+        };
+        await auditRepository.RecordAuditEntryAsync(request.ProposalId, auditEntry, cancellationToken);
+
         // Mock implementation - will re-invoke PricingAgent with new prices
         await Task.Delay(100, cancellationToken);
 
@@ -103,7 +161,7 @@ public static class PricingEndpoints
             Action = "Modified",
             Success = true,
             Message = "Modified prices received. Re-triggering PricingAgent calculation with new values.",
-            UpdatedStores = request.ModifiedPrices.Select(p => p.StoreId).Distinct().ToArray(),
+            UpdatedStores = modifiedStores,
             Timestamp = DateTimeOffset.UtcNow
         });
     }

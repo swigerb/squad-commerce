@@ -144,9 +144,114 @@ public sealed class DatabaseSeeder
 
         await _context.Inventory.AddRangeAsync(inventoryData, cancellationToken);
         await _context.Pricing.AddRangeAsync(pricingData, cancellationToken);
+
+        // Seed audit entries for a "completed" session demonstrating the workflow
+        var completedSessionId = "session-demo-001";
+        var baseTime = DateTimeOffset.UtcNow.AddHours(-2);
+
+        var auditData = new List<AuditEntryEntity>
+        {
+            new()
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = completedSessionId,
+                AgentName = "ChiefSoftwareArchitect",
+                Action = "Initiated competitor price response workflow",
+                Protocol = "AGUI",
+                Timestamp = baseTime,
+                DurationMs = 50,
+                Status = "Success",
+                Details = "User request: Analyze competitor price drop for SKU-1001",
+                AffectedSkusCsv = "SKU-1001"
+            },
+            new()
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = completedSessionId,
+                AgentName = "MarketIntelAgent",
+                Action = "Queried competitor pricing via A2A",
+                Protocol = "A2A",
+                Timestamp = baseTime.AddSeconds(5),
+                DurationMs = 1250,
+                Status = "Success",
+                Details = "Retrieved 3 competitor prices, validated with ExternalDataValidator",
+                AffectedSkusCsv = "SKU-1001"
+            },
+            new()
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = completedSessionId,
+                AgentName = "InventoryAgent",
+                Action = "Retrieved inventory snapshot",
+                Protocol = "MCP",
+                Timestamp = baseTime.AddSeconds(7),
+                DurationMs = 320,
+                Status = "Success",
+                Details = "Queried 5 stores using GetInventoryLevels tool",
+                AffectedSkusCsv = "SKU-1001",
+                AffectedStoresCsv = "SEA-001,PDX-002,SFO-003,LAX-004,DEN-005"
+            },
+            new()
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = completedSessionId,
+                AgentName = "PricingAgent",
+                Action = "Calculated margin impact scenarios",
+                Protocol = "MCP",
+                Timestamp = baseTime.AddSeconds(8),
+                DurationMs = 450,
+                Status = "Success",
+                Details = "Generated 4 pricing scenarios with revenue projections",
+                AffectedSkusCsv = "SKU-1001"
+            },
+            new()
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = completedSessionId,
+                AgentName = "ChiefSoftwareArchitect",
+                Action = "Synthesized orchestrator response",
+                Protocol = "AGUI",
+                Timestamp = baseTime.AddSeconds(9),
+                DurationMs = 100,
+                Status = "Success",
+                Details = "Generated executive summary with 3 A2UI payloads"
+            },
+            new()
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = completedSessionId,
+                AgentName = "PricingManager",
+                Action = "Reviewed pricing recommendation",
+                Protocol = "Internal",
+                Timestamp = baseTime.AddMinutes(15),
+                DurationMs = 180000,
+                Status = "Success",
+                Details = "Human review of competitive pricing analysis",
+                DecisionOutcome = "Approved Match Competitor scenario"
+            },
+            new()
+            {
+                Id = Guid.NewGuid().ToString(),
+                SessionId = completedSessionId,
+                AgentName = "PricingAgent",
+                Action = "Applied pricing updates",
+                Protocol = "MCP",
+                Timestamp = baseTime.AddMinutes(18),
+                DurationMs = 890,
+                Status = "Success",
+                Details = "Updated prices across 5 stores using UpdateStorePricing tool",
+                AffectedSkusCsv = "SKU-1001",
+                AffectedStoresCsv = "SEA-001,PDX-002,SFO-003,LAX-004,DEN-005"
+            }
+        };
+
+        await _context.AuditEntries.AddRangeAsync(auditData, cancellationToken);
         await _context.SaveChangesAsync(cancellationToken);
 
-        _logger.LogInformation("Database seeded successfully with {InventoryCount} inventory records and {PricingCount} pricing records",
-            inventoryData.Count, pricingData.Count);
+        _logger.LogInformation(
+            "Database seeded successfully with {InventoryCount} inventory records, {PricingCount} pricing records, and {AuditCount} audit entries",
+            inventoryData.Count,
+            pricingData.Count,
+            auditData.Count);
     }
 }

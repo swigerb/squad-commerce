@@ -9,6 +9,7 @@ using SquadCommerce.Contracts.A2UI;
 using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Contracts.Models;
 using SquadCommerce.Mcp.Data;
+using Microsoft.EntityFrameworkCore;
 using Xunit;
 
 namespace SquadCommerce.Integration.Tests.E2E;
@@ -45,10 +46,12 @@ public class CompetitorPriceDropScenarioTests
             validator,
             NullLogger<MarketIntelAgent>.Instance);
 
+        var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            auditRepo,
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Trigger full workflow: competitor drops price by 10%
@@ -229,5 +232,14 @@ public class CompetitorPriceDropScenarioTests
         var marketGrid = (MarketComparisonGridData)marketIntelResult.A2UIPayload!;
         marketGrid.Competitors.Should().NotBeEmpty();
         marketGrid.Competitors.All(c => c.Price > 0).Should().BeTrue("all competitor prices should be valid");
+    }
+
+    private static AuditRepository CreateInMemoryAuditRepository()
+    {
+        var options = new DbContextOptionsBuilder<SquadCommerceDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        var context = new SquadCommerceDbContext(options);
+        return new AuditRepository(context, NullLogger<AuditRepository>.Instance);
     }
 }

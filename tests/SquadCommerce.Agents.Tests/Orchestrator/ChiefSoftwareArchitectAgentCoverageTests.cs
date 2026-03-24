@@ -7,6 +7,7 @@ using SquadCommerce.Mcp.Data;
 using SquadCommerce.A2A;
 using SquadCommerce.A2A.Validation;
 using SquadCommerce.Contracts.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace SquadCommerce.Agents.Tests.Orchestrator;
 
@@ -28,11 +29,13 @@ public class ChiefSoftwareArchitectAgentCoverageTests
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
         var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var auditRepo = CreateInMemoryAuditRepository();
 
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            auditRepo,
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act
@@ -45,6 +48,8 @@ public class ChiefSoftwareArchitectAgentCoverageTests
         result.WorkflowDuration.Should().BeGreaterThan(TimeSpan.Zero);
         result.ExecutiveSummary.Should().Contain("SKU-1008");
         result.ErrorMessage.Should().BeNull();
+        result.AuditTrailData.Should().NotBeNull("audit trail should be generated");
+        result.PipelineData.Should().NotBeNull("pipeline visualization should be generated");
     }
 
     [Fact]
@@ -59,11 +64,13 @@ public class ChiefSoftwareArchitectAgentCoverageTests
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
         var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var auditRepo = CreateInMemoryAuditRepository();
 
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            auditRepo,
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act
@@ -90,11 +97,13 @@ public class ChiefSoftwareArchitectAgentCoverageTests
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
         var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var auditRepo = CreateInMemoryAuditRepository();
 
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            auditRepo,
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act
@@ -105,5 +114,14 @@ public class ChiefSoftwareArchitectAgentCoverageTests
         result.ExecutiveSummary.Should().Contain("SKU-1005");
         result.ExecutiveSummary.Should().NotBeEmpty();
         result.AgentResults.Should().HaveCount(3);
+    }
+
+    private static AuditRepository CreateInMemoryAuditRepository()
+    {
+        var options = new DbContextOptionsBuilder<SquadCommerceDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        var context = new SquadCommerceDbContext(options);
+        return new AuditRepository(context, NullLogger<AuditRepository>.Instance);
     }
 }

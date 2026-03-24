@@ -46,6 +46,90 @@ User Advocate and AG-UI Expert for squad-commerce. Responsible for Blazor fronte
 - Requires API endpoint at `/api/agui` for AG-UI streaming (not yet implemented)
 - Requires SignalR hub at `/hubs/state` for background updates (not yet implemented)
 
+### 2026-03-24: Decision Audit Trail & Pipeline Visualizer A2UI Components
+
+**What was done:**
+- **Created two showcase A2UI components** for Microsoft demo:
+  - `DecisionAuditTrail.razor` — Timeline-based audit log showing every action during analysis workflows
+  - `AgentPipelineVisualizer.razor` — Horizontal pipeline diagram with real-time stage progress
+  
+- **Component Features:**
+  - **DecisionAuditTrail**:
+    - Vertical timeline with top-to-bottom flow (newest first)
+    - Each entry shows: timestamp, agent name with emoji, action, protocol badge, duration, status indicator
+    - Expandable details: trace ID, affected SKUs/stores, decision outcomes, error messages
+    - Color-coded status borders (green=success, red=failed, yellow=warning)
+    - Session-based grouping with entry count summary
+    - Keyboard navigable with Tab/Enter for expand/collapse
+  - **AgentPipelineVisualizer**:
+    - Horizontal stage cards with animated status indicators
+    - Progress bar showing overall completion percentage
+    - Each stage displays: order, agent name, protocol, status (Pending/Running/Completed/Failed/Skipped)
+    - Animated connectors between stages with data flow visualization
+    - Stage details: duration, tools used, output payloads
+    - Pulsing animation for running stages
+    - Responsive layout (stacks vertically on narrow screens)
+  
+- **Updated A2UIRenderer** to dispatch new component types:
+  - Added case for "DecisionAuditTrail"
+  - Added case for "AgentPipelineVisualizer"
+  
+- **Data Contracts** (created by Satya in parallel):
+  - `DecisionAuditTrailData.cs` with `AuditEntry` records
+  - `AgentPipelineData.cs` with `PipelineStage` records
+  - All contracts use immutable records with required properties
+  - Includes optional fields for trace IDs, affected resources, error messages
+
+**Visual Design:**
+- **Purple theme** matching existing components (#b794f4 primary, #9f7aea secondary)
+- **Dark mode optimized** (#1a1a1a background, #2d2d2d cards, #e0e0e0 text)
+- **Protocol badges** color-coded (MCP=blue, A2A=green, AGUI=purple, Internal=gray)
+- **Smooth CSS animations** (no JavaScript):
+  - Pulse animation for running stages
+  - Shimmer effect on progress bars
+  - Flow animation on active connectors
+  - Fade-in for expanded details
+  - Hover effects with shadow and transform
+- **Print-friendly** styles for executive reports
+- **Accessibility**: ARIA labels, keyboard navigation, semantic HTML, color + icon for status
+
+**Technical Implementation:**
+- JSON deserialization from `JsonElement` with fallback to typed data
+- HashSet for tracking expanded entries in audit trail
+- LINQ for calculating progress percentages and filtering stages
+- TimeSpan formatting helpers for duration display
+- String matching for agent emoji assignment
+- CSS Grid for stage card layout
+- Flexbox for responsive header/stat layouts
+
+**Key Patterns:**
+- Component accepts `A2UIPayload` parameter (standard for all A2UI components)
+- Dual deserialization path: JsonElement → typed record OR direct typed data
+- Click handlers for interactive elements (expand/collapse, stage selection)
+- Status-based CSS class mapping for visual indicators
+- Relative time calculation from session start or generation time
+- Responsive breakpoints at 768px and 1200px
+
+**Build Status:** ✅ Clean build with 1 non-critical warning (CA2024 in AgUiStreamService)
+
+**Showcase Features:**
+- Enterprise-grade visual polish for Microsoft executives
+- Real-time workflow transparency with audit trail
+- Agent orchestration visibility with pipeline stages
+- Protocol interaction tracking (MCP, A2A, AGUI)
+- OpenTelemetry integration via trace IDs
+- Manager decision tracking with outcomes
+- Animated stage transitions showing data flow
+- Responsive design for mobile/tablet/desktop
+- Keyboard accessible for WCAG compliance
+
+**Next Steps:**
+- Agents must emit `DecisionAuditTrailData` and `AgentPipelineData` payloads
+- API team must wire up A2UIRenderer to agent responses
+- Integration testing with real workflow executions
+- Demo script creation showing audit trail + pipeline in action
+
+
 ### 2026-03-24: Phase 4 Full Frontend Implementation
 
 **What was done:**

@@ -26,6 +26,14 @@ build_property.EnableCodeStyleSeverity =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXEEyVUlSZW5kZXJlci5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/AgentPipelineVisualizer.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXEFnZW50UGlwZWxpbmVWaXN1YWxpemVyLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/DecisionAuditTrail.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXERlY2lzaW9uQXVkaXRUcmFpbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/MarketComparisonGrid.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXE1hcmtldENvbXBhcmlzb25HcmlkLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

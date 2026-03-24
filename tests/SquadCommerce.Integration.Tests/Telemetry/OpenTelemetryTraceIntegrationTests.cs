@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using SquadCommerce.Agents.Domain;
 using SquadCommerce.Agents.Orchestrator;
 using SquadCommerce.Mcp.Data;
+using Microsoft.EntityFrameworkCore;
 using SquadCommerce.A2A;
 using SquadCommerce.A2A.Validation;
 
@@ -125,10 +126,12 @@ public class OpenTelemetryTraceIntegrationTests
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
         var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
 
+        var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            auditRepo,
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Create parent activity and execute workflow
@@ -166,6 +169,15 @@ public class OpenTelemetryTraceIntegrationTests
         mcpSource.Name.Should().Be("SquadCommerce.Mcp");
         a2aSource.Name.Should().Be("SquadCommerce.A2A");
         aguiSource.Name.Should().Be("SquadCommerce.AgUi");
+    }
+
+    private static AuditRepository CreateInMemoryAuditRepository()
+    {
+        var options = new DbContextOptionsBuilder<SquadCommerceDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        var context = new SquadCommerceDbContext(options);
+        return new AuditRepository(context, NullLogger<AuditRepository>.Instance);
     }
 }
 

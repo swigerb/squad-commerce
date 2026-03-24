@@ -418,3 +418,89 @@ Lead developer for squad-commerce. Responsible for MAF agent orchestration, A2A 
 - Create Grafana dashboards for metric visualization
 - Validate E2E trace hierarchy in Aspire Dashboard
 
+
+### 2026-03-24: A2UI Expansion — Audit Trail & Pipeline Visualization (Satya Nadella)
+
+**What:** Implemented two new A2UI components for observability: Decision Audit Trail Viewer and Agent Pipeline Visualizer. Created full backend data layer with EF Core persistence and real-time tracking.
+
+**Components Created:**
+
+1. **DecisionAuditTrailData.cs** — A2UI payload for chronological audit trail
+   - DecisionAuditTrailData: SessionId, Entries[], GeneratedAt
+   - AuditEntry: Id, AgentName, Action, Protocol, Timestamp, Duration, Status, Details, TraceId, AffectedSkus/Stores, DecisionOutcome
+   - Captures every agent action from workflow initiation through human approval/rejection
+   - OpenTelemetry TraceId correlation for deep drill-down
+   - Decision outcomes track human approvals ("Approved", "Rejected", "Modified to \$24.99")
+
+2. **AgentPipelineData.cs** — A2UI payload for real-time pipeline visualization
+   - AgentPipelineData: SessionId, WorkflowName, Stages[], OverallStatus, TotalDuration, StartedAt, CompletedAt
+   - PipelineStage: Order, AgentName, StageName, Status, Protocol, Duration, StartedAt, CompletedAt, ToolsUsed[], OutputPayloads[], ErrorMessage
+   - Real-time status transitions: Pending → Running → Completed/Failed
+   - Shows MCP tools invoked, A2A protocols used, and A2UI payloads generated per stage
+
+3. **AuditEntryEntity.cs** — EF Core entity for SQLite persistence
+   - Fields: Id (GUID), SessionId, AgentName, Action, Protocol, Timestamp, DurationMs, Status, Details, TraceId, DecisionOutcome
+   - CSV storage for AffectedSkus and AffectedStores (denormalized for simplicity)
+   - Indexed on SessionId and Timestamp for fast retrieval
+
+4. **AuditRepository.cs** — Repository for audit trail persistence
+   - RecordAuditEntryAsync(sessionId, entry) — persists to SQLite
+   - GetAuditTrailAsync(sessionId) — retrieves all entries for a session
+   - GetRecentAuditEntriesAsync(count) — retrieves most recent entries across sessions
+   - Maps between AuditEntry contracts and AuditEntryEntity persistence models
+
+5. **ChiefSoftwareArchitectAgent updates:**
+   - Records audit entry at each workflow step (initiation, MarketIntel, Inventory, Pricing, Synthesis)
+   - Builds PipelineData showing real-time stage transitions
+   - Builds DecisionAuditTrailData from persisted audit entries
+   - OrchestratorResult now includes AuditTrailData and PipelineData properties
+   - Session IDs generated: session-{Guid} format
+
+6. **PricingEndpoints updates:**
+   - ApproveProposal, RejectProposal, ModifyProposal all record audit entries
+   - Captures human decision metadata (approvedBy, reason, modified prices)
+   - DecisionOutcome populated with approval/rejection/modification details
+
+7. **Database seeding:**
+   - DatabaseSeeder seeds 7 audit entries for demo session "session-demo-001"
+   - Demonstrates complete workflow: orchestrator start → MarketIntel A2A → Inventory MCP → Pricing MCP → synthesize → human review → pricing update
+   - Realistic durations: 50ms orchestrator overhead, 1250ms A2A call, 320ms MCP inventory, 450ms pricing calculation, 180s human review
+
+**Patterns Demonstrated:**
+- Audit trail for compliance and debugging
+- Real-time pipeline visualization for workflow transparency
+- Session-based grouping for multi-step workflows
+- OpenTelemetry trace correlation (TraceId stored in audit)
+- Human-in-the-loop decision tracking
+- EF Core persistence with in-memory testing support
+- CSV denormalization for simple arrays (skus/stores)
+- Dual A2UI payloads (audit + pipeline) in single orchestrator result
+
+**Database Schema:**
+- Added AuditEntries table with 12 columns
+- Indexes: SessionId (for fast session queries), Timestamp (for recent entries)
+- String limits: Id/SessionId/TraceId (50), AgentName (100), Action (200), Status (20), Details (1000)
+
+**DI Registration:**
+- AuditRepository registered as scoped in McpServerSetup
+- ChiefSoftwareArchitectAgent constructor updated to inject AuditRepository
+- All tests updated with CreateInMemoryAuditRepository() helper method
+- Test projects now reference Microsoft.EntityFrameworkCore.InMemory 10.0.5
+
+**Build & Test Results:**
+- ✅ Solution builds successfully (10 warnings, 0 errors)
+- ✅ All 160 tests pass (13 Web + 30 Mcp + 24 A2A + 35 Integration + 58 Agents)
+- ✅ SystemSmokeTests now includes AuditRepository in DI setup
+
+**Integration Points:**
+- Blazor A2UI components can now render DecisionAuditTrailData as timeline visualization
+- Pipeline visualizer can show live workflow progress with color-coded stages
+- Human decisions traceable from audit trail to OpenTelemetry traces
+- Supports multi-session analytics (cross-workflow insights)
+
+**Next Steps:**
+- Wire A2UI payloads to Blazor components for rendering
+- Add filtering/search to audit trail (by agent, protocol, status)
+- Implement audit trail export (CSV, JSON) for compliance reporting
+- Add pipeline visualization animations (stage transitions)
+

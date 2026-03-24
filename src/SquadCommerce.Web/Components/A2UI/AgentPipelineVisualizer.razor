@@ -1,0 +1,607 @@
+@using SquadCommerce.Contracts.A2UI
+@using System.Text.Json
+
+<div class="agent-pipeline-visualizer" role="region" aria-label="Agent Pipeline Visualizer">
+    <div class="component-header">
+        <h3>🔄 Agent Pipeline: @(_data?.WorkflowName ?? "Loading...")</h3>
+        @if (_data != null)
+        {
+            <div class="pipeline-stats">
+                <span class="stat-item">
+                    <span class="stat-label">Duration:</span>
+                    <span class="stat-value">@GetDuration()</span>
+                </span>
+                <span class="stat-item">
+                    <span class="stat-label">Status:</span>
+                    <span class="stat-value">@GetOverallStatus()</span>
+                </span>
+            </div>
+        }
+    </div>
+
+    @if (_data != null)
+    {
+        <div class="progress-section">
+            <div class="progress-label">
+                Overall Progress: @_data.Stages.Count(s => s.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase)) / @_data.Stages.Count stages
+            </div>
+            <div class="progress-bar-container" role="progressbar" 
+                 aria-valuenow="@GetProgressPercent()" 
+                 aria-valuemin="0" 
+                 aria-valuemax="100"
+                 aria-label="Pipeline progress">
+                <div class="progress-bar-fill" style="width: @GetProgressPercent()%"></div>
+            </div>
+            <div class="progress-percent">@GetProgressPercent()%</div>
+        </div>
+
+        <div class="pipeline-stages" role="list">
+            @for (int i = 0; i < _data.Stages.Count; i++)
+            {
+                var stage = _data.Stages[i];
+                var statusCss = GetStageCssClass(stage.Status);
+                var isLast = i == _data.Stages.Count - 1;
+                
+                <div class="stage-wrapper" role="listitem">
+                    <div class="stage-card @statusCss" 
+                         role="article" 
+                         aria-label="Stage @stage.Order: @stage.StageName - @stage.Status">
+                        
+                        <div class="stage-header">
+                            <div class="stage-number">@stage.Order</div>
+                            <div class="stage-title">
+                                <div class="stage-name">@stage.StageName</div>
+                                <div class="stage-agent">@stage.AgentName</div>
+                            </div>
+                        </div>
+
+                        <div class="stage-body">
+                            <div class="stage-badges">
+                                <span class="protocol-badge protocol-@stage.Protocol.ToLowerInvariant()" 
+                                      aria-label="Protocol: @stage.Protocol">
+                                    @stage.Protocol
+                                </span>
+                                <span class="status-badge status-@stage.Status.ToLowerInvariant()" 
+                                      aria-label="Status: @stage.Status">
+                                    @GetStatusIcon(stage.Status) @stage.Status
+                                </span>
+                            </div>
+
+                            @if (stage.Duration.HasValue)
+                            {
+                                <div class="stage-duration" aria-label="Duration: @FormatDuration(stage.Duration.Value)">
+                                    ⏱️ @FormatDuration(stage.Duration.Value)
+                                </div>
+                            }
+
+                            @if (stage.ToolsUsed?.Any() == true)
+                            {
+                                <div class="stage-tools">
+                                    <div class="tools-label">Tools:</div>
+                                    <div class="tools-list">
+                                        @foreach (var tool in stage.ToolsUsed)
+                                        {
+                                            <span class="tool-badge" aria-label="Tool: @tool">@tool</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+
+                            @if (stage.OutputPayloads?.Any() == true)
+                            {
+                                <div class="stage-outputs">
+                                    <div class="outputs-label">Outputs:</div>
+                                    <div class="outputs-list">
+                                        @foreach (var output in stage.OutputPayloads)
+                                        {
+                                            <span class="output-badge" aria-label="Output: @output">@output</span>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+
+                    @if (!isLast)
+                    {
+                        <div class="stage-connector @GetConnectorCssClass(stage, _data.Stages[i + 1])" 
+                             aria-hidden="true">
+                            <span class="connector-arrow">→</span>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">No pipeline data available</div>
+    }
+</div>
+
+<style>
+.agent-pipeline-visualizer {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 1.5rem;
+    color: #e0e0e0;
+}
+
+.component-header {
+    margin-bottom: 1.5rem;
+}
+
+.component-header h3 {
+    margin: 0 0 0.75rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #b794f4;
+}
+
+.pipeline-stats {
+    display: flex;
+    gap: 2rem;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.stat-label {
+    color: #a0a0a0;
+    font-weight: 500;
+}
+
+.stat-value {
+    color: #e0e0e0;
+    font-weight: 600;
+}
+
+.progress-section {
+    margin-bottom: 2rem;
+    padding: 1rem;
+    background: rgba(183, 148, 244, 0.1);
+    border-radius: 6px;
+}
+
+.progress-label {
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #b794f4;
+}
+
+.progress-bar-container {
+    position: relative;
+    height: 24px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    overflow: hidden;
+    border: 1px solid rgba(183, 148, 244, 0.3);
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #b794f4, #9f7aea);
+    border-radius: 12px;
+    transition: width 0.5s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    animation: shimmer 2s infinite;
+}
+
+@@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+.progress-percent {
+    text-align: center;
+    margin-top: 0.5rem;
+    font-weight: 600;
+    color: #e0e0e0;
+}
+
+.pipeline-stages {
+    display: flex;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 1rem;
+}
+
+.stage-wrapper {
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.stage-card {
+    width: 280px;
+    background: #2d2d2d;
+    border-radius: 8px;
+    padding: 1.25rem;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.stage-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 20px rgba(183, 148, 244, 0.3);
+}
+
+.stage-card.stage-pending {
+    border-color: #808080;
+    border-style: dashed;
+    opacity: 0.7;
+}
+
+.stage-card.stage-running {
+    border-color: #60a5fa;
+    animation: pulse 2s infinite;
+}
+
+@@keyframes pulse {
+    0%, 100% {
+        border-color: #60a5fa;
+        box-shadow: 0 0 0 0 rgba(96, 165, 250, 0.4);
+    }
+    50% {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 8px rgba(96, 165, 250, 0);
+    }
+}
+
+.stage-card.stage-completed {
+    border-color: #48bb78;
+}
+
+.stage-card.stage-failed {
+    border-color: #f56565;
+}
+
+.stage-card.stage-skipped {
+    border-color: #808080;
+    background: repeating-linear-gradient(
+        45deg,
+        #2d2d2d,
+        #2d2d2d 10px,
+        #333333 10px,
+        #333333 20px
+    );
+    opacity: 0.6;
+}
+
+.stage-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.stage-number {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #b794f4, #9f7aea);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: white;
+    flex-shrink: 0;
+}
+
+.stage-title {
+    flex: 1;
+}
+
+.stage-name {
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #e0e0e0;
+    margin-bottom: 0.25rem;
+}
+
+.stage-agent {
+    font-size: 0.9rem;
+    color: #a0a0a0;
+}
+
+.stage-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.stage-badges {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.protocol-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.protocol-mcp {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid #3b82f6;
+}
+
+.protocol-a2a {
+    background: rgba(72, 187, 120, 0.2);
+    color: #68d391;
+    border: 1px solid #48bb78;
+}
+
+.protocol-agui {
+    background: rgba(183, 148, 244, 0.2);
+    color: #b794f4;
+    border: 1px solid #9f7aea;
+}
+
+.protocol-internal {
+    background: rgba(160, 160, 160, 0.2);
+    color: #a0a0a0;
+    border: 1px solid #808080;
+}
+
+.status-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.status-pending {
+    background: rgba(160, 160, 160, 0.2);
+    color: #a0a0a0;
+}
+
+.status-running {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+}
+
+.status-completed {
+    background: rgba(72, 187, 120, 0.2);
+    color: #68d391;
+}
+
+.status-failed {
+    background: rgba(245, 101, 101, 0.2);
+    color: #fc8181;
+}
+
+.status-skipped {
+    background: rgba(160, 160, 160, 0.2);
+    color: #a0a0a0;
+}
+
+.stage-duration {
+    color: #a0a0a0;
+    font-size: 0.9rem;
+    font-family: 'Consolas', monospace;
+}
+
+.stage-tools,
+.stage-outputs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.tools-label,
+.outputs-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #b794f4;
+}
+
+.tools-list,
+.outputs-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tool-badge,
+.output-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stage-connector {
+    width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #808080;
+    font-size: 2rem;
+    transition: all 0.3s ease;
+}
+
+.stage-connector.connector-active {
+    color: #b794f4;
+    animation: flow 1.5s infinite;
+}
+
+@@keyframes flow {
+    0%, 100% {
+        transform: translateX(0);
+        opacity: 0.5;
+    }
+    50% {
+        transform: translateX(10px);
+        opacity: 1;
+    }
+}
+
+.connector-arrow {
+    display: inline-block;
+}
+
+@@media (max-width: 1200px) {
+    .pipeline-stages {
+        flex-direction: column;
+        gap: 1rem;
+    }
+    
+    .stage-wrapper {
+        flex-direction: column;
+    }
+    
+    .stage-card {
+        width: 100%;
+    }
+    
+    .stage-connector {
+        width: auto;
+        height: 40px;
+        transform: rotate(90deg);
+    }
+}
+
+@@media print {
+    .agent-pipeline-visualizer {
+        background: white;
+        color: black;
+    }
+    
+    .stage-card {
+        background: #f5f5f5;
+        page-break-inside: avoid;
+    }
+    
+    .stage-card.stage-running {
+        animation: none;
+    }
+}
+</style>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Payload { get; set; }
+
+    private AgentPipelineData? _data;
+
+    protected override void OnParametersSet()
+    {
+        if (Payload?.Data != null)
+        {
+            if (Payload.Data is JsonElement jsonElement)
+            {
+                _data = JsonSerializer.Deserialize<AgentPipelineData>(
+                    jsonElement.GetRawText(),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            else if (Payload.Data is AgentPipelineData typedData)
+            {
+                _data = typedData;
+            }
+        }
+    }
+
+    private string GetDuration()
+    {
+        if (_data == null)
+            return "0ms";
+        
+        var totalMs = (int)_data.TotalDuration.TotalMilliseconds;
+        if (totalMs < 1000)
+            return $"{totalMs}ms";
+        
+        return $"{_data.TotalDuration.TotalSeconds:F1}s";
+    }
+
+    private string GetOverallStatus()
+    {
+        if (_data == null)
+            return "Unknown";
+        
+        return _data.OverallStatus switch
+        {
+            "Failed" => "Failed ❌",
+            "Running" => "Running 🔄",
+            "Completed" => "Completed ✅",
+            _ => "In Progress ⏳"
+        };
+    }
+
+    private int GetProgressPercent()
+    {
+        if (_data == null || _data.Stages.Count == 0)
+            return 0;
+        
+        var completedCount = _data.Stages.Count(s => s.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase));
+        return (int)((double)completedCount / _data.Stages.Count * 100);
+    }
+
+    private string GetStageCssClass(string status) => status.ToLowerInvariant() switch
+    {
+        "pending" => "stage-pending",
+        "running" => "stage-running",
+        "completed" => "stage-completed",
+        "failed" => "stage-failed",
+        "skipped" => "stage-skipped",
+        _ => "stage-pending"
+    };
+
+    private string GetStatusIcon(string status) => status.ToLowerInvariant() switch
+    {
+        "pending" => "⏳",
+        "running" => "🔄",
+        "completed" => "✅",
+        "failed" => "❌",
+        "skipped" => "⏭️",
+        _ => "⚪"
+    };
+
+    private string GetConnectorCssClass(PipelineStage current, PipelineStage next)
+    {
+        if (current.Status.Equals("Completed", StringComparison.OrdinalIgnoreCase) &&
+            next.Status.Equals("Running", StringComparison.OrdinalIgnoreCase))
+        {
+            return "connector-active";
+        }
+        return string.Empty;
+    }
+
+    private string FormatDuration(TimeSpan duration)
+    {
+        if (duration.TotalMilliseconds < 1000)
+            return $"{(int)duration.TotalMilliseconds}ms";
+        return $"{duration.TotalSeconds:F1}s";
+    }
+}

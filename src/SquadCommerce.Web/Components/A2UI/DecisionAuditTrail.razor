@@ -1,0 +1,475 @@
+@using SquadCommerce.Contracts.A2UI
+@using System.Text.Json
+
+<div class="decision-audit-trail" role="region" aria-label="Decision Audit Trail">
+    <div class="component-header">
+        <h3>📜 Decision Audit Trail</h3>
+        @if (_data != null)
+        {
+            <div class="summary-header">
+                <span class="workflow-name">Session: @_data.SessionId</span>
+                <span class="summary-stats">
+                    @_data.Entries.Count actions | Generated @GetRelativeGeneratedTime()
+                </span>
+            </div>
+        }
+    </div>
+
+    @if (_data?.Entries != null && _data.Entries.Any())
+    {
+        <div class="timeline-container">
+            @foreach (var entry in _data.Entries)
+            {
+                var statusCss = GetStatusCssClass(entry.Status);
+                var isExpanded = _expandedEntries.Contains(entry.Id);
+                
+                <div class="timeline-entry @statusCss" role="article" aria-label="@entry.Action">
+                    <div class="timeline-dot" aria-hidden="true"></div>
+                    <div class="timeline-content">
+                        <div class="entry-header" @onclick="() => ToggleExpanded(entry.Id)">
+                            <div class="entry-header-left">
+                                <span class="entry-timestamp" aria-label="Timestamp: @entry.Timestamp.ToString("HH:mm:ss")">
+                                    @entry.Timestamp.ToString("HH:mm:ss")
+                                </span>
+                                <span class="entry-agent" aria-label="Agent: @entry.AgentName">
+                                    @GetAgentEmoji(entry.AgentName) @entry.AgentName
+                                </span>
+                            </div>
+                            <div class="entry-header-right">
+                                <span class="protocol-badge protocol-@entry.Protocol.ToLowerInvariant()" aria-label="Protocol: @entry.Protocol">
+                                    @entry.Protocol
+                                </span>
+                                <span class="duration-badge" aria-label="Duration: @FormatDuration(entry.Duration)">
+                                    @FormatDuration(entry.Duration)
+                                </span>
+                                <span class="status-indicator" aria-label="Status: @entry.Status">
+                                    @GetStatusIcon(entry.Status)
+                                </span>
+                                <span class="expand-toggle" aria-label="@(isExpanded ? "Collapse" : "Expand") details">
+                                    @(isExpanded ? "▼" : "▶")
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="entry-action">
+                            @entry.Action
+                        </div>
+
+                        @if (isExpanded)
+                        {
+                            <div class="entry-details" role="region" aria-label="Entry details">
+                                @if (!string.IsNullOrEmpty(entry.TraceId))
+                                {
+                                    <div class="detail-row">
+                                        <span class="detail-label">Trace ID:</span>
+                                        <code class="detail-value">@entry.TraceId</code>
+                                    </div>
+                                }
+                                @if (entry.AffectedSkus?.Any() == true)
+                                {
+                                    <div class="detail-row">
+                                        <span class="detail-label">Affected SKUs:</span>
+                                        <span class="detail-value">@string.Join(", ", entry.AffectedSkus)</span>
+                                    </div>
+                                }
+                                @if (entry.AffectedStores?.Any() == true)
+                                {
+                                    <div class="detail-row">
+                                        <span class="detail-label">Affected Stores:</span>
+                                        <span class="detail-value">@string.Join(", ", entry.AffectedStores)</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(entry.DecisionOutcome))
+                                {
+                                    <div class="detail-row">
+                                        <span class="detail-label">Decision Outcome:</span>
+                                        <span class="detail-value">@entry.DecisionOutcome</span>
+                                    </div>
+                                }
+                                @if (!string.IsNullOrEmpty(entry.Details))
+                                {
+                                    <div class="detail-row">
+                                        <span class="detail-label">Details:</span>
+                                        <span class="detail-value">@entry.Details</span>
+                                    </div>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">No audit trail entries available</div>
+    }
+</div>
+
+<style>
+.decision-audit-trail {
+    background: #1a1a1a;
+    border-radius: 8px;
+    padding: 1.5rem;
+    color: #e0e0e0;
+}
+
+.component-header h3 {
+    margin: 0 0 1rem 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #b794f4;
+}
+
+.summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(183, 148, 244, 0.1);
+    border-radius: 6px;
+    margin-bottom: 1.5rem;
+}
+
+.workflow-name {
+    font-weight: 600;
+    color: #b794f4;
+}
+
+.summary-stats {
+    color: #a0a0a0;
+    font-size: 0.9rem;
+}
+
+.timeline-container {
+    position: relative;
+    padding-left: 2rem;
+}
+
+.timeline-container::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #b794f4, #6b46c1);
+}
+
+.timeline-entry {
+    position: relative;
+    margin-bottom: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.timeline-entry:last-child {
+    margin-bottom: 0;
+}
+
+.timeline-dot {
+    position: absolute;
+    left: -1.5rem;
+    top: 0.75rem;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #b794f4;
+    border: 3px solid #1a1a1a;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.timeline-entry.status-success {
+    border-left: 3px solid #48bb78;
+}
+
+.timeline-entry.status-success .timeline-dot {
+    background: #48bb78;
+}
+
+.timeline-entry.status-failed {
+    border-left: 3px solid #f56565;
+}
+
+.timeline-entry.status-failed .timeline-dot {
+    background: #f56565;
+}
+
+.timeline-entry.status-warning {
+    border-left: 3px solid #ed8936;
+}
+
+.timeline-entry.status-warning .timeline-dot {
+    background: #ed8936;
+}
+
+.timeline-content {
+    background: #2d2d2d;
+    border-radius: 6px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.timeline-content:hover {
+    background: #333333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(183, 148, 244, 0.2);
+}
+
+.entry-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+
+.entry-header-left,
+.entry-header-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.entry-timestamp {
+    color: #a0a0a0;
+    font-size: 0.85rem;
+    font-family: 'Consolas', monospace;
+}
+
+.entry-agent {
+    font-weight: 600;
+    color: #e0e0e0;
+    font-size: 0.95rem;
+}
+
+.protocol-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.protocol-mcp {
+    background: rgba(59, 130, 246, 0.2);
+    color: #60a5fa;
+    border: 1px solid #3b82f6;
+}
+
+.protocol-a2a {
+    background: rgba(72, 187, 120, 0.2);
+    color: #68d391;
+    border: 1px solid #48bb78;
+}
+
+.protocol-agui {
+    background: rgba(183, 148, 244, 0.2);
+    color: #b794f4;
+    border: 1px solid #9f7aea;
+}
+
+.protocol-internal {
+    background: rgba(160, 160, 160, 0.2);
+    color: #a0a0a0;
+    border: 1px solid #808080;
+}
+
+.duration-badge {
+    padding: 0.25rem 0.75rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    background: rgba(255, 255, 255, 0.1);
+    color: #e0e0e0;
+    font-family: 'Consolas', monospace;
+}
+
+.status-indicator {
+    font-size: 1.2rem;
+}
+
+.expand-toggle {
+    color: #b794f4;
+    font-size: 0.8rem;
+}
+
+.entry-action {
+    color: #e0e0e0;
+    line-height: 1.5;
+    padding-left: 0.5rem;
+}
+
+.entry-details {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(183, 148, 244, 0.2);
+    animation: fadeIn 0.3s ease;
+}
+
+@@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.detail-row {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.detail-row:last-child {
+    margin-bottom: 0;
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #b794f4;
+    min-width: 140px;
+}
+
+.detail-value {
+    color: #e0e0e0;
+}
+
+.detail-value code {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-family: 'Consolas', monospace;
+    font-size: 0.85rem;
+    color: #68d391;
+}
+
+.error-message .detail-value {
+    color: #fc8181;
+}
+
+@@media (max-width: 768px) {
+    .timeline-container {
+        padding-left: 1.5rem;
+    }
+    
+    .entry-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+    
+    .summary-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+    
+    .detail-row {
+        flex-direction: column;
+        gap: 0.25rem;
+    }
+}
+
+@@media print {
+    .decision-audit-trail {
+        background: white;
+        color: black;
+    }
+    
+    .timeline-content {
+        background: #f5f5f5;
+    }
+    
+    .entry-header {
+        page-break-inside: avoid;
+    }
+}
+</style>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Payload { get; set; }
+
+    private DecisionAuditTrailData? _data;
+    private HashSet<string> _expandedEntries = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Payload?.Data != null)
+        {
+            if (Payload.Data is JsonElement jsonElement)
+            {
+                _data = JsonSerializer.Deserialize<DecisionAuditTrailData>(
+                    jsonElement.GetRawText(),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            else if (Payload.Data is DecisionAuditTrailData typedData)
+            {
+                _data = typedData;
+            }
+        }
+    }
+
+    private void ToggleExpanded(string entryId)
+    {
+        if (_expandedEntries.Contains(entryId))
+        {
+            _expandedEntries.Remove(entryId);
+        }
+        else
+        {
+            _expandedEntries.Add(entryId);
+        }
+    }
+
+    private string GetRelativeGeneratedTime()
+    {
+        if (_data == null)
+            return "now";
+        
+        var diff = DateTimeOffset.Now - _data.GeneratedAt;
+        if (diff.TotalSeconds < 60)
+            return $"{(int)diff.TotalSeconds}s ago";
+        if (diff.TotalMinutes < 60)
+            return $"{(int)diff.TotalMinutes}m ago";
+        return _data.GeneratedAt.ToString("g");
+    }
+
+    private string FormatDuration(TimeSpan duration)
+    {
+        if (duration.TotalMilliseconds < 1000)
+            return $"{(int)duration.TotalMilliseconds}ms";
+        return $"{duration.TotalSeconds:F1}s";
+    }
+
+    private string GetAgentEmoji(string agentName) => agentName.ToLowerInvariant() switch
+    {
+        var name when name.Contains("marketintel") => "🔧",
+        var name when name.Contains("inventory") => "📦",
+        var name when name.Contains("pricing") => "💰",
+        var name when name.Contains("orchestrator") || name.Contains("chief") => "🏗️",
+        _ => "🤖"
+    };
+
+    private string GetStatusIcon(string status) => status.ToLowerInvariant() switch
+    {
+        "success" => "✅",
+        "failed" => "❌",
+        "warning" => "⚠️",
+        "pending" => "⏳",
+        _ => "⚪"
+    };
+
+    private string GetStatusCssClass(string status) => status.ToLowerInvariant() switch
+    {
+        "success" => "status-success",
+        "failed" => "status-failed",
+        "warning" => "status-warning",
+        _ => "status-default"
+    };
+}

@@ -27,6 +27,9 @@ public static class McpServerSetup
         // Register database seeder
         services.AddScoped<DatabaseSeeder>();
 
+        // Register audit repository
+        services.AddScoped<AuditRepository>();
+
         // Register repositories with Contracts interfaces (SQLite via EF Core)
         services.AddScoped<IInventoryRepository, SqliteInventoryRepository>();
         services.AddScoped<IPricingRepository, SqlitePricingRepository>();
