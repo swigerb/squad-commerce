@@ -97,3 +97,4 @@ C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.AppHost\obj\Debug\
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.AppHost\obj\Debug\net10.0\SquadCommerce.AppHost.pdb
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.AppHost\obj\Debug\net10.0\SquadCommerce.AppHost.genruntimeconfig.cache
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.AppHost\obj\Debug\net10.0\ref\SquadCommerce.AppHost.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.AppHost\obj\Debug\net10.0\Aspire\references\SquadCommerce_Web.ProjectMetadata.g.cs

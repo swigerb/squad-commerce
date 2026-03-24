@@ -101,3 +101,15 @@ C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\obj
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\obj\Debug\net10.0\SquadCommerce.Agents.Tests.pdb
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\obj\Debug\net10.0\SquadCommerce.Agents.Tests.genruntimeconfig.cache
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\obj\Debug\net10.0\ref\SquadCommerce.Agents.Tests.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\.msCoverageSourceRootsMapping_SquadCommerce.Agents.Tests
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\CoverletSourceRootsMapping_SquadCommerce.Agents.Tests
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\SquadCommerce.A2A.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\SquadCommerce.Agents.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\SquadCommerce.Contracts.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\SquadCommerce.Mcp.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\SquadCommerce.Agents.pdb
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\SquadCommerce.Contracts.pdb
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\SquadCommerce.A2A.pdb
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Agents.Tests\bin\Debug\net10.0\SquadCommerce.Mcp.pdb

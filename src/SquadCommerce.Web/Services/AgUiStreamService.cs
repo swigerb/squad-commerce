@@ -7,10 +7,12 @@ namespace SquadCommerce.Web.Services;
 public class AgUiStreamService
 {
     private readonly HttpClient _httpClient;
+    private readonly ILogger<AgUiStreamService> _logger;
 
-    public AgUiStreamService(HttpClient httpClient)
+    public AgUiStreamService(HttpClient httpClient, ILogger<AgUiStreamService> logger)
     {
         _httpClient = httpClient;
+        _logger = logger;
     }
 
     public async IAsyncEnumerable<StreamChunk> StreamAgUiAsync(
@@ -22,71 +24,122 @@ public class AgUiStreamService
             Content = JsonContent.Create(new { message = userMessage })
         };
 
-        using var response = await _httpClient.SendAsync(
-            request,
-            HttpCompletionOption.ResponseHeadersRead,
-            cancellationToken);
+        HttpResponseMessage? response = null;
+        Stream? stream = null;
+        StreamReader? reader = null;
 
-        response.EnsureSuccessStatusCode();
-
-        using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-        using var reader = new StreamReader(stream);
-
-        while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+        try
         {
-            var line = await reader.ReadLineAsync(cancellationToken);
+            response = await _httpClient.SendAsync(
+                request,
+                HttpCompletionOption.ResponseHeadersRead,
+                cancellationToken);
 
-            if (string.IsNullOrWhiteSpace(line))
-                continue;
+            response.EnsureSuccessStatusCode();
 
-            if (line.StartsWith("data: "))
+            stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            reader = new StreamReader(stream);
+
+            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
             {
-                var jsonData = line["data: ".Length..];
+                var line = await reader.ReadLineAsync(cancellationToken);
 
-                if (jsonData == "[DONE]")
+                if (string.IsNullOrWhiteSpace(line))
+                    continue;
+
+                // SSE format: "data: {json}"
+                if (line.StartsWith("data: "))
                 {
-                    yield break;
-                }
+                    var jsonData = line["data: ".Length..];
 
-                StreamChunk? chunk = null;
-
-                try
-                {
-                    var jsonDoc = JsonDocument.Parse(jsonData);
-                    var root = jsonDoc.RootElement;
-
-                    if (root.TryGetProperty("type", out var typeProperty))
+                    if (jsonData == "[DONE]")
                     {
-                        var type = typeProperty.GetString();
+                        _logger.LogInformation("Stream completed with [DONE] marker");
+                        yield break;
+                    }
 
-                        if (type == "a2ui" && root.TryGetProperty("payload", out var payloadProperty))
-                        {
-                            var payload = JsonSerializer.Deserialize<A2UIPayload>(
-                                payloadProperty.GetRawText(),
-                                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                    StreamChunk? chunk = null;
 
-                            chunk = new StreamChunk(IsA2UI: true, Payload: payload);
-                        }
-                        else if (type == "text" && root.TryGetProperty("text", out var textProperty))
+                    try
+                    {
+                        var jsonDoc = JsonDocument.Parse(jsonData);
+                        var root = jsonDoc.RootElement;
+
+                        if (root.TryGetProperty("type", out var typeProperty))
                         {
-                            chunk = new StreamChunk(Text: textProperty.GetString() ?? string.Empty);
-                        }
-                        else if (type == "status" && root.TryGetProperty("status", out var statusProperty))
-                        {
-                            chunk = new StreamChunk(Status: statusProperty.GetString() ?? string.Empty);
+                            var type = typeProperty.GetString();
+
+                            switch (type)
+                            {
+                                case "a2ui":
+                                    if (root.TryGetProperty("payload", out var payloadProperty))
+                                    {
+                                        var payload = JsonSerializer.Deserialize<A2UIPayload>(
+                                            payloadProperty.GetRawText(),
+                                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+                                        if (payload != null)
+                                        {
+                                            _logger.LogInformation("Received A2UI payload: {RenderAs}", payload.RenderAs);
+                                            chunk = new StreamChunk(IsA2UI: true, Payload: payload);
+                                        }
+                                    }
+                                    break;
+
+                                case "text_delta":
+                                case "text":
+                                    if (root.TryGetProperty("text", out var textProperty))
+                                    {
+                                        var text = textProperty.GetString() ?? string.Empty;
+                                        chunk = new StreamChunk(Text: text);
+                                    }
+                                    break;
+
+                                case "status_update":
+                                case "status":
+                                    if (root.TryGetProperty("status", out var statusProperty))
+                                    {
+                                        var status = statusProperty.GetString() ?? string.Empty;
+                                        _logger.LogInformation("Status update: {Status}", status);
+                                        chunk = new StreamChunk(Status: status);
+                                    }
+                                    break;
+
+                                case "tool_call":
+                                    // Future: Handle tool call visualization
+                                    _logger.LogDebug("Received tool_call event (not yet implemented)");
+                                    break;
+
+                                case "done":
+                                    _logger.LogInformation("Stream completed with done event");
+                                    yield break;
+
+                                default:
+                                    _logger.LogWarning("Unknown event type: {Type}", type);
+                                    break;
+                            }
                         }
                     }
-                }
-                catch (JsonException)
-                {
-                    continue;
-                }
+                    catch (JsonException ex)
+                    {
+                        _logger.LogWarning(ex, "Failed to parse SSE JSON: {Data}", jsonData);
+                        continue;
+                    }
 
-                if (chunk != null)
-                {
-                    yield return chunk;
+                    if (chunk != null)
+                    {
+                        yield return chunk;
+                    }
                 }
             }
+
+            _logger.LogInformation("Stream ended normally");
+        }
+        finally
+        {
+            reader?.Dispose();
+            stream?.Dispose();
+            response?.Dispose();
         }
     }
 

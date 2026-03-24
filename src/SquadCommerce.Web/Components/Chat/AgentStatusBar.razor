@@ -1,83 +1,264 @@
 @inject Services.SignalRStateService StateService
+@implements IDisposable
 
 <div class="agent-status-bar" role="status" aria-live="polite" aria-atomic="true">
-    @if (!string.IsNullOrEmpty(_currentStatus))
-    {
-        <div class="status-message">
-            <span class="status-icon" aria-hidden="true">⚙️</span>
-            <span class="status-text">@_currentStatus</span>
+    <div class="status-section">
+        @if (!string.IsNullOrEmpty(_currentStatus))
+        {
+            <div class="status-message @_statusLevel">
+                <span class="status-icon-spinner" aria-hidden="true"></span>
+                <span class="status-text">@_currentStatus</span>
+            </div>
+        }
+        else
+        {
+            <div class="status-message idle">
+                <span class="status-icon">💤</span>
+                <span class="status-text">Agents idle</span>
+            </div>
+        }
+    </div>
+
+    <div class="connection-section">
+        <div class="connection-indicator @_connectionState" title="SignalR Connection: @_connectionState">
+            <span class="connection-dot"></span>
+            <span class="connection-text">@GetConnectionText()</span>
         </div>
-    }
+    </div>
 
     @if (_urgencyBadges.Any())
     {
-        <div class="urgency-badges">
-            @foreach (var badge in _urgencyBadges)
+        <div class="urgency-section">
+            @foreach (var badge in _urgencyBadges.OrderByDescending(b => b.Level))
             {
-                <span class="badge @GetBadgeCssClass(badge.Level)" 
+                <span class="urgency-badge urgency-@badge.Level.ToLowerInvariant() @GetPulseClass(badge)" 
                       role="alert"
                       aria-label="@badge.Level urgency: @badge.Message">
                     <span class="badge-icon">@GetBadgeIcon(badge.Level)</span>
-                    @badge.Message
+                    <span class="badge-text">@badge.Message</span>
+                    <span class="badge-close" @onclick="() => DismissBadge(badge)" aria-label="Dismiss">×</span>
                 </span>
             }
+        </div>
+    }
+
+    @if (_pipelineProgress != null)
+    {
+        <div class="pipeline-section">
+            <div class="pipeline-label">Pipeline Progress:</div>
+            <div class="pipeline-steps">
+                @foreach (var step in _pipelineProgress.Steps)
+                {
+                    <div class="pipeline-step @step.Status" title="@step.Name">
+                        @GetStepIcon(step.Status)
+                        <span class="step-name">@step.Name</span>
+                    </div>
+                }
+            </div>
+            <div class="pipeline-progress-bar">
+                <div class="progress">
+                    <div class="progress-bar @GetProgressClass()" 
+                         role="progressbar" 
+                         style="width: @_pipelineProgress.PercentComplete%"
+                         aria-valuenow="@_pipelineProgress.PercentComplete" 
+                         aria-valuemin="0" 
+                         aria-valuemax="100">
+                        @_pipelineProgress.PercentComplete%
+                    </div>
+                </div>
+            </div>
         </div>
     }
 </div>
 
 @code {
     private string _currentStatus = string.Empty;
+    private string _statusLevel = "info";
     private List<UrgencyBadge> _urgencyBadges = new();
+    private PipelineProgress? _pipelineProgress;
+    private string _connectionState = "disconnected";
+    private System.Threading.Timer? _badgeCleanupTimer;
 
-    private record UrgencyBadge(string Level, string Message, DateTime Timestamp);
+    private record UrgencyBadge(string Level, string Message, DateTime Timestamp, Guid Id);
+    
+    private record PipelineProgress(
+        List<PipelineStep> Steps,
+        int PercentComplete
+    );
+
+    private record PipelineStep(string Name, string Status);
 
     protected override async Task OnInitializedAsync()
     {
         StateService.OnStatusUpdate += HandleStatusUpdate;
         StateService.OnUrgencyBadge += HandleUrgencyBadge;
 
-        await StateService.StartAsync();
+        try
+        {
+            await StateService.StartAsync();
+            _connectionState = "connected";
+        }
+        catch
+        {
+            _connectionState = "error";
+        }
+
+        _badgeCleanupTimer = new System.Threading.Timer(
+            _ => CleanupOldBadges(),
+            null,
+            TimeSpan.FromSeconds(5),
+            TimeSpan.FromSeconds(5)
+        );
+
         await base.OnInitializedAsync();
     }
 
     private void HandleStatusUpdate(string status)
     {
         _currentStatus = status;
+        
+        _statusLevel = status.ToLowerInvariant() switch
+        {
+            var s when s.Contains("error") || s.Contains("failed") => "error",
+            var s when s.Contains("warning") => "warning",
+            var s when s.Contains("success") || s.Contains("complete") => "success",
+            _ => "info"
+        };
+
+        ParsePipelineProgress(status);
+
         InvokeAsync(StateHasChanged);
     }
 
     private void HandleUrgencyBadge(string level, string message)
     {
-        _urgencyBadges.Add(new UrgencyBadge(level, message, DateTime.Now));
-
-        Task.Delay(5000).ContinueWith(_ =>
-        {
-            _urgencyBadges.RemoveAll(b => (DateTime.Now - b.Timestamp).TotalSeconds > 5);
-            InvokeAsync(StateHasChanged);
-        });
+        var badge = new UrgencyBadge(level, message, DateTime.Now, Guid.NewGuid());
+        _urgencyBadges.Add(badge);
 
         InvokeAsync(StateHasChanged);
     }
 
-    private string GetBadgeCssClass(string level) => level.ToLowerInvariant() switch
+    private void DismissBadge(UrgencyBadge badge)
     {
-        "high" => "badge-danger",
-        "medium" => "badge-warning",
-        "low" => "badge-info",
-        _ => "badge-secondary"
+        _urgencyBadges.Remove(badge);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void CleanupOldBadges()
+    {
+        var cutoff = DateTime.Now.AddSeconds(-30);
+        var removed = _urgencyBadges.RemoveAll(b => b.Timestamp < cutoff);
+        if (removed > 0)
+        {
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void ParsePipelineProgress(string status)
+    {
+        var lowerStatus = status.ToLowerInvariant();
+        
+        if (lowerStatus.Contains("querying") || lowerStatus.Contains("analyzing") || lowerStatus.Contains("calculating"))
+        {
+            _pipelineProgress = new PipelineProgress(
+                new List<PipelineStep>
+                {
+                    new("Receive Request", "completed"),
+                    new("Query Data", "in-progress"),
+                    new("Analyze", "pending"),
+                    new("Generate Response", "pending")
+                },
+                25
+            );
+        }
+        else if (lowerStatus.Contains("verified") || lowerStatus.Contains("retrieved"))
+        {
+            _pipelineProgress = new PipelineProgress(
+                new List<PipelineStep>
+                {
+                    new("Receive Request", "completed"),
+                    new("Query Data", "completed"),
+                    new("Analyze", "in-progress"),
+                    new("Generate Response", "pending")
+                },
+                50
+            );
+        }
+        else if (lowerStatus.Contains("calculated") || lowerStatus.Contains("generated"))
+        {
+            _pipelineProgress = new PipelineProgress(
+                new List<PipelineStep>
+                {
+                    new("Receive Request", "completed"),
+                    new("Query Data", "completed"),
+                    new("Analyze", "completed"),
+                    new("Generate Response", "in-progress")
+                },
+                75
+            );
+        }
+        else if (lowerStatus.Contains("complete") || lowerStatus.Contains("done"))
+        {
+            _pipelineProgress = new PipelineProgress(
+                new List<PipelineStep>
+                {
+                    new("Receive Request", "completed"),
+                    new("Query Data", "completed"),
+                    new("Analyze", "completed"),
+                    new("Generate Response", "completed")
+                },
+                100
+            );
+
+            Task.Delay(3000).ContinueWith(_ =>
+            {
+                _pipelineProgress = null;
+                InvokeAsync(StateHasChanged);
+            });
+        }
+    }
+
+    private string GetConnectionText() => _connectionState switch
+    {
+        "connected" => "Live",
+        "connecting" => "Connecting...",
+        "reconnecting" => "Reconnecting...",
+        "error" => "Error",
+        _ => "Disconnected"
     };
 
     private string GetBadgeIcon(string level) => level.ToLowerInvariant() switch
     {
-        "high" => "🔴",
+        "critical" => "🔴",
+        "high" => "🟠",
         "medium" => "🟡",
         "low" => "🔵",
         _ => "⚪"
+    };
+
+    private string GetPulseClass(UrgencyBadge badge) =>
+        badge.Level.ToLowerInvariant() == "critical" ? "pulse" : string.Empty;
+
+    private string GetStepIcon(string status) => status switch
+    {
+        "completed" => "✅",
+        "in-progress" => "⏳",
+        "error" => "❌",
+        _ => "⭕"
+    };
+
+    private string GetProgressClass() => _statusLevel switch
+    {
+        "error" => "bg-danger",
+        "warning" => "bg-warning",
+        "success" => "bg-success",
+        _ => "bg-info"
     };
 
     public void Dispose()
     {
         StateService.OnStatusUpdate -= HandleStatusUpdate;
         StateService.OnUrgencyBadge -= HandleUrgencyBadge;
+        _badgeCleanupTimer?.Dispose();
     }
 }

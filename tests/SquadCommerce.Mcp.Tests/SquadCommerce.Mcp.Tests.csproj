@@ -20,4 +20,9 @@
     <Using Include="Xunit" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\SquadCommerce.Mcp\SquadCommerce.Mcp.csproj" />
+    <ProjectReference Include="..\..\src\SquadCommerce.Contracts\SquadCommerce.Contracts.csproj" />
+  </ItemGroup>
+
 </Project>

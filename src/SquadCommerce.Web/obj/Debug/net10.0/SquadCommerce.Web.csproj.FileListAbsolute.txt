@@ -30,7 +30,6 @@ C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net1
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\scopedcss\Components\Layout\ReconnectModal.razor.rz.scp.css
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\scopedcss\bundle\SquadCommerce.Web.styles.css
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\scopedcss\projectbundle\SquadCommerce.Web.bundle.scp.css
-C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\compressed\2if2sp36w0-{0}-khy4lop6wu-khy4lop6wu.gz
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\compressed\3tgud5icyx-{0}-bqjiyaj88i-bqjiyaj88i.gz
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\compressed\3znhnj2c6w-{0}-c2jlpeoesf-c2jlpeoesf.gz
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\compressed\rk7fwuz7lv-{0}-erw9l3u2r3-erw9l3u2r3.gz
@@ -91,3 +90,4 @@ C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net1
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\SquadCommerce.Web.pdb
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\SquadCommerce.Web.genruntimeconfig.cache
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\ref\SquadCommerce.Web.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\compressed\2if2sp36w0-{0}-rmqym3bj3z-rmqym3bj3z.gz

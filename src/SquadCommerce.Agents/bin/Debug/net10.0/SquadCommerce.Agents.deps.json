@@ -10,7 +10,9 @@
         "dependencies": {
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
-          "SquadCommerce.Contracts": "1.0.0"
+          "SquadCommerce.A2A": "1.0.0",
+          "SquadCommerce.Contracts": "1.0.0",
+          "SquadCommerce.Mcp": "1.0.0"
         },
         "runtime": {
           "SquadCommerce.Agents.dll": {}
@@ -35,9 +37,34 @@
           }
         }
       },
+      "SquadCommerce.A2A/1.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "SquadCommerce.Contracts": "1.0.0"
+        },
+        "runtime": {
+          "SquadCommerce.A2A.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
       "SquadCommerce.Contracts/1.0.0": {
         "runtime": {
           "SquadCommerce.Contracts.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "SquadCommerce.Mcp/1.0.0": {
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "SquadCommerce.Contracts": "1.0.0"
+        },
+        "runtime": {
+          "SquadCommerce.Mcp.dll": {
             "assemblyVersion": "1.0.0.0",
             "fileVersion": "1.0.0.0"
           }
@@ -65,7 +92,17 @@
       "path": "microsoft.extensions.logging.abstractions/10.0.5",
       "hashPath": "microsoft.extensions.logging.abstractions.10.0.5.nupkg.sha512"
     },
+    "SquadCommerce.A2A/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
     "SquadCommerce.Contracts/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SquadCommerce.Mcp/1.0.0": {
       "type": "project",
       "serviceable": false,
       "sha512": ""

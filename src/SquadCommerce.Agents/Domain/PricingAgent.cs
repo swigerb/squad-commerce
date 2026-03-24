@@ -1,102 +1,181 @@
 using Microsoft.Extensions.Logging;
+using SquadCommerce.Contracts.A2UI;
+using SquadCommerce.Contracts.Interfaces;
+using SquadCommerce.Contracts.Models;
 
 namespace SquadCommerce.Agents.Domain;
 
 /// <summary>
 /// PricingAgent is responsible for calculating margin impact and proposing/applying price changes.
-/// It has read/write access to pricing data and can update store prices via MCP.
+/// It has read/write access to pricing data and updates store prices via MCP.
 /// </summary>
 /// <remarks>
 /// Allowed tools: ["GetInventoryLevels", "UpdateStorePricing"]
 /// Required scope: SquadCommerce.Pricing.ReadWrite
 /// Protocol: MCP
 /// </remarks>
-public sealed class PricingAgent
+public sealed class PricingAgent : IDomainAgent
 {
+    private readonly IPricingRepository _pricingRepository;
+    private readonly IInventoryRepository _inventoryRepository;
     private readonly ILogger<PricingAgent> _logger;
-    // TODO: Add repository interfaces when Contracts project exists
-    // private readonly IPricingRepository _pricingRepository;
-    // private readonly IInventoryRepository _inventoryRepository;
 
-    public PricingAgent(ILogger<PricingAgent> logger /* , repositories */)
+    public string AgentName => "PricingAgent";
+
+    public PricingAgent(
+        IPricingRepository pricingRepository,
+        IInventoryRepository inventoryRepository,
+        ILogger<PricingAgent> logger)
     {
+        _pricingRepository = pricingRepository ?? throw new ArgumentNullException(nameof(pricingRepository));
+        _inventoryRepository = inventoryRepository ?? throw new ArgumentNullException(nameof(inventoryRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
-    /// Calculates the margin impact if we match a competitor's price.
+    /// Executes margin impact analysis and builds A2UI pricing chart payload.
     /// </summary>
     /// <param name="sku">Product SKU</param>
-    /// <param name="currentPrice">Our current price</param>
-    /// <param name="competitorPrice">Competitor's price</param>
+    /// <param name="competitorPrice">Competitor's proposed price</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>A2UI payload containing PricingImpactChart data</returns>
-    /// <remarks>
-    /// This method:
-    /// 1. Queries current inventory levels (MCP: GetInventoryLevels)
-    /// 2. Calculates lost margin per unit: (currentPrice - competitorPrice) * inventoryQty
-    /// 3. Calculates percentage margin impact
-    /// 4. Generates A2UI payload for PricingImpactChart
-    /// 5. Emits OpenTelemetry span
-    /// </remarks>
-    public async Task<string> CalculateMarginImpact(
+    /// <returns>Agent result with PricingImpactChart A2UI payload</returns>
+    public async Task<AgentResult> ExecuteAsync(
         string sku,
-        decimal currentPrice,
         decimal competitorPrice,
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation(
-            "PricingAgent calculating margin impact: SKU {Sku}, Current ${Current}, Competitor ${Competitor}",
-            sku, currentPrice, competitorPrice);
+            "PricingAgent executing margin analysis: SKU {Sku}, CompetitorPrice ${CompetitorPrice:F2}",
+            sku,
+            competitorPrice);
 
-        // TODO: Call MCP GetInventoryLevels to get total inventory
-        // TODO: Calculate: (currentPrice - competitorPrice) * totalQty
-        // TODO: Generate A2UI PricingImpactChart payload
+        try
+        {
+            // Get current pricing across all stores
+            var storeIds = new[] { "SEA-001", "PDX-002", "SFO-003", "LAX-004", "DEN-005" };
+            var currentPrices = new List<decimal>();
+            decimal totalCost = 0;
+            int storeCount = 0;
 
-        await Task.CompletedTask;
-        return "Stub: Margin impact calculation pending";
+            foreach (var storeId in storeIds)
+            {
+                var price = await _pricingRepository.GetCurrentPriceAsync(storeId, sku, cancellationToken);
+                if (price.HasValue)
+                {
+                    currentPrices.Add(price.Value);
+                    storeCount++;
+
+                    // Try to get cost (using internal helper if available)
+                    if (_pricingRepository is Mcp.Data.PricingRepository repo)
+                    {
+                        var cost = repo.GetCost(storeId, sku);
+                        if (cost.HasValue)
+                        {
+                            totalCost += cost.Value;
+                        }
+                    }
+                }
+            }
+
+            if (currentPrices.Count == 0)
+            {
+                _logger.LogWarning("No pricing data found for SKU {Sku}", sku);
+                return new AgentResult
+                {
+                    TextSummary = $"No pricing data found for SKU {sku}",
+                    Success = false,
+                    ErrorMessage = $"SKU {sku} not found in pricing system",
+                    Timestamp = DateTimeOffset.UtcNow
+                };
+            }
+
+            var avgCurrentPrice = currentPrices.Average();
+            var avgCost = totalCost / storeCount;
+
+            // Get inventory context for volume estimates
+            var inventory = await _inventoryRepository.GetInventoryLevelsAsync(sku, cancellationToken);
+            var totalUnits = inventory.Sum(i => i.UnitsOnHand);
+
+            // Calculate scenarios
+            var scenarios = new List<PriceScenario>
+            {
+                // Current state
+                CalculateScenario("Current Pricing", avgCurrentPrice, avgCost, totalUnits, 100),
+                
+                // Match competitor
+                CalculateScenario("Match Competitor", competitorPrice, avgCost, totalUnits, 110),
+                
+                // Beat competitor by 5%
+                CalculateScenario("Beat by 5%", competitorPrice * 0.95m, avgCost, totalUnits, 120),
+                
+                // Split difference
+                CalculateScenario("Split Difference", (avgCurrentPrice + competitorPrice) / 2, avgCost, totalUnits, 105)
+            };
+
+            var a2uiPayload = new PricingImpactChartData
+            {
+                Sku = sku,
+                CurrentPrice = avgCurrentPrice,
+                ProposedPrice = competitorPrice,
+                Scenarios = scenarios,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+
+            // Generate text summary
+            var currentMargin = ((avgCurrentPrice - avgCost) / avgCurrentPrice) * 100;
+            var proposedMargin = ((competitorPrice - avgCost) / competitorPrice) * 100;
+            var marginDelta = proposedMargin - currentMargin;
+
+            var textSummary = $"SKU {sku}: Current ${avgCurrentPrice:F2} ({currentMargin:F1}% margin) → " +
+                              $"Proposed ${competitorPrice:F2} ({proposedMargin:F1}% margin). " +
+                              $"Margin impact: {marginDelta:+0.0;-0.0}pp. " +
+                              $"Estimated volume uplift: +10-20% ({totalUnits} units in stock).";
+
+            _logger.LogInformation(
+                "PricingAgent completed: Margin delta {MarginDelta:F1}pp, Current {Current:F1}% → Proposed {Proposed:F1}%",
+                marginDelta,
+                currentMargin,
+                proposedMargin);
+
+            return new AgentResult
+            {
+                TextSummary = textSummary,
+                A2UIPayload = a2uiPayload,
+                Success = true,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "PricingAgent failed for SKU {Sku}", sku);
+            return new AgentResult
+            {
+                TextSummary = $"Error calculating pricing impact for SKU {sku}",
+                Success = false,
+                ErrorMessage = ex.Message,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
     }
 
-    /// <summary>
-    /// Proposes a price change for approval by the store manager.
-    /// </summary>
-    /// <remarks>
-    /// Does NOT apply the price change — returns a proposal for user approval.
-    /// The user clicks "Approve" in the Blazor UI, which triggers ApplyPriceChange.
-    /// </remarks>
-    public async Task<string> ProposePriceChange(
-        string sku,
-        decimal newPrice,
-        string reason,
-        CancellationToken cancellationToken = default)
+    private static PriceScenario CalculateScenario(
+        string name,
+        decimal price,
+        decimal cost,
+        int totalUnits,
+        int volumeMultiplier)
     {
-        _logger.LogInformation("PricingAgent proposing price change: SKU {Sku} → ${NewPrice}, Reason: {Reason}",
-            sku, newPrice, reason);
+        var margin = ((price - cost) / price) * 100;
+        var projectedUnits = (int)(totalUnits * (volumeMultiplier / 100.0));
+        var revenue = price * projectedUnits;
 
-        // TODO: Generate A2UI proposal payload with "Approve/Reject" actions
-        await Task.CompletedTask;
-        return "Stub: Price proposal pending";
-    }
-
-    /// <summary>
-    /// Applies an approved price change via MCP.
-    /// </summary>
-    /// <remarks>
-    /// Called AFTER user approves the proposal.
-    /// Uses MCP tool "UpdateStorePricing" to persist the change.
-    /// </remarks>
-    public async Task<string> ApplyPriceChange(
-        string sku,
-        decimal newPrice,
-        string storeId,
-        CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("PricingAgent applying price change: SKU {Sku} → ${NewPrice} at Store {StoreId}",
-            sku, newPrice, storeId);
-
-        // TODO: Call MCP tool "UpdateStorePricing"
-        // TODO: Emit OpenTelemetry span
-        await Task.CompletedTask;
-        return "Stub: Price update pending";
+        return new PriceScenario
+        {
+            ScenarioName = name,
+            Price = Math.Round(price, 2),
+            EstimatedMargin = Math.Round(margin, 1),
+            EstimatedRevenue = Math.Round(revenue, 2),
+            ProjectedUnitsSold = projectedUnits
+        };
     }
 }

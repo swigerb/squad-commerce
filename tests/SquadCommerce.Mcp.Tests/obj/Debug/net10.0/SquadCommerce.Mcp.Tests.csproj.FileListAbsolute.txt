@@ -101,3 +101,11 @@ C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\obj\De
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\obj\Debug\net10.0\SquadCommerce.Mcp.Tests.pdb
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\obj\Debug\net10.0\SquadCommerce.Mcp.Tests.genruntimeconfig.cache
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\obj\Debug\net10.0\ref\SquadCommerce.Mcp.Tests.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\bin\Debug\net10.0\.msCoverageSourceRootsMapping_SquadCommerce.Mcp.Tests
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\bin\Debug\net10.0\CoverletSourceRootsMapping_SquadCommerce.Mcp.Tests
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\bin\Debug\net10.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\bin\Debug\net10.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\bin\Debug\net10.0\SquadCommerce.Contracts.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\bin\Debug\net10.0\SquadCommerce.Mcp.dll
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\bin\Debug\net10.0\SquadCommerce.Mcp.pdb
+C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.Mcp.Tests\bin\Debug\net10.0\SquadCommerce.Contracts.pdb

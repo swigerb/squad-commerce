@@ -7,6 +7,7 @@ using Microsoft.Extensions.ServiceDiscovery;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Trace;
+using SquadCommerce.Observability;
 
 namespace Microsoft.Extensions.Hosting;
 
@@ -58,6 +59,9 @@ public static class Extensions
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation();
+
+                // Add Squad-Commerce custom metrics
+                builder.AddSquadCommerceMetrics(metrics);
             })
             .WithTracing(tracing =>
             {
@@ -71,9 +75,37 @@ public static class Extensions
                     // Uncomment the following line to enable gRPC instrumentation (requires the OpenTelemetry.Instrumentation.GrpcNetClient package)
                     //.AddGrpcClientInstrumentation()
                     .AddHttpClientInstrumentation();
+
+                // Add Squad-Commerce activity sources
+                builder.AddSquadCommerceTracing(tracing);
             });
 
         builder.AddOpenTelemetryExporters();
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds Squad-Commerce tracing activity sources.
+    /// </summary>
+    public static TBuilder AddSquadCommerceTracing<TBuilder>(this TBuilder builder, TracerProviderBuilder tracing) 
+        where TBuilder : IHostApplicationBuilder
+    {
+        tracing.AddSource(SquadCommerceTelemetry.Agents.Name)
+               .AddSource(SquadCommerceTelemetry.Mcp.Name)
+               .AddSource(SquadCommerceTelemetry.A2A.Name)
+               .AddSource(SquadCommerceTelemetry.AgUi.Name);
+
+        return builder;
+    }
+
+    /// <summary>
+    /// Adds Squad-Commerce custom metrics.
+    /// </summary>
+    public static TBuilder AddSquadCommerceMetrics<TBuilder>(this TBuilder builder, MeterProviderBuilder metrics)
+        where TBuilder : IHostApplicationBuilder
+    {
+        metrics.AddMeter("SquadCommerce");
 
         return builder;
     }
@@ -125,3 +157,4 @@ public static class Extensions
         return app;
     }
 }
+

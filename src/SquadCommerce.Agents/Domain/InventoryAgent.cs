@@ -1,10 +1,12 @@
 using Microsoft.Extensions.Logging;
+using SquadCommerce.Contracts.A2UI;
+using SquadCommerce.Contracts.Interfaces;
 
 namespace SquadCommerce.Agents.Domain;
 
 /// <summary>
 /// InventoryAgent is responsible for querying store inventory levels via MCP.
-/// It has read-only access to inventory data and can generate A2UI payloads
+/// It has read-only access to inventory data and generates A2UI payloads
 /// (RetailStockHeatmap) for visualization.
 /// </summary>
 /// <remarks>
@@ -12,63 +14,113 @@ namespace SquadCommerce.Agents.Domain;
 /// Required scope: SquadCommerce.Inventory.Read
 /// Protocol: MCP
 /// </remarks>
-public sealed class InventoryAgent
+public sealed class InventoryAgent : IDomainAgent
 {
+    private readonly IInventoryRepository _inventoryRepository;
     private readonly ILogger<InventoryAgent> _logger;
-    // TODO: Add IInventoryRepository interface reference when Contracts project exists
-    // private readonly IInventoryRepository _inventoryRepository;
 
-    public InventoryAgent(ILogger<InventoryAgent> logger /* , IInventoryRepository inventoryRepository */)
+    public string AgentName => "InventoryAgent";
+
+    public InventoryAgent(
+        IInventoryRepository inventoryRepository,
+        ILogger<InventoryAgent> logger)
     {
+        _inventoryRepository = inventoryRepository ?? throw new ArgumentNullException(nameof(inventoryRepository));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        // _inventoryRepository = inventoryRepository ?? throw new ArgumentNullException(nameof(inventoryRepository));
     }
 
     /// <summary>
-    /// Queries inventory levels for a specific SKU across all stores.
+    /// Executes inventory query for a SKU and builds A2UI heatmap payload.
     /// </summary>
     /// <param name="sku">Product SKU to query</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>A2UI payload containing RetailStockHeatmap data</returns>
-    /// <remarks>
-    /// This method:
-    /// 1. Calls MCP tool "GetInventoryLevels" with SKU filter
-    /// 2. Transforms raw data into A2UI-compliant payload
-    /// 3. Emits OpenTelemetry span for auditability
-    /// </remarks>
-    public async Task<string> GetInventoryLevelsBySku(string sku, CancellationToken cancellationToken = default)
+    /// <returns>Agent result with RetailStockHeatmap A2UI payload</returns>
+    public async Task<AgentResult> ExecuteAsync(string sku, CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("InventoryAgent querying levels for SKU: {Sku}", sku);
+        _logger.LogInformation("InventoryAgent executing for SKU: {Sku}", sku);
 
-        // TODO: Call MCP tool "GetInventoryLevels"
-        // TODO: Transform to A2UI payload with RenderAs: "RetailStockHeatmap"
-        // TODO: Emit OpenTelemetry span
+        try
+        {
+            // Query inventory levels via repository (which backs the MCP tool)
+            var inventoryLevels = await _inventoryRepository.GetInventoryLevelsAsync(sku, cancellationToken);
 
-        await Task.CompletedTask;
-        return "Stub: MCP GetInventoryLevels integration pending";
+            if (inventoryLevels.Count == 0)
+            {
+                _logger.LogWarning("No inventory found for SKU {Sku}", sku);
+                return new AgentResult
+                {
+                    TextSummary = $"No inventory records found for SKU {sku}",
+                    Success = false,
+                    ErrorMessage = $"SKU {sku} not found in inventory system",
+                    Timestamp = DateTimeOffset.UtcNow
+                };
+            }
+
+            // Build A2UI payload for RetailStockHeatmap
+            var storeStockLevels = inventoryLevels.Select(inv => new StoreStockLevel
+            {
+                StoreId = inv.StoreId,
+                StoreName = GetStoreName(inv.StoreId),
+                UnitsOnHand = inv.UnitsOnHand,
+                ReorderPoint = inv.ReorderPoint,
+                StockStatus = CalculateStockStatus(inv.UnitsOnHand, inv.ReorderPoint)
+            }).ToList();
+
+            var a2uiPayload = new RetailStockHeatmapData
+            {
+                Sku = sku,
+                Stores = storeStockLevels,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+
+            // Generate text summary
+            var totalUnits = inventoryLevels.Sum(i => i.UnitsOnHand);
+            var lowStockCount = storeStockLevels.Count(s => s.StockStatus == "Low");
+            var textSummary = $"SKU {sku}: {totalUnits} total units across {inventoryLevels.Count} stores. " +
+                              $"{lowStockCount} store(s) below reorder point.";
+
+            _logger.LogInformation(
+                "InventoryAgent completed: {TotalUnits} units, {LowStock} low-stock stores",
+                totalUnits,
+                lowStockCount);
+
+            return new AgentResult
+            {
+                TextSummary = textSummary,
+                A2UIPayload = a2uiPayload,
+                Success = true,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "InventoryAgent failed for SKU {Sku}", sku);
+            return new AgentResult
+            {
+                TextSummary = $"Error querying inventory for SKU {sku}",
+                Success = false,
+                ErrorMessage = ex.Message,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
     }
 
-    /// <summary>
-    /// Queries inventory levels for all SKUs at a specific store.
-    /// </summary>
-    public async Task<string> GetInventoryLevelsByStore(string storeId, CancellationToken cancellationToken = default)
+    private static string CalculateStockStatus(int unitsOnHand, int reorderPoint)
     {
-        _logger.LogInformation("InventoryAgent querying levels for Store: {StoreId}", storeId);
-
-        // TODO: Call MCP tool with store filter
-        await Task.CompletedTask;
-        return "Stub: MCP GetInventoryLevels integration pending";
+        if (unitsOnHand < reorderPoint)
+            return "Low";
+        if (unitsOnHand < reorderPoint * 2)
+            return "Normal";
+        return "High";
     }
 
-    /// <summary>
-    /// Identifies SKUs with critically low inventory (below reorder threshold).
-    /// </summary>
-    public async Task<string> IdentifyLowStockSkus(CancellationToken cancellationToken = default)
+    private static string GetStoreName(string storeId) => storeId switch
     {
-        _logger.LogInformation("InventoryAgent identifying low-stock SKUs");
-
-        // TODO: Call MCP, filter by quantity < reorder threshold
-        await Task.CompletedTask;
-        return "Stub: Low-stock analysis pending";
-    }
+        "SEA-001" => "Downtown Flagship",
+        "PDX-002" => "Suburban Mall",
+        "SFO-003" => "Airport Terminal",
+        "LAX-004" => "University District",
+        "DEN-005" => "Waterfront Plaza",
+        _ => storeId
+    };
 }

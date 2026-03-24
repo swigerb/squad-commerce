@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\SquadCommerce.Api\SquadCommerce.Api.csproj" />
+    <ProjectReference Include="..\SquadCommerce.Web\SquadCommerce.Web.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

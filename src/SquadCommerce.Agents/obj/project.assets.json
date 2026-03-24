@@ -37,6 +37,20 @@
           "buildTransitive/net8.0/Microsoft.Extensions.Logging.Abstractions.targets": {}
         }
       },
+      "SquadCommerce.A2A/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "SquadCommerce.Contracts": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/SquadCommerce.A2A.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/SquadCommerce.A2A.dll": {}
+        }
+      },
       "SquadCommerce.Contracts/1.0.0": {
         "type": "project",
         "framework": ".NETCoreApp,Version=v10.0",
@@ -45,6 +59,21 @@
         },
         "runtime": {
           "bin/placeholder/SquadCommerce.Contracts.dll": {}
+        }
+      },
+      "SquadCommerce.Mcp/1.0.0": {
+        "type": "project",
+        "framework": ".NETCoreApp,Version=v10.0",
+        "dependencies": {
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "SquadCommerce.Contracts": "1.0.0"
+        },
+        "compile": {
+          "bin/placeholder/SquadCommerce.Mcp.dll": {}
+        },
+        "runtime": {
+          "bin/placeholder/SquadCommerce.Mcp.dll": {}
         }
       }
     }
@@ -153,17 +182,29 @@
         "useSharedDesignerContext.txt"
       ]
     },
+    "SquadCommerce.A2A/1.0.0": {
+      "type": "project",
+      "path": "../SquadCommerce.A2A/SquadCommerce.A2A.csproj",
+      "msbuildProject": "../SquadCommerce.A2A/SquadCommerce.A2A.csproj"
+    },
     "SquadCommerce.Contracts/1.0.0": {
       "type": "project",
       "path": "../SquadCommerce.Contracts/SquadCommerce.Contracts.csproj",
       "msbuildProject": "../SquadCommerce.Contracts/SquadCommerce.Contracts.csproj"
+    },
+    "SquadCommerce.Mcp/1.0.0": {
+      "type": "project",
+      "path": "../SquadCommerce.Mcp/SquadCommerce.Mcp.csproj",
+      "msbuildProject": "../SquadCommerce.Mcp/SquadCommerce.Mcp.csproj"
     }
   },
   "projectFileDependencyGroups": {
     "net10.0": [
       "Microsoft.Extensions.DependencyInjection.Abstractions >= 10.0.5",
       "Microsoft.Extensions.Logging.Abstractions >= 10.0.5",
-      "SquadCommerce.Contracts >= 1.0.0"
+      "SquadCommerce.A2A >= 1.0.0",
+      "SquadCommerce.Contracts >= 1.0.0",
+      "SquadCommerce.Mcp >= 1.0.0"
     ]
   },
   "packageFolders": {
@@ -198,8 +239,14 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "projectReferences": {
+            "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.A2A\\SquadCommerce.A2A.csproj": {
+              "projectPath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.A2A\\SquadCommerce.A2A.csproj"
+            },
             "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Contracts\\SquadCommerce.Contracts.csproj": {
               "projectPath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Contracts\\SquadCommerce.Contracts.csproj"
+            },
+            "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Mcp\\SquadCommerce.Mcp.csproj": {
+              "projectPath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Mcp\\SquadCommerce.Mcp.csproj"
             }
           }
         }

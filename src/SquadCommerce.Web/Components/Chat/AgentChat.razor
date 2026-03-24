@@ -1,26 +1,43 @@
 @inject Services.AgUiStreamService StreamService
+@inject IJSRuntime JS
 
 <div class="agent-chat" role="region" aria-label="Agent Chat">
     <div class="chat-header">
-        <h2>Agent Workspace</h2>
+        <h2>🤖 Agent Workspace</h2>
+        <div class="connection-status @_connectionStatus">
+            <span class="status-dot"></span>
+            <span class="status-text">@_connectionStatusText</span>
+        </div>
     </div>
 
-    <div class="chat-messages" aria-live="polite" aria-atomic="false">
+    <div class="chat-messages" @ref="_messagesContainer" aria-live="polite" aria-atomic="false">
         @foreach (var message in _messages)
         {
             <div class="chat-message @message.Role" role="article">
                 <div class="message-header">
+                    <span class="message-avatar">@GetMessageAvatar(message.Role)</span>
                     <span class="message-role">@message.Role</span>
-                    <span class="message-timestamp">@message.Timestamp.ToString("HH:mm:ss")</span>
+                    <span class="message-timestamp" title="@message.Timestamp.ToString("F")">
+                        @message.Timestamp.ToString("HH:mm:ss")
+                    </span>
                 </div>
                 <div class="message-content">
-                    @if (message.IsA2UI && message.A2UIPayload != null)
+                    @if (message.IsStatus)
                     {
-                        <A2UIRenderer Payload="message.A2UIPayload" />
+                        <div class="status-message">
+                            <span class="status-icon">⚙️</span>
+                            <span class="status-text">@message.Content</span>
+                        </div>
+                    }
+                    else if (message.IsA2UI && message.A2UIPayload != null)
+                    {
+                        <div class="a2ui-container">
+                            <A2UIRenderer Payload="message.A2UIPayload" />
+                        </div>
                     }
                     else
                     {
-                        <div class="message-text">@((MarkupString)message.Content)</div>
+                        <div class="message-text">@((MarkupString)FormatMessage(message.Content))</div>
                     }
                 </div>
             </div>
@@ -30,6 +47,7 @@
         {
             <div class="chat-message assistant streaming" role="status" aria-live="polite">
                 <div class="message-header">
+                    <span class="message-avatar">🤖</span>
                     <span class="message-role">Assistant</span>
                     <span class="typing-indicator">
                         <span class="dot"></span>
@@ -38,27 +56,52 @@
                     </span>
                 </div>
                 <div class="message-content">
-                    <div class="message-text">@_currentStreamingMessage</div>
+                    <div class="message-text">@((MarkupString)FormatMessage(_currentStreamingMessage))</div>
                 </div>
             </div>
         }
+
+        <div @ref="_scrollAnchor"></div>
     </div>
 
     <div class="chat-input-container">
-        <form class="chat-input-form" @onsubmit="SendMessage">
-            <input type="text" 
-                   class="form-control chat-input" 
-                   placeholder="Ask the agent team..." 
-                   @bind="_inputText"
-                   disabled="@_isStreaming"
-                   aria-label="Chat input" />
-            <button type="submit" 
-                    class="btn btn-primary" 
-                    disabled="@(_isStreaming || string.IsNullOrWhiteSpace(_inputText))"
-                    aria-label="Send message">
-                Send
-            </button>
+        <form class="chat-input-form" @onsubmit="SendMessage" @onsubmit:preventDefault="true">
+            <div class="input-group">
+                <input type="text" 
+                       class="form-control chat-input" 
+                       placeholder="Ask the agent team about inventory, pricing, or competitors..." 
+                       @bind="_inputText"
+                       @bind:event="oninput"
+                       @onkeydown="HandleKeyDown"
+                       disabled="@_isStreaming"
+                       aria-label="Chat input" />
+                <button type="submit" 
+                        class="btn btn-primary send-button" 
+                        disabled="@(_isStreaming || string.IsNullOrWhiteSpace(_inputText))"
+                        aria-label="Send message">
+                    @if (_isStreaming)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span>Sending...</span>
+                    }
+                    else
+                    {
+                        <span>Send 📤</span>
+                    }
+                </button>
+            </div>
+            @if (!string.IsNullOrEmpty(_errorMessage))
+            {
+                <div class="alert alert-danger alert-sm mt-2" role="alert">
+                    <strong>Error:</strong> @_errorMessage
+                </div>
+            }
         </form>
+        <div class="chat-hints">
+            <small class="text-muted">
+                Try: "Check inventory for SKU-100" or "Compare prices with competitors"
+            </small>
+        </div>
     </div>
 </div>
 
@@ -67,18 +110,44 @@
     private string _inputText = string.Empty;
     private bool _isStreaming = false;
     private string _currentStreamingMessage = string.Empty;
+    private string _errorMessage = string.Empty;
+    private string _connectionStatus = "connected";
+    private string _connectionStatusText = "Connected";
+    private ElementReference _messagesContainer;
+    private ElementReference _scrollAnchor;
 
     private record ChatMessage(
         string Role,
         string Content,
         DateTime Timestamp,
         bool IsA2UI = false,
+        bool IsStatus = false,
         Contracts.A2UI.A2UIPayload? A2UIPayload = null
     );
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        _messages.Add(new ChatMessage(
+            "System",
+            "Welcome! I'm your Squad Commerce AI team. Ask me about inventory levels, pricing strategies, or competitor analysis.",
+            DateTime.Now
+        ));
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (!firstRender && (_isStreaming || _messages.Any()))
+        {
+            try
+            {
+                await JS.InvokeVoidAsync("eval", "document.querySelector('.chat-messages')?.scrollTo({top: document.querySelector('.chat-messages').scrollHeight, behavior: 'smooth'})");
+            }
+            catch
+            {
+                // JS interop may fail, ignore
+            }
+        }
     }
 
     private async Task SendMessage()
@@ -86,12 +155,15 @@
         if (string.IsNullOrWhiteSpace(_inputText))
             return;
 
-        var userMessage = _inputText;
+        var userMessage = _inputText.Trim();
         _inputText = string.Empty;
+        _errorMessage = string.Empty;
 
         _messages.Add(new ChatMessage("User", userMessage, DateTime.Now));
         _isStreaming = true;
         _currentStreamingMessage = string.Empty;
+        _connectionStatus = "streaming";
+        _connectionStatusText = "Streaming...";
 
         await InvokeAsync(StateHasChanged);
 
@@ -101,6 +173,12 @@
             {
                 if (chunk.IsA2UI && chunk.Payload != null)
                 {
+                    if (!string.IsNullOrEmpty(_currentStreamingMessage))
+                    {
+                        _messages.Add(new ChatMessage("Assistant", _currentStreamingMessage, DateTime.Now));
+                        _currentStreamingMessage = string.Empty;
+                    }
+
                     _messages.Add(new ChatMessage(
                         "Assistant",
                         string.Empty,
@@ -108,7 +186,15 @@
                         IsA2UI: true,
                         A2UIPayload: chunk.Payload
                     ));
-                    _currentStreamingMessage = string.Empty;
+                }
+                else if (!string.IsNullOrEmpty(chunk.Status))
+                {
+                    _messages.Add(new ChatMessage(
+                        "System",
+                        chunk.Status,
+                        DateTime.Now,
+                        IsStatus: true
+                    ));
                 }
                 else if (!string.IsNullOrEmpty(chunk.Text))
                 {
@@ -122,10 +208,23 @@
             {
                 _messages.Add(new ChatMessage("Assistant", _currentStreamingMessage, DateTime.Now));
             }
+
+            _connectionStatus = "connected";
+            _connectionStatusText = "Connected";
+        }
+        catch (HttpRequestException ex)
+        {
+            _errorMessage = "Network error. Please check your connection and try again.";
+            _messages.Add(new ChatMessage("System", $"Connection error: {ex.Message}", DateTime.Now));
+            _connectionStatus = "disconnected";
+            _connectionStatusText = "Disconnected";
         }
         catch (Exception ex)
         {
+            _errorMessage = "An unexpected error occurred. Please try again.";
             _messages.Add(new ChatMessage("System", $"Error: {ex.Message}", DateTime.Now));
+            _connectionStatus = "error";
+            _connectionStatusText = "Error";
         }
         finally
         {
@@ -133,5 +232,38 @@
             _currentStreamingMessage = string.Empty;
             await InvokeAsync(StateHasChanged);
         }
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter" && !e.ShiftKey && !_isStreaming)
+        {
+            _ = SendMessage();
+        }
+    }
+
+    private string GetMessageAvatar(string role) => role switch
+    {
+        "User" => "👤",
+        "Assistant" => "🤖",
+        "System" => "ℹ️",
+        _ => "💬"
+    };
+
+    private string FormatMessage(string content)
+    {
+        if (string.IsNullOrEmpty(content))
+            return string.Empty;
+
+        content = System.Net.WebUtility.HtmlEncode(content);
+        content = content.Replace("\n", "<br />");
+        
+        content = System.Text.RegularExpressions.Regex.Replace(
+            content,
+            @"\*\*(.*?)\*\*",
+            "<strong>$1</strong>"
+        );
+
+        return content;
     }
 }

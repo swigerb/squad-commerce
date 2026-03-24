@@ -50,6 +50,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xDaGF0XEFnZW50U3RhdHVzQmFyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/Chat/ApprovalPanel.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xDaGF0XEFwcHJvdmFsUGFuZWwucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = 
+
 [C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/Pages/Counter.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xQYWdlc1xDb3VudGVyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

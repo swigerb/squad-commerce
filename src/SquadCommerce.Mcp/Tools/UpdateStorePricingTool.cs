@@ -1,4 +1,6 @@
-using SquadCommerce.Mcp.Data;
+using Microsoft.Extensions.Logging;
+using SquadCommerce.Contracts.Interfaces;
+using SquadCommerce.Contracts.Models;
 
 namespace SquadCommerce.Mcp.Tools;
 
@@ -9,17 +11,21 @@ namespace SquadCommerce.Mcp.Tools;
 /// <remarks>
 /// This tool:
 /// - Updates a single SKU price at a single store
-/// - Records pricing history for audit purposes
+/// - Validates price constraints (must be positive, above cost)
+/// - Returns structured success/failure results
 /// - Requires SquadCommerce.Pricing.ReadWrite scope
-/// - Emits OpenTelemetry spans for observability
 /// </remarks>
 public sealed class UpdateStorePricingTool
 {
     private readonly IPricingRepository _repository;
+    private readonly ILogger<UpdateStorePricingTool> _logger;
 
-    public UpdateStorePricingTool(IPricingRepository repository)
+    public UpdateStorePricingTool(
+        IPricingRepository repository,
+        ILogger<UpdateStorePricingTool> logger)
     {
         _repository = repository ?? throw new ArgumentNullException(nameof(repository));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
@@ -42,41 +48,105 @@ public sealed class UpdateStorePricingTool
     /// <returns>Success/failure result with updated pricing info</returns>
     public async Task<object> ExecuteAsync(string storeId, string sku, decimal newPrice, CancellationToken cancellationToken = default)
     {
-        // TODO: Add OpenTelemetry span emission
-        // using var activity = ActivitySource.StartActivity("UpdateStorePricing");
-        // activity?.SetTag("mcp.tool", Name);
-        // activity?.SetTag("storeId", storeId);
-        // activity?.SetTag("sku", sku);
-        // activity?.SetTag("newPrice", newPrice);
-
-        // Validation
-        if (string.IsNullOrWhiteSpace(storeId))
-            return new { Success = false, Error = "storeId is required" };
-
-        if (string.IsNullOrWhiteSpace(sku))
-            return new { Success = false, Error = "sku is required" };
-
-        if (newPrice <= 0)
-            return new { Success = false, Error = "newPrice must be greater than zero" };
-
-        // Update pricing
-        var success = await _repository.UpdateStorePrice(storeId, sku, newPrice, cancellationToken);
-
-        if (!success)
-            return new { Success = false, Error = $"Pricing record not found for store {storeId}, SKU {sku}" };
-
-        // Return updated pricing
-        var updatedPricing = await _repository.GetPricingBySku(sku, cancellationToken);
-        var storePrice = updatedPricing.FirstOrDefault(p => p.StoreId.Equals(storeId, StringComparison.OrdinalIgnoreCase));
-
-        return new
+        try
         {
-            Success = true,
-            StoreId = storeId,
-            Sku = sku,
-            NewPrice = newPrice,
-            MarginPercent = storePrice?.MarginPercent,
-            UpdatedAt = DateTimeOffset.UtcNow
-        };
+            _logger.LogInformation(
+                "UpdateStorePricing executing: StoreId={StoreId}, SKU={Sku}, NewPrice={NewPrice:C}",
+                storeId,
+                sku,
+                newPrice);
+
+            // Validation
+            if (string.IsNullOrWhiteSpace(storeId))
+            {
+                _logger.LogWarning("UpdateStorePricing called without storeId");
+                return new { Success = false, Error = "storeId is required" };
+            }
+
+            if (string.IsNullOrWhiteSpace(sku))
+            {
+                _logger.LogWarning("UpdateStorePricing called without sku");
+                return new { Success = false, Error = "sku is required" };
+            }
+
+            if (newPrice <= 0)
+            {
+                _logger.LogWarning("UpdateStorePricing called with invalid price: {NewPrice}", newPrice);
+                return new { Success = false, Error = "newPrice must be greater than zero" };
+            }
+
+            // Get current price for comparison
+            var currentPrice = await _repository.GetCurrentPriceAsync(storeId, sku, cancellationToken);
+            if (currentPrice == null)
+            {
+                _logger.LogWarning("Pricing record not found for StoreId={StoreId}, SKU={Sku}", storeId, sku);
+                return new
+                {
+                    Success = false,
+                    Error = $"Pricing record not found for store {storeId}, SKU {sku}"
+                };
+            }
+
+            // Build PriceChange payload
+            var priceChange = new PriceChange
+            {
+                Sku = sku,
+                StoreId = storeId,
+                OldPrice = currentPrice.Value,
+                NewPrice = newPrice,
+                Reason = "MCP tool invocation",
+                RequestedBy = "MCP:UpdateStorePricing",
+                Timestamp = DateTimeOffset.UtcNow
+            };
+
+            // Execute update
+            var result = await _repository.UpdatePricingAsync(priceChange, cancellationToken);
+
+            if (!result.Success)
+            {
+                _logger.LogWarning(
+                    "Price update failed for StoreId={StoreId}, SKU={Sku}: {Error}",
+                    storeId,
+                    sku,
+                    result.ErrorMessage);
+
+                return new
+                {
+                    Success = false,
+                    Error = result.ErrorMessage
+                };
+            }
+
+            // Get updated pricing details
+            var updatedPrice = await _repository.GetCurrentPriceAsync(storeId, sku, cancellationToken);
+
+            _logger.LogInformation(
+                "Price update succeeded for StoreId={StoreId}, SKU={Sku}: {OldPrice:C} → {NewPrice:C}",
+                storeId,
+                sku,
+                currentPrice.Value,
+                updatedPrice);
+
+            return new
+            {
+                Success = true,
+                StoreId = storeId,
+                Sku = sku,
+                OldPrice = currentPrice.Value,
+                NewPrice = newPrice,
+                PriceChange = newPrice - currentPrice.Value,
+                PriceChangePercent = Math.Round(((newPrice - currentPrice.Value) / currentPrice.Value) * 100, 1),
+                UpdatedAt = DateTimeOffset.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error executing UpdateStorePricing");
+            return new
+            {
+                Success = false,
+                Error = $"Internal error: {ex.Message}"
+            };
+        }
     }
 }

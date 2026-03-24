@@ -1,114 +1,157 @@
 @using SquadCommerce.Contracts.A2UI
+@using System.Text.Json
 
 <div class="market-comparison-grid" role="region" aria-label="Market Comparison Grid">
-    <h3>Market Comparison Grid</h3>
+    <div class="component-header">
+        <h3>📊 Competitive Price Comparison</h3>
+        @if (_data != null)
+        {
+            <div class="timestamp">
+                <span class="timestamp-label">Product:</span>
+                <span class="timestamp-value">@_data.ProductName (@_data.Sku)</span>
+                <span class="timestamp-label ms-3">Our Price:</span>
+                <span class="our-price-badge">@_data.OurPrice.ToString("C")</span>
+                <span class="timestamp-label ms-3">Updated:</span>
+                <span class="timestamp-value">@_data.Timestamp.ToString("g")</span>
+            </div>
+        }
+    </div>
 
-    @if (Data?.Data != null)
+    @if (_data?.Competitors != null && _data.Competitors.Any())
     {
-        <table class="table table-striped market-comparison-table" aria-label="Competitor price comparison">
-            <thead>
-                <tr>
-                    <th scope="col" class="sortable" @onclick="() => SortBy(nameof(ComparisonItem.sku))">
-                        SKU @GetSortIndicator(nameof(ComparisonItem.sku))
-                    </th>
-                    <th scope="col" class="sortable" @onclick="() => SortBy(nameof(ComparisonItem.ourPrice))">
-                        Our Price @GetSortIndicator(nameof(ComparisonItem.ourPrice))
-                    </th>
-                    <th scope="col" class="sortable" @onclick="() => SortBy(nameof(ComparisonItem.competitorPrice))">
-                        Competitor Price @GetSortIndicator(nameof(ComparisonItem.competitorPrice))
-                    </th>
-                    <th scope="col" class="sortable" @onclick="() => SortBy(nameof(ComparisonItem.deltaPercent))">
-                        Delta % @GetSortIndicator(nameof(ComparisonItem.deltaPercent))
-                    </th>
-                    <th scope="col">Trend</th>
-                    <th scope="col">Competitor</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var item in GetSortedItems())
-                {
+        <div class="comparison-table-container">
+            <table class="table table-hover comparison-table" aria-label="Competitor price comparison">
+                <thead>
                     <tr>
-                        <th scope="row">@item.sku</th>
-                        <td class="price-cell">@item.ourPrice.ToString("C")</td>
-                        <td class="price-cell">@item.competitorPrice.ToString("C")</td>
-                        <td class="delta-cell @GetDeltaCssClass(item.deltaPercent)">
-                            @item.deltaPercent.ToString("+0.0%;-0.0%;0.0%")
-                        </td>
-                        <td class="trend-cell">
-                            <span class="trend-indicator @GetTrendCssClass(item.trend)" aria-label="@GetTrendLabel(item.trend)">
-                                @GetTrendIcon(item.trend)
-                            </span>
-                        </td>
-                        <td>@item.competitor</td>
+                        <th scope="col" class="sortable" @onclick="() => SortBy(nameof(CompetitorPrice.CompetitorName))">
+                            Competitor @GetSortIndicator(nameof(CompetitorPrice.CompetitorName))
+                        </th>
+                        <th scope="col" class="sortable numeric-col" @onclick="() => SortBy(nameof(CompetitorPrice.Price))">
+                            Their Price @GetSortIndicator(nameof(CompetitorPrice.Price))
+                        </th>
+                        <th scope="col" class="numeric-col">Delta from Ours</th>
+                        <th scope="col" class="status-col">Verification</th>
+                        <th scope="col" class="source-col">Source</th>
+                        <th scope="col" class="sortable" @onclick="() => SortBy(nameof(CompetitorPrice.LastUpdated))">
+                            Last Updated @GetSortIndicator(nameof(CompetitorPrice.LastUpdated))
+                        </th>
                     </tr>
-                }
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach (var competitor in GetSortedCompetitors())
+                    {
+                        var delta = CalculateDelta(competitor.Price);
+                        var deltaPercent = CalculateDeltaPercent(competitor.Price);
+                        <tr class="@GetRowCssClass(competitor)">
+                            <th scope="row">@competitor.CompetitorName</th>
+                            <td class="numeric-col price-cell">@competitor.Price.ToString("C")</td>
+                            <td class="numeric-col delta-cell">
+                                <span class="@GetDeltaCssClass(delta)">
+                                    @delta.ToString("+$0.00;-$0.00;$0.00")
+                                    <span class="delta-percent">(@deltaPercent.ToString("+0.0%;-0.0%;0.0%"))</span>
+                                </span>
+                            </td>
+                            <td class="status-col">
+                                @if (competitor.Verified)
+                                {
+                                    <span class="verification-badge verified" aria-label="Verified via A2A">
+                                        ✅ Verified
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="verification-badge unverified" aria-label="Unverified">
+                                        ⚠️ Unverified
+                                    </span>
+                                }
+                            </td>
+                            <td class="source-col" title="@competitor.Source">
+                                @TruncateSource(competitor.Source)
+                            </td>
+                            <td class="updated-col">
+                                @GetRelativeTime(competitor.LastUpdated)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="comparison-summary">
+            <div class="summary-card">
+                <div class="summary-label">Lowest Competitor Price</div>
+                <div class="summary-value">@GetLowestPrice().ToString("C")</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Highest Competitor Price</div>
+                <div class="summary-value">@GetHighestPrice().ToString("C")</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">Average Competitor Price</div>
+                <div class="summary-value">@GetAveragePrice().ToString("C")</div>
+            </div>
+            <div class="summary-card @GetPositionCssClass()">
+                <div class="summary-label">Our Position</div>
+                <div class="summary-value">@GetOurPosition()</div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="alert alert-info">No competitor data available</div>
     }
 </div>
 
 @code {
     [Parameter]
-    public A2UIPayload? Data { get; set; }
+    public A2UIPayload? Payload { get; set; }
 
+    private MarketComparisonGridData? _data;
     private string? _sortColumn;
     private bool _sortAscending = true;
 
-    private record ComparisonItem(
-        string sku,
-        decimal ourPrice,
-        decimal competitorPrice,
-        decimal deltaPercent,
-        string trend,
-        string competitor
-    );
-
-    private IEnumerable<ComparisonItem> GetComparisonItems()
+    protected override void OnParametersSet()
     {
-        if (Data?.Data is not System.Text.Json.JsonElement jsonData)
-            return Enumerable.Empty<ComparisonItem>();
-
-        if (jsonData.TryGetProperty("comparisons", out var comparisons) && comparisons.ValueKind == System.Text.Json.JsonValueKind.Array)
+        if (Payload?.Data != null)
         {
-            return comparisons.EnumerateArray().Select(item =>
+            if (Payload.Data is JsonElement jsonElement)
             {
-                var sku = item.TryGetProperty("sku", out var s) ? s.GetString() ?? "" : "";
-                var ourPrice = item.TryGetProperty("ourPrice", out var op) ? op.GetDecimal() : 0m;
-                var competitorPrice = item.TryGetProperty("competitorPrice", out var cp) ? cp.GetDecimal() : 0m;
-                var deltaPercent = item.TryGetProperty("deltaPercent", out var dp) ? dp.GetDecimal() : 0m;
-                var trend = item.TryGetProperty("trend", out var t) ? t.GetString() ?? "stable" : "stable";
-                var competitor = item.TryGetProperty("competitor", out var c) ? c.GetString() ?? "" : "";
-
-                return new ComparisonItem(sku, ourPrice, competitorPrice, deltaPercent, trend, competitor);
-            });
+                _data = JsonSerializer.Deserialize<MarketComparisonGridData>(
+                    jsonElement.GetRawText(),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            else if (Payload.Data is MarketComparisonGridData typedData)
+            {
+                _data = typedData;
+            }
         }
-
-        return Enumerable.Empty<ComparisonItem>();
     }
 
-    private IEnumerable<ComparisonItem> GetSortedItems()
+    private IEnumerable<CompetitorPrice> GetSortedCompetitors()
     {
-        var items = GetComparisonItems();
+        if (_data?.Competitors == null)
+            return Enumerable.Empty<CompetitorPrice>();
 
-        if (_sortColumn == null)
-            return items;
+        var competitors = _data.Competitors.AsEnumerable();
 
-        return _sortColumn switch
+        if (_sortColumn != null)
         {
-            nameof(ComparisonItem.sku) => _sortAscending 
-                ? items.OrderBy(i => i.sku) 
-                : items.OrderByDescending(i => i.sku),
-            nameof(ComparisonItem.ourPrice) => _sortAscending 
-                ? items.OrderBy(i => i.ourPrice) 
-                : items.OrderByDescending(i => i.ourPrice),
-            nameof(ComparisonItem.competitorPrice) => _sortAscending 
-                ? items.OrderBy(i => i.competitorPrice) 
-                : items.OrderByDescending(i => i.competitorPrice),
-            nameof(ComparisonItem.deltaPercent) => _sortAscending 
-                ? items.OrderBy(i => i.deltaPercent) 
-                : items.OrderByDescending(i => i.deltaPercent),
-            _ => items
-        };
+            competitors = _sortColumn switch
+            {
+                nameof(CompetitorPrice.CompetitorName) => _sortAscending
+                    ? competitors.OrderBy(c => c.CompetitorName)
+                    : competitors.OrderByDescending(c => c.CompetitorName),
+                nameof(CompetitorPrice.Price) => _sortAscending
+                    ? competitors.OrderBy(c => c.Price)
+                    : competitors.OrderByDescending(c => c.Price),
+                nameof(CompetitorPrice.LastUpdated) => _sortAscending
+                    ? competitors.OrderBy(c => c.LastUpdated)
+                    : competitors.OrderByDescending(c => c.LastUpdated),
+                _ => competitors
+            };
+        }
+
+        return competitors;
     }
 
     private void SortBy(string column)
@@ -131,31 +174,97 @@
         return _sortAscending ? "↑" : "↓";
     }
 
+    private decimal CalculateDelta(decimal competitorPrice)
+    {
+        return competitorPrice - (_data?.OurPrice ?? 0);
+    }
+
+    private decimal CalculateDeltaPercent(decimal competitorPrice)
+    {
+        if (_data?.OurPrice == 0 || _data == null)
+            return 0;
+        return (competitorPrice - _data.OurPrice) / _data.OurPrice;
+    }
+
     private string GetDeltaCssClass(decimal delta)
     {
-        if (delta < 0) return "delta-negative";
-        if (delta > 0) return "delta-positive";
+        if (delta < 0) return "delta-negative"; // They're cheaper
+        if (delta > 0) return "delta-positive"; // We're cheaper
         return "delta-neutral";
     }
 
-    private string GetTrendCssClass(string trend) => trend.ToLowerInvariant() switch
+    private string GetRowCssClass(CompetitorPrice competitor)
     {
-        "up" => "trend-up",
-        "down" => "trend-down",
-        _ => "trend-stable"
-    };
+        if (!competitor.Verified)
+            return "row-unverified";
+        return string.Empty;
+    }
 
-    private string GetTrendIcon(string trend) => trend.ToLowerInvariant() switch
+    private string TruncateSource(string source)
     {
-        "up" => "↗",
-        "down" => "↘",
-        _ => "→"
-    };
+        if (source.Length > 30)
+            return source.Substring(0, 27) + "...";
+        return source;
+    }
 
-    private string GetTrendLabel(string trend) => trend.ToLowerInvariant() switch
+    private string GetRelativeTime(DateTimeOffset lastUpdated)
     {
-        "up" => "Price trending up",
-        "down" => "Price trending down",
-        _ => "Price stable"
-    };
+        var diff = DateTimeOffset.Now - lastUpdated;
+        if (diff.TotalMinutes < 60)
+            return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24)
+            return $"{(int)diff.TotalHours}h ago";
+        return $"{(int)diff.TotalDays}d ago";
+    }
+
+    private decimal GetLowestPrice()
+    {
+        if (_data?.Competitors == null || !_data.Competitors.Any())
+            return 0;
+        return _data.Competitors.Min(c => c.Price);
+    }
+
+    private decimal GetHighestPrice()
+    {
+        if (_data?.Competitors == null || !_data.Competitors.Any())
+            return 0;
+        return _data.Competitors.Max(c => c.Price);
+    }
+
+    private decimal GetAveragePrice()
+    {
+        if (_data?.Competitors == null || !_data.Competitors.Any())
+            return 0;
+        return _data.Competitors.Average(c => c.Price);
+    }
+
+    private string GetOurPosition()
+    {
+        if (_data == null)
+            return "Unknown";
+        
+        var lowestPrice = GetLowestPrice();
+        var highestPrice = GetHighestPrice();
+        
+        if (_data.OurPrice < lowestPrice)
+            return "Lowest 🏆";
+        if (_data.OurPrice > highestPrice)
+            return "Highest ⚠️";
+        return "Middle Range";
+    }
+
+    private string GetPositionCssClass()
+    {
+        if (_data == null)
+            return string.Empty;
+        
+        var lowestPrice = GetLowestPrice();
+        var highestPrice = GetHighestPrice();
+        
+        if (_data.OurPrice < lowestPrice)
+            return "position-lowest";
+        if (_data.OurPrice > highestPrice)
+            return "position-highest";
+        return "position-middle";
+    }
 }

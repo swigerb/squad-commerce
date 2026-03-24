@@ -1,0 +1,287 @@
+@inject HttpClient Http
+
+<div class="approval-panel @_state" role="region" aria-label="Approval Panel">
+    @if (_state == "hidden")
+    {
+        return;
+    }
+
+    <div class="approval-header">
+        <h3>📋 Manager Approval Required</h3>
+        <button class="btn-close" @onclick="Dismiss" aria-label="Dismiss approval panel">×</button>
+    </div>
+
+    <div class="approval-summary">
+        <div class="summary-item">
+            <span class="summary-label">Total Changes:</span>
+            <span class="summary-value">@_totalChanges</span>
+        </div>
+        <div class="summary-item">
+            <span class="summary-label">Estimated Impact:</span>
+            <span class="summary-value @GetImpactClass()">@_estimatedImpact.ToString("C0")</span>
+        </div>
+    </div>
+
+    @if (_editMode)
+    {
+        <div class="approval-edit-mode">
+            <div class="alert alert-info">
+                <strong>✏️ Edit Mode:</strong> Modify proposed values below, then approve or reject.
+            </div>
+            <div class="edit-fields">
+                <!-- Future: Dynamic editing fields based on scenario -->
+                <p class="text-muted">Custom edits will be available in a future update.</p>
+            </div>
+        </div>
+    }
+
+    <div class="approval-actions">
+        @if (!_processing)
+        {
+            <button class="btn btn-success btn-lg approval-btn" 
+                    @onclick="ApproveAll" 
+                    aria-label="Approve all changes">
+                <span class="btn-icon">✅</span>
+                <span class="btn-text">Approve All</span>
+            </button>
+
+            <button class="btn btn-warning btn-lg approval-btn" 
+                    @onclick="ToggleEditMode" 
+                    aria-label="Modify changes">
+                <span class="btn-icon">✏️</span>
+                <span class="btn-text">@(_editMode ? "Cancel Edit" : "Modify")</span>
+            </button>
+
+            <button class="btn btn-danger btn-lg approval-btn" 
+                    @onclick="RejectAll" 
+                    aria-label="Reject all changes">
+                <span class="btn-icon">❌</span>
+                <span class="btn-text">Reject All</span>
+            </button>
+        }
+        else
+        {
+            <div class="processing-indicator">
+                <span class="spinner-border me-2" role="status" aria-hidden="true"></span>
+                <span>Processing your decision...</span>
+            </div>
+        }
+    </div>
+
+    @if (!string.IsNullOrEmpty(_resultMessage))
+    {
+        <div class="approval-result alert @_resultClass" role="alert">
+            @_resultMessage
+        </div>
+    }
+
+    @if (_showConfirmDialog)
+    {
+        <div class="approval-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
+            <div class="confirm-dialog-overlay" @onclick="CancelConfirm"></div>
+            <div class="confirm-dialog-content">
+                <h4 id="confirm-dialog-title">⚠️ Confirm Your Decision</h4>
+                <p>@_confirmMessage</p>
+                <div class="confirm-dialog-actions">
+                    <button class="btn btn-primary" @onclick="ConfirmAction">
+                        Yes, I'm sure
+                    </button>
+                    <button class="btn btn-secondary" @onclick="CancelConfirm">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int TotalChanges { get; set; }
+
+    [Parameter]
+    public decimal EstimatedImpact { get; set; }
+
+    [Parameter]
+    public EventCallback OnApproved { get; set; }
+
+    [Parameter]
+    public EventCallback OnRejected { get; set; }
+
+    private string _state = "hidden"; // hidden, visible, processing
+    private int _totalChanges;
+    private decimal _estimatedImpact;
+    private bool _editMode = false;
+    private bool _processing = false;
+    private bool _showConfirmDialog = false;
+    private string _confirmMessage = string.Empty;
+    private string _resultMessage = string.Empty;
+    private string _resultClass = string.Empty;
+    private Action? _pendingAction;
+
+    protected override void OnParametersSet()
+    {
+        _totalChanges = TotalChanges;
+        _estimatedImpact = EstimatedImpact;
+
+        if (_totalChanges > 0)
+        {
+            _state = "visible";
+        }
+    }
+
+    public void Show(int changes, decimal impact)
+    {
+        _totalChanges = changes;
+        _estimatedImpact = impact;
+        _state = "visible";
+        StateHasChanged();
+    }
+
+    public void Hide()
+    {
+        _state = "hidden";
+        StateHasChanged();
+    }
+
+    private void Dismiss()
+    {
+        _state = "hidden";
+    }
+
+    private void ToggleEditMode()
+    {
+        _editMode = !_editMode;
+    }
+
+    private void ApproveAll()
+    {
+        _confirmMessage = $"Are you sure you want to approve {_totalChanges} change(s)? This will update pricing across affected stores.";
+        _pendingAction = async () => await ExecuteApproval();
+        _showConfirmDialog = true;
+    }
+
+    private void RejectAll()
+    {
+        _confirmMessage = $"Are you sure you want to reject {_totalChanges} change(s)? No changes will be made.";
+        _pendingAction = async () => await ExecuteRejection();
+        _showConfirmDialog = true;
+    }
+
+    private async Task ConfirmAction()
+    {
+        _showConfirmDialog = false;
+        if (_pendingAction != null)
+        {
+            _pendingAction();
+            _pendingAction = null;
+        }
+    }
+
+    private void CancelConfirm()
+    {
+        _showConfirmDialog = false;
+        _pendingAction = null;
+    }
+
+    private async Task ExecuteApproval()
+    {
+        _processing = true;
+        _resultMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            // POST to /api/pricing/approve
+            var response = await Http.PostAsJsonAsync("/api/pricing/approve", new
+            {
+                Changes = _totalChanges,
+                Impact = _estimatedImpact
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                _resultMessage = "✅ Changes approved successfully!";
+                _resultClass = "alert-success";
+                
+                if (OnApproved.HasDelegate)
+                {
+                    await OnApproved.InvokeAsync();
+                }
+
+                await Task.Delay(2000);
+                _state = "hidden";
+            }
+            else
+            {
+                _resultMessage = $"❌ Approval failed: {response.ReasonPhrase}";
+                _resultClass = "alert-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            _resultMessage = $"❌ Error: {ex.Message}";
+            _resultClass = "alert-danger";
+        }
+        finally
+        {
+            _processing = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task ExecuteRejection()
+    {
+        _processing = true;
+        _resultMessage = string.Empty;
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            // POST to /api/pricing/reject
+            var response = await Http.PostAsJsonAsync("/api/pricing/reject", new
+            {
+                Changes = _totalChanges,
+                Reason = "Manager rejected"
+            });
+
+            if (response.IsSuccessStatusCode)
+            {
+                _resultMessage = "Changes rejected. No updates were made.";
+                _resultClass = "alert-info";
+                
+                if (OnRejected.HasDelegate)
+                {
+                    await OnRejected.InvokeAsync();
+                }
+
+                await Task.Delay(2000);
+                _state = "hidden";
+            }
+            else
+            {
+                _resultMessage = $"❌ Rejection failed: {response.ReasonPhrase}";
+                _resultClass = "alert-danger";
+            }
+        }
+        catch (Exception ex)
+        {
+            _resultMessage = $"❌ Error: {ex.Message}";
+            _resultClass = "alert-danger";
+        }
+        finally
+        {
+            _processing = false;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private string GetImpactClass()
+    {
+        if (_estimatedImpact < 0)
+            return "text-danger";
+        if (_estimatedImpact > 0)
+            return "text-success";
+        return "text-muted";
+    }
+}

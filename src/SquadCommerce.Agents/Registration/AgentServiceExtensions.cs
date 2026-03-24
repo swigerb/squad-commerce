@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using SquadCommerce.A2A.Validation;
 using SquadCommerce.Agents.Domain;
 using SquadCommerce.Agents.Orchestrator;
 using SquadCommerce.Agents.Policies;
@@ -11,12 +12,16 @@ namespace SquadCommerce.Agents.Registration;
 public static class AgentServiceExtensions
 {
     /// <summary>
-    /// Registers all Squad-Commerce agents, policies, and MAF infrastructure.
+    /// Registers all Squad-Commerce agents, policies, and dependencies.
+    /// Call this after AddSquadCommerceMcp() to ensure MCP infrastructure is available.
     /// </summary>
     /// <param name="services">The service collection</param>
     /// <returns>The service collection for chaining</returns>
     public static IServiceCollection AddSquadCommerceAgents(this IServiceCollection services)
     {
+        // Register A2A validation infrastructure
+        services.AddScoped<ExternalDataValidator>();
+
         // Register policy enforcement infrastructure
         services.AddSingleton<PolicyEnforcementFilter>();
 
@@ -31,7 +36,7 @@ public static class AgentServiceExtensions
         // Register workflow definitions
         services.AddSingleton<RetailWorkflow>();
 
-        // TODO: Register MAF infrastructure when packages are available
+        // Note: In production, this is where MAF infrastructure would be registered:
         // services.AddMicrosoftAgentFramework(options =>
         // {
         //     options.UseGraphBasedWorkflow();
@@ -39,7 +44,7 @@ public static class AgentServiceExtensions
         //     options.UsePolicyEnforcement<PolicyEnforcementFilter>();
         // });
 
-        // TODO: Register agent policies with MAF runtime
+        // Note: Agent policies from AgentPolicyRegistry would be registered here:
         // foreach (var policy in AgentPolicyRegistry.GetAllPolicies())
         // {
         //     services.Configure<AgentRuntimeOptions>(opts =>

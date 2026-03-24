@@ -1,4 +1,7 @@
 using Microsoft.Extensions.Logging;
+using SquadCommerce.A2A.Validation;
+using SquadCommerce.Contracts.A2UI;
+using SquadCommerce.Contracts.Interfaces;
 
 namespace SquadCommerce.Agents.Domain;
 
@@ -14,83 +17,155 @@ namespace SquadCommerce.Agents.Domain;
 /// CRITICAL: External data from A2A is NEVER shown raw to the user.
 /// It is cross-referenced against internal data (ExternalDataValidator) before surfacing.
 /// </remarks>
-public sealed class MarketIntelAgent
+public sealed class MarketIntelAgent : IDomainAgent
 {
+    private readonly IA2AClient _a2aClient;
+    private readonly ExternalDataValidator _validator;
     private readonly ILogger<MarketIntelAgent> _logger;
-    // TODO: Add IA2AClient interface when A2A project exists
-    // private readonly IA2AClient _a2aClient;
-    // private readonly IExternalDataValidator _validator;
 
-    public MarketIntelAgent(ILogger<MarketIntelAgent> logger /* , IA2AClient a2aClient, IExternalDataValidator validator */)
+    public string AgentName => "MarketIntelAgent";
+
+    public MarketIntelAgent(
+        IA2AClient a2aClient,
+        ExternalDataValidator validator,
+        ILogger<MarketIntelAgent> logger)
     {
+        _a2aClient = a2aClient ?? throw new ArgumentNullException(nameof(a2aClient));
+        _validator = validator ?? throw new ArgumentNullException(nameof(validator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
-    /// Validates a competitor price claim by querying an external vendor agent via A2A.
+    /// Executes A2A competitor pricing query with validation and builds A2UI comparison grid.
     /// </summary>
-    /// <param name="competitorName">Name of the competitor (e.g., "Target")</param>
     /// <param name="sku">Product SKU</param>
-    /// <param name="claimedPrice">The price claim we're validating</param>
+    /// <param name="ourPrice">Our current price for comparison context</param>
     /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Validation result with confidence score and data source</returns>
-    /// <remarks>
-    /// Workflow:
-    /// 1. Look up competitor's A2A Agent Card (discovery)
-    /// 2. Send A2A request: "What's your price for SKU {sku}?"
-    /// 3. Receive A2A response with price and metadata
-    /// 4. Validate response against internal telemetry (ExternalDataValidator)
-    /// 5. Return confidence score (High/Medium/Low/Unverified)
-    /// 6. Emit OpenTelemetry span
-    /// </remarks>
-    public async Task<string> ValidateCompetitorPrice(
-        string competitorName,
+    /// <returns>Agent result with MarketComparisonGrid A2UI payload</returns>
+    public async Task<AgentResult> ExecuteAsync(
         string sku,
-        decimal claimedPrice,
+        decimal ourPrice,
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation(
-            "MarketIntelAgent validating competitor price: {Competitor} claims ${Price} for SKU {Sku}",
-            competitorName, claimedPrice, sku);
+            "MarketIntelAgent executing A2A query: SKU {Sku}, OurPrice ${OurPrice:F2}",
+            sku,
+            ourPrice);
 
-        // TODO: Call A2A client to query external vendor agent
-        // TODO: Validate response with ExternalDataValidator
-        // TODO: Return confidence score
+        try
+        {
+            // Step 1: Query external competitor pricing via A2A
+            var competitorPrices = await _a2aClient.GetCompetitorPricingAsync(sku, cancellationToken);
 
-        await Task.CompletedTask;
-        return "Stub: A2A validation pending";
+            if (competitorPrices.Count == 0)
+            {
+                _logger.LogWarning("No competitor pricing data retrieved for SKU {Sku}", sku);
+                return new AgentResult
+                {
+                    TextSummary = $"No competitor pricing available for SKU {sku}",
+                    Success = false,
+                    ErrorMessage = "A2A query returned no results",
+                    Timestamp = DateTimeOffset.UtcNow
+                };
+            }
+
+            _logger.LogInformation("Retrieved {Count} competitor prices for SKU {Sku}", competitorPrices.Count, sku);
+
+            // Step 2: Validate each competitor price against internal data
+            var validationResults = await _validator.ValidatePricingBatchAsync(competitorPrices, cancellationToken);
+
+            // Step 3: Filter to only High and Medium confidence data
+            var validatedPrices = competitorPrices
+                .Zip(validationResults, (price, validation) => new { Price = price, Validation = validation })
+                .Where(x => x.Validation.ConfidenceLevel is "High" or "Medium")
+                .Select(x => x.Price)
+                .ToList();
+
+            if (validatedPrices.Count == 0)
+            {
+                _logger.LogWarning("All competitor prices failed validation for SKU {Sku}", sku);
+                return new AgentResult
+                {
+                    TextSummary = $"Competitor prices for SKU {sku} could not be verified",
+                    Success = false,
+                    ErrorMessage = "No high-confidence competitor pricing data available after validation",
+                    Timestamp = DateTimeOffset.UtcNow
+                };
+            }
+
+            _logger.LogInformation(
+                "Validation complete: {Validated} of {Total} prices passed validation",
+                validatedPrices.Count,
+                competitorPrices.Count);
+
+            // Step 4: Build A2UI payload for MarketComparisonGrid
+            var competitorPriceData = validatedPrices.Select(p => new CompetitorPrice
+            {
+                CompetitorName = p.CompetitorName,
+                Price = p.Price,
+                Source = p.Source,
+                Verified = p.Verified,
+                LastUpdated = p.LastUpdated
+            }).ToList();
+
+            var a2uiPayload = new MarketComparisonGridData
+            {
+                Sku = sku,
+                ProductName = GetProductName(sku),
+                Competitors = competitorPriceData,
+                OurPrice = ourPrice,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+
+            // Step 5: Generate text summary
+            var lowestCompetitorPrice = validatedPrices.Min(p => p.Price);
+            var avgCompetitorPrice = validatedPrices.Average(p => p.Price);
+            var priceDelta = ourPrice - lowestCompetitorPrice;
+            var priceDeltaPercent = (priceDelta / ourPrice) * 100;
+
+            var textSummary = $"SKU {sku}: {validatedPrices.Count} verified competitor prices. " +
+                              $"Lowest: ${lowestCompetitorPrice:F2} ({validatedPrices.First(p => p.Price == lowestCompetitorPrice).CompetitorName}), " +
+                              $"Avg: ${avgCompetitorPrice:F2}, " +
+                              $"Our price: ${ourPrice:F2} ({(priceDelta > 0 ? "+" : "")}{priceDeltaPercent:F1}% vs lowest). " +
+                              $"All prices validated via A2A protocol with ExternalDataValidator.";
+
+            _logger.LogInformation(
+                "MarketIntelAgent completed: Lowest ${Lowest:F2}, Avg ${Avg:F2}, OurPrice ${Our:F2}",
+                lowestCompetitorPrice,
+                avgCompetitorPrice,
+                ourPrice);
+
+            return new AgentResult
+            {
+                TextSummary = textSummary,
+                A2UIPayload = a2uiPayload,
+                Success = true,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "MarketIntelAgent failed for SKU {Sku}", sku);
+            return new AgentResult
+            {
+                TextSummary = $"Error retrieving competitor pricing for SKU {sku}",
+                Success = false,
+                ErrorMessage = ex.Message,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
     }
 
-    /// <summary>
-    /// Retrieves current market prices for a SKU from multiple competitors.
-    /// </summary>
-    /// <remarks>
-    /// Queries multiple A2A vendor agents in parallel, validates responses,
-    /// and generates A2UI MarketComparisonGrid payload.
-    /// </remarks>
-    public async Task<string> GetMarketPriceComparison(
-        string sku,
-        CancellationToken cancellationToken = default)
+    private static string GetProductName(string sku) => sku switch
     {
-        _logger.LogInformation("MarketIntelAgent retrieving market comparison for SKU: {Sku}", sku);
-
-        // TODO: Query multiple A2A agents in parallel
-        // TODO: Validate all responses
-        // TODO: Generate A2UI MarketComparisonGrid payload
-
-        await Task.CompletedTask;
-        return "Stub: Market comparison pending";
-    }
-
-    /// <summary>
-    /// Discovers available competitor agents via A2A Agent Card registry.
-    /// </summary>
-    public async Task<string> DiscoverCompetitorAgents(CancellationToken cancellationToken = default)
-    {
-        _logger.LogInformation("MarketIntelAgent discovering available competitor agents");
-
-        // TODO: Query A2A Agent Card registry
-        await Task.CompletedTask;
-        return "Stub: Agent discovery pending";
-    }
+        "SKU-1001" => "Wireless Mouse",
+        "SKU-1002" => "USB-C Cable 6ft",
+        "SKU-1003" => "Laptop Stand",
+        "SKU-1004" => "Webcam 1080p",
+        "SKU-1005" => "Mechanical Keyboard",
+        "SKU-1006" => "Noise-Cancelling Headphones",
+        "SKU-1007" => "External SSD 1TB",
+        "SKU-1008" => "Monitor 27-inch",
+        _ => sku
+    };
 }

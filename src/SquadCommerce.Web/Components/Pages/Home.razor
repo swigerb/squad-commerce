@@ -1,7 +1,251 @@
 ﻿@page "/"
+@rendermode InteractiveServer
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Squad Commerce - Dashboard</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="dashboard-welcome">
+    <div class="welcome-header">
+        <h1>👋 Welcome to Squad Commerce</h1>
+        <p class="lead">
+            Your AI-powered retail management platform. Start a conversation in the left panel to analyze inventory, 
+            pricing strategies, or competitive intelligence.
+        </p>
+    </div>
 
-Welcome to your new app.
+    <div class="quick-actions">
+        <h2>🚀 Try These Commands</h2>
+        <div class="action-cards">
+            <div class="action-card">
+                <div class="action-icon">📦</div>
+                <h3>Check Inventory</h3>
+                <p>"Show me inventory levels for SKU-100 across all stores"</p>
+                <span class="action-badge">Inventory Agent</span>
+            </div>
+            <div class="action-card">
+                <div class="action-icon">💰</div>
+                <h3>Analyze Pricing</h3>
+                <p>"Calculate margin impact if we match competitor prices"</p>
+                <span class="action-badge">Pricing Agent</span>
+            </div>
+            <div class="action-card">
+                <div class="action-icon">📊</div>
+                <h3>Compare Market</h3>
+                <p>"Compare our prices with MegaMart for electronics"</p>
+                <span class="action-badge">Market Intel Agent</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="features-section">
+        <h2>✨ What You Can Do</h2>
+        <div class="feature-grid">
+            <div class="feature-item">
+                <div class="feature-icon">🔄</div>
+                <div class="feature-text">
+                    <h4>Real-Time Streaming</h4>
+                    <p>Watch agents work in real-time with live status updates</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">📈</div>
+                <div class="feature-text">
+                    <h4>Interactive Visualizations</h4>
+                    <p>Explore data with sortable tables, heatmaps, and charts</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">✅</div>
+                <div class="feature-text">
+                    <h4>Manager Approval</h4>
+                    <p>Review and approve pricing changes with confidence</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🔗</div>
+                <div class="feature-text">
+                    <h4>A2A Integration</h4>
+                    <p>Verified competitor data through agent-to-agent protocol</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🎯</div>
+                <div class="feature-text">
+                    <h4>MCP Tools</h4>
+                    <p>Direct ERP integration via Model Context Protocol</p>
+                </div>
+            </div>
+            <div class="feature-item">
+                <div class="feature-icon">🎨</div>
+                <div class="feature-text">
+                    <h4>A2UI Components</h4>
+                    <p>Native Blazor UI rendered from agent responses</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="tech-stack">
+        <h2>🛠️ Technology Stack</h2>
+        <div class="tech-badges">
+            <span class="tech-badge">Microsoft Agent Framework</span>
+            <span class="tech-badge">Blazor Server</span>
+            <span class="tech-badge">SignalR</span>
+            <span class="tech-badge">AG-UI Protocol</span>
+            <span class="tech-badge">A2UI Components</span>
+            <span class="tech-badge">MCP Integration</span>
+            <span class="tech-badge">A2A Handshake</span>
+            <span class="tech-badge">OpenTelemetry</span>
+        </div>
+    </div>
+</div>
+
+<style>
+    .dashboard-welcome {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .welcome-header {
+        text-align: center;
+        margin-bottom: 3rem;
+        padding: 2rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 12px;
+    }
+
+    .welcome-header h1 {
+        margin: 0 0 1rem 0;
+        font-size: 2.5rem;
+    }
+
+    .lead {
+        font-size: 1.125rem;
+        opacity: 0.95;
+        max-width: 800px;
+        margin: 0 auto;
+    }
+
+    .quick-actions {
+        margin-bottom: 3rem;
+    }
+
+    .quick-actions h2 {
+        margin-bottom: 1.5rem;
+    }
+
+    .action-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 1.5rem;
+    }
+
+    .action-card {
+        background: white;
+        padding: 1.5rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+
+    .action-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+    }
+
+    .action-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+
+    .action-card h3 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1.25rem;
+    }
+
+    .action-card p {
+        color: #6c757d;
+        font-style: italic;
+        margin-bottom: 1rem;
+        font-size: 0.875rem;
+    }
+
+    .action-badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        background: #e9ecef;
+        border-radius: 12px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: #495057;
+    }
+
+    .features-section {
+        margin-bottom: 3rem;
+    }
+
+    .features-section h2 {
+        margin-bottom: 1.5rem;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1rem;
+    }
+
+    .feature-item {
+        display: flex;
+        align-items: start;
+        gap: 1rem;
+        padding: 1rem;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+
+    .feature-icon {
+        font-size: 2rem;
+        flex-shrink: 0;
+    }
+
+    .feature-text h4 {
+        margin: 0 0 0.5rem 0;
+        font-size: 1rem;
+    }
+
+    .feature-text p {
+        margin: 0;
+        font-size: 0.875rem;
+        color: #6c757d;
+    }
+
+    .tech-stack {
+        text-align: center;
+        padding: 2rem;
+        background: #f8f9fa;
+        border-radius: 12px;
+    }
+
+    .tech-stack h2 {
+        margin-bottom: 1.5rem;
+    }
+
+    .tech-badges {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 0.75rem;
+    }
+
+    .tech-badge {
+        padding: 0.5rem 1rem;
+        background: white;
+        border: 2px solid #667eea;
+        color: #667eea;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 600;
+    }
+</style>

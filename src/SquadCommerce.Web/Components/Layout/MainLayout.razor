@@ -1,23 +1,38 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="page">
-    <div class="sidebar">
-        <NavMenu />
-    </div>
-
-    <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">About</a>
+<div class="app-layout">
+    <header class="app-header">
+        <div class="header-brand">
+            <h1>🛒 Squad Commerce</h1>
+            <span class="header-subtitle">AI-Powered Retail Management</span>
         </div>
+        <AgentStatusBar />
+    </header>
 
-        <article class="content px-4">
-            @Body
-        </article>
-    </main>
+    <div class="app-content">
+        <aside class="sidebar-left">
+            <div class="sidebar-header">
+                <h2>💬 Conversation</h2>
+            </div>
+            <AgentChat />
+        </aside>
+
+        <main class="main-content">
+            <div class="content-header">
+                <h2>📊 Analysis Dashboard</h2>
+            </div>
+            <article class="content-body">
+                @Body
+            </article>
+        </main>
+    </div>
 </div>
 
 <div id="blazor-error-ui" data-nosnippet>
-    An unhandled error has occurred.
-    <a href="." class="reload">Reload</a>
-    <span class="dismiss">🗙</span>
+    <div class="blazor-error-content">
+        <span class="blazor-error-icon">⚠️</span>
+        <span class="blazor-error-text">An unhandled error has occurred.</span>
+        <button class="blazor-error-reload" onclick="location.reload()">Reload</button>
+        <button class="blazor-error-dismiss" onclick="document.getElementById('blazor-error-ui').style.display='none'">Dismiss</button>
+    </div>
 </div>
