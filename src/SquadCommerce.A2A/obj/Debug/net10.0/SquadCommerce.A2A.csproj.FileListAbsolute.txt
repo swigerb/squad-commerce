@@ -1,0 +1,16 @@
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\bin\Debug\net10.0\SquadCommerce.A2A.deps.json
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\bin\Debug\net10.0\SquadCommerce.A2A.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\bin\Debug\net10.0\SquadCommerce.A2A.pdb
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCommerce.A2A.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCommerce.A2A.AssemblyInfoInputs.cache
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCommerce.A2A.AssemblyInfo.cs
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCommerce.A2A.csproj.CoreCompileInputs.cache
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCommerce.A2A.sourcelink.json
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCommerce.A2A.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\refint\SquadCommerce.A2A.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCommerce.A2A.pdb
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\ref\SquadCommerce.A2A.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\bin\Debug\net10.0\SquadCommerce.Contracts.dll
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\bin\Debug\net10.0\SquadCommerce.Contracts.pdb
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCommerce.A2A.csproj.AssemblyReference.cache
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.A2A\obj\Debug\net10.0\SquadCom.760E8783.Up2Date

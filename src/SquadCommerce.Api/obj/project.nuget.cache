@@ -1,0 +1,45 @@
+{
+  "version": 2,
+  "dgSpecHash": "UnipxsyK904=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Api\\SquadCommerce.Api.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.aspnetcore.signalr\\1.2.9\\microsoft.aspnetcore.signalr.1.2.9.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.ambientmetadata.application\\10.1.0\\microsoft.extensions.ambientmetadata.application.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.compliance.abstractions\\10.1.0\\microsoft.extensions.compliance.abstractions.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.dependencyinjection.autoactivation\\10.1.0\\microsoft.extensions.dependencyinjection.autoactivation.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.diagnostics.exceptionsummarization\\10.1.0\\microsoft.extensions.diagnostics.exceptionsummarization.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.http.diagnostics\\10.1.0\\microsoft.extensions.http.diagnostics.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.http.resilience\\10.1.0\\microsoft.extensions.http.resilience.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.resilience\\10.1.0\\microsoft.extensions.resilience.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.servicediscovery\\10.1.0\\microsoft.extensions.servicediscovery.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.servicediscovery.abstractions\\10.1.0\\microsoft.extensions.servicediscovery.abstractions.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.telemetry\\10.1.0\\microsoft.extensions.telemetry.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.telemetry.abstractions\\10.1.0\\microsoft.extensions.telemetry.abstractions.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry\\1.14.0\\opentelemetry.1.14.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry.api\\1.14.0\\opentelemetry.api.1.14.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry.api.providerbuilderextensions\\1.14.0\\opentelemetry.api.providerbuilderextensions.1.14.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry.exporter.opentelemetryprotocol\\1.14.0\\opentelemetry.exporter.opentelemetryprotocol.1.14.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry.extensions.hosting\\1.14.0\\opentelemetry.extensions.hosting.1.14.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry.instrumentation.aspnetcore\\1.14.0\\opentelemetry.instrumentation.aspnetcore.1.14.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry.instrumentation.http\\1.14.0\\opentelemetry.instrumentation.http.1.14.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry.instrumentation.runtime\\1.14.0\\opentelemetry.instrumentation.runtime.1.14.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\polly.core\\8.4.2\\polly.core.8.4.2.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\polly.extensions\\8.4.2\\polly.extensions.8.4.2.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\polly.ratelimiting\\8.4.2\\polly.ratelimiting.8.4.2.nupkg.sha512"
+  ],
+  "logs": [
+    {
+      "code": "NU1510",
+      "level": "Warning",
+      "message": "PackageReference Microsoft.AspNetCore.SignalR will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
+      "projectPath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Api\\SquadCommerce.Api.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Api\\SquadCommerce.Api.csproj",
+      "libraryId": "Microsoft.AspNetCore.SignalR",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SquadCommerce.A2A/SquadCommerce.A2A.csproj" />
+    <Project Path="src/SquadCommerce.Agents/SquadCommerce.Agents.csproj" />
+    <Project Path="src/SquadCommerce.Api/SquadCommerce.Api.csproj" />
+    <Project Path="src/SquadCommerce.AppHost/SquadCommerce.AppHost.csproj" />
+    <Project Path="src/SquadCommerce.Contracts/SquadCommerce.Contracts.csproj" />
+    <Project Path="src/SquadCommerce.Mcp/SquadCommerce.Mcp.csproj" />
+    <Project Path="src/SquadCommerce.ServiceDefaults/SquadCommerce.ServiceDefaults.csproj" />
+    <Project Path="src/SquadCommerce.Web/SquadCommerce.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SquadCommerce.A2A.Tests/SquadCommerce.A2A.Tests.csproj" />
+    <Project Path="tests/SquadCommerce.Agents.Tests/SquadCommerce.Agents.Tests.csproj" />
+    <Project Path="tests/SquadCommerce.Integration.Tests/SquadCommerce.Integration.Tests.csproj" />
+    <Project Path="tests/SquadCommerce.Mcp.Tests/SquadCommerce.Mcp.Tests.csproj" />
+    <Project Path="tests/SquadCommerce.Web.Tests/SquadCommerce.Web.Tests.csproj" />
+  </Folder>
+</Solution>

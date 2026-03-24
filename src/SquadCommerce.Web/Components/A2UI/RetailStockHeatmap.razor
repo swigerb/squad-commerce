@@ -1,0 +1,118 @@
+@using SquadCommerce.Contracts.A2UI
+
+<div class="retail-stock-heatmap" role="region" aria-label="Retail Stock Heatmap">
+    <h3>Retail Stock Heatmap</h3>
+
+    @if (Data?.Data != null)
+    {
+        <div class="heatmap-container">
+            <table class="table table-bordered heatmap-table" aria-label="Inventory levels by store and SKU">
+                <thead>
+                    <tr>
+                        <th scope="col">Store / SKU</th>
+                        @foreach (var sku in GetSkus())
+                        {
+                            <th scope="col">@sku</th>
+                        }
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var store in GetStores())
+                    {
+                        <tr>
+                            <th scope="row">@store</th>
+                            @foreach (var sku in GetSkus())
+                            {
+                                var cellData = GetCellData(store, sku);
+                                var cssClass = GetCellCssClass(cellData);
+                                <td class="@cssClass" 
+                                    aria-label="@store @sku: @cellData.current units, @cellData.percentOfTarget% of target"
+                                    title="Current: @cellData.current / Target: @cellData.target (@cellData.percentOfTarget%)">
+                                    <div class="cell-content">
+                                        <span class="cell-value">@cellData.current</span>
+                                        <span class="cell-percent">@cellData.percentOfTarget%</span>
+                                    </div>
+                                </td>
+                            }
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <div class="heatmap-legend" role="img" aria-label="Heatmap color legend">
+                <span class="legend-item">
+                    <span class="legend-color legend-red"></span> &lt; 10% of target
+                </span>
+                <span class="legend-item">
+                    <span class="legend-color legend-yellow"></span> 10-30% of target
+                </span>
+                <span class="legend-item">
+                    <span class="legend-color legend-green"></span> ≥ 30% of target
+                </span>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Data { get; set; }
+
+    private IEnumerable<string> GetStores()
+    {
+        if (Data?.Data is not System.Text.Json.JsonElement jsonData)
+            return Enumerable.Empty<string>();
+
+        if (jsonData.TryGetProperty("stores", out var stores) && stores.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            return stores.EnumerateArray().Select(s => s.GetString() ?? "").Where(s => !string.IsNullOrEmpty(s));
+        }
+
+        return Enumerable.Empty<string>();
+    }
+
+    private IEnumerable<string> GetSkus()
+    {
+        if (Data?.Data is not System.Text.Json.JsonElement jsonData)
+            return Enumerable.Empty<string>();
+
+        if (jsonData.TryGetProperty("skus", out var skus) && skus.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            return skus.EnumerateArray().Select(s => s.GetString() ?? "").Where(s => !string.IsNullOrEmpty(s));
+        }
+
+        return Enumerable.Empty<string>();
+    }
+
+    private (int current, int target, int percentOfTarget) GetCellData(string store, string sku)
+    {
+        if (Data?.Data is not System.Text.Json.JsonElement jsonData)
+            return (0, 0, 0);
+
+        if (jsonData.TryGetProperty("cells", out var cells) && cells.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            foreach (var cell in cells.EnumerateArray())
+            {
+                var cellStore = cell.TryGetProperty("store", out var s) ? s.GetString() : "";
+                var cellSku = cell.TryGetProperty("sku", out var sk) ? sk.GetString() : "";
+
+                if (cellStore == store && cellSku == sku)
+                {
+                    var current = cell.TryGetProperty("current", out var c) ? c.GetInt32() : 0;
+                    var target = cell.TryGetProperty("target", out var t) ? t.GetInt32() : 0;
+                    var percent = target > 0 ? (int)((current / (double)target) * 100) : 0;
+                    return (current, target, percent);
+                }
+            }
+        }
+
+        return (0, 0, 0);
+    }
+
+    private string GetCellCssClass((int current, int target, int percentOfTarget) cellData)
+    {
+        var percent = cellData.percentOfTarget;
+        if (percent < 10) return "heatmap-cell heatmap-cell-red";
+        if (percent < 30) return "heatmap-cell heatmap-cell-yellow";
+        return "heatmap-cell heatmap-cell-green";
+    }
+}

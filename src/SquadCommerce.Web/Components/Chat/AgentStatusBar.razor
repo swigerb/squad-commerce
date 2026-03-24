@@ -1,0 +1,83 @@
+@inject Services.SignalRStateService StateService
+
+<div class="agent-status-bar" role="status" aria-live="polite" aria-atomic="true">
+    @if (!string.IsNullOrEmpty(_currentStatus))
+    {
+        <div class="status-message">
+            <span class="status-icon" aria-hidden="true">⚙️</span>
+            <span class="status-text">@_currentStatus</span>
+        </div>
+    }
+
+    @if (_urgencyBadges.Any())
+    {
+        <div class="urgency-badges">
+            @foreach (var badge in _urgencyBadges)
+            {
+                <span class="badge @GetBadgeCssClass(badge.Level)" 
+                      role="alert"
+                      aria-label="@badge.Level urgency: @badge.Message">
+                    <span class="badge-icon">@GetBadgeIcon(badge.Level)</span>
+                    @badge.Message
+                </span>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private string _currentStatus = string.Empty;
+    private List<UrgencyBadge> _urgencyBadges = new();
+
+    private record UrgencyBadge(string Level, string Message, DateTime Timestamp);
+
+    protected override async Task OnInitializedAsync()
+    {
+        StateService.OnStatusUpdate += HandleStatusUpdate;
+        StateService.OnUrgencyBadge += HandleUrgencyBadge;
+
+        await StateService.StartAsync();
+        await base.OnInitializedAsync();
+    }
+
+    private void HandleStatusUpdate(string status)
+    {
+        _currentStatus = status;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleUrgencyBadge(string level, string message)
+    {
+        _urgencyBadges.Add(new UrgencyBadge(level, message, DateTime.Now));
+
+        Task.Delay(5000).ContinueWith(_ =>
+        {
+            _urgencyBadges.RemoveAll(b => (DateTime.Now - b.Timestamp).TotalSeconds > 5);
+            InvokeAsync(StateHasChanged);
+        });
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string GetBadgeCssClass(string level) => level.ToLowerInvariant() switch
+    {
+        "high" => "badge-danger",
+        "medium" => "badge-warning",
+        "low" => "badge-info",
+        _ => "badge-secondary"
+    };
+
+    private string GetBadgeIcon(string level) => level.ToLowerInvariant() switch
+    {
+        "high" => "🔴",
+        "medium" => "🟡",
+        "low" => "🔵",
+        _ => "⚪"
+    };
+
+    public void Dispose()
+    {
+        StateService.OnStatusUpdate -= HandleStatusUpdate;
+        StateService.OnUrgencyBadge -= HandleUrgencyBadge;
+    }
+}

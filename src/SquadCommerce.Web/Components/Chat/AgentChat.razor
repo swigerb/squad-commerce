@@ -1,0 +1,137 @@
+@inject Services.AgUiStreamService StreamService
+
+<div class="agent-chat" role="region" aria-label="Agent Chat">
+    <div class="chat-header">
+        <h2>Agent Workspace</h2>
+    </div>
+
+    <div class="chat-messages" aria-live="polite" aria-atomic="false">
+        @foreach (var message in _messages)
+        {
+            <div class="chat-message @message.Role" role="article">
+                <div class="message-header">
+                    <span class="message-role">@message.Role</span>
+                    <span class="message-timestamp">@message.Timestamp.ToString("HH:mm:ss")</span>
+                </div>
+                <div class="message-content">
+                    @if (message.IsA2UI && message.A2UIPayload != null)
+                    {
+                        <A2UIRenderer Payload="message.A2UIPayload" />
+                    }
+                    else
+                    {
+                        <div class="message-text">@((MarkupString)message.Content)</div>
+                    }
+                </div>
+            </div>
+        }
+
+        @if (_isStreaming)
+        {
+            <div class="chat-message assistant streaming" role="status" aria-live="polite">
+                <div class="message-header">
+                    <span class="message-role">Assistant</span>
+                    <span class="typing-indicator">
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                        <span class="dot"></span>
+                    </span>
+                </div>
+                <div class="message-content">
+                    <div class="message-text">@_currentStreamingMessage</div>
+                </div>
+            </div>
+        }
+    </div>
+
+    <div class="chat-input-container">
+        <form class="chat-input-form" @onsubmit="SendMessage">
+            <input type="text" 
+                   class="form-control chat-input" 
+                   placeholder="Ask the agent team..." 
+                   @bind="_inputText"
+                   disabled="@_isStreaming"
+                   aria-label="Chat input" />
+            <button type="submit" 
+                    class="btn btn-primary" 
+                    disabled="@(_isStreaming || string.IsNullOrWhiteSpace(_inputText))"
+                    aria-label="Send message">
+                Send
+            </button>
+        </form>
+    </div>
+</div>
+
+@code {
+    private List<ChatMessage> _messages = new();
+    private string _inputText = string.Empty;
+    private bool _isStreaming = false;
+    private string _currentStreamingMessage = string.Empty;
+
+    private record ChatMessage(
+        string Role,
+        string Content,
+        DateTime Timestamp,
+        bool IsA2UI = false,
+        Contracts.A2UI.A2UIPayload? A2UIPayload = null
+    );
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(_inputText))
+            return;
+
+        var userMessage = _inputText;
+        _inputText = string.Empty;
+
+        _messages.Add(new ChatMessage("User", userMessage, DateTime.Now));
+        _isStreaming = true;
+        _currentStreamingMessage = string.Empty;
+
+        await InvokeAsync(StateHasChanged);
+
+        try
+        {
+            await foreach (var chunk in StreamService.StreamAgUiAsync(userMessage))
+            {
+                if (chunk.IsA2UI && chunk.Payload != null)
+                {
+                    _messages.Add(new ChatMessage(
+                        "Assistant",
+                        string.Empty,
+                        DateTime.Now,
+                        IsA2UI: true,
+                        A2UIPayload: chunk.Payload
+                    ));
+                    _currentStreamingMessage = string.Empty;
+                }
+                else if (!string.IsNullOrEmpty(chunk.Text))
+                {
+                    _currentStreamingMessage += chunk.Text;
+                }
+
+                await InvokeAsync(StateHasChanged);
+            }
+
+            if (!string.IsNullOrEmpty(_currentStreamingMessage))
+            {
+                _messages.Add(new ChatMessage("Assistant", _currentStreamingMessage, DateTime.Now));
+            }
+        }
+        catch (Exception ex)
+        {
+            _messages.Add(new ChatMessage("System", $"Error: {ex.Message}", DateTime.Now));
+        }
+        finally
+        {
+            _isStreaming = false;
+            _currentStreamingMessage = string.Empty;
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+}

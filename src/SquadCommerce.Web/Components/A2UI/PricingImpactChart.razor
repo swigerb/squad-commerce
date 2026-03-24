@@ -1,0 +1,100 @@
+@using SquadCommerce.Contracts.A2UI
+
+<div class="pricing-impact-chart" role="region" aria-label="Pricing Impact Chart">
+    <h3>Pricing Impact Chart</h3>
+
+    @if (Data?.Data != null)
+    {
+        <div class="impact-cards">
+            @foreach (var item in GetPricingItems())
+            {
+                <div class="impact-card" role="article" aria-label="Pricing impact for @item.sku">
+                    <div class="card-header">
+                        <h4 class="sku-name">@item.sku</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="price-flow">
+                            <div class="price-item">
+                                <span class="price-label">Current Price</span>
+                                <span class="price-value">@item.currentPrice.ToString("C")</span>
+                            </div>
+                            <div class="price-arrow" aria-hidden="true">→</div>
+                            <div class="price-item">
+                                <span class="price-label">Proposed Price</span>
+                                <span class="price-value proposed">@item.proposedPrice.ToString("C")</span>
+                            </div>
+                        </div>
+                        <div class="margin-impact">
+                            <div class="margin-row">
+                                <span class="margin-label">Margin Delta:</span>
+                                <span class="margin-value @GetMarginCssClass(item.marginDelta)">
+                                    @item.marginDelta.ToString("+0.0%;-0.0%;0.0%")
+                                </span>
+                            </div>
+                            <div class="margin-row">
+                                <span class="margin-label">Revenue Impact:</span>
+                                <span class="margin-value @GetRevenueCssClass(item.revenueImpact)">
+                                    @item.revenueImpact.ToString("C")
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-footer">
+                        <span class="units-affected">@item.unitsAffected units affected</span>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Data { get; set; }
+
+    private record PricingItem(
+        string sku,
+        decimal currentPrice,
+        decimal proposedPrice,
+        decimal marginDelta,
+        decimal revenueImpact,
+        int unitsAffected
+    );
+
+    private IEnumerable<PricingItem> GetPricingItems()
+    {
+        if (Data?.Data is not System.Text.Json.JsonElement jsonData)
+            return Enumerable.Empty<PricingItem>();
+
+        if (jsonData.TryGetProperty("items", out var items) && items.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            return items.EnumerateArray().Select(item =>
+            {
+                var sku = item.TryGetProperty("sku", out var s) ? s.GetString() ?? "" : "";
+                var currentPrice = item.TryGetProperty("currentPrice", out var cp) ? cp.GetDecimal() : 0m;
+                var proposedPrice = item.TryGetProperty("proposedPrice", out var pp) ? pp.GetDecimal() : 0m;
+                var marginDelta = item.TryGetProperty("marginDelta", out var md) ? md.GetDecimal() : 0m;
+                var revenueImpact = item.TryGetProperty("revenueImpact", out var ri) ? ri.GetDecimal() : 0m;
+                var unitsAffected = item.TryGetProperty("unitsAffected", out var ua) ? ua.GetInt32() : 0;
+
+                return new PricingItem(sku, currentPrice, proposedPrice, marginDelta, revenueImpact, unitsAffected);
+            });
+        }
+
+        return Enumerable.Empty<PricingItem>();
+    }
+
+    private string GetMarginCssClass(decimal marginDelta)
+    {
+        if (marginDelta < 0) return "negative";
+        if (marginDelta > 0) return "positive";
+        return "neutral";
+    }
+
+    private string GetRevenueCssClass(decimal revenueImpact)
+    {
+        if (revenueImpact < 0) return "negative";
+        if (revenueImpact > 0) return "positive";
+        return "neutral";
+    }
+}

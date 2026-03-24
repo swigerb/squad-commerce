@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "L822/s5HGUE=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Agents\\SquadCommerce.Agents.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\10.0.5\\microsoft.extensions.dependencyinjection.abstractions.10.0.5.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\10.0.5\\microsoft.extensions.logging.abstractions.10.0.5.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,33 @@
+@using SquadCommerce.Contracts.A2UI
+
+<div class="a2ui-renderer">
+    @if (Payload == null)
+    {
+        <p class="text-muted">No data to display</p>
+    }
+    else
+    {
+        @switch (Payload.RenderAs)
+        {
+            case "RetailStockHeatmap":
+                <RetailStockHeatmap Data="Payload" />
+                break;
+            case "PricingImpactChart":
+                <PricingImpactChart Data="Payload" />
+                break;
+            case "MarketComparisonGrid":
+                <MarketComparisonGrid Data="Payload" />
+                break;
+            default:
+                <div class="alert alert-warning" role="alert">
+                    <strong>Unknown A2UI component:</strong> @Payload.RenderAs
+                </div>
+                break;
+        }
+    }
+</div>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Payload { get; set; }
+}

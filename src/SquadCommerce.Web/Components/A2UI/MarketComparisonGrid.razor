@@ -1,0 +1,161 @@
+@using SquadCommerce.Contracts.A2UI
+
+<div class="market-comparison-grid" role="region" aria-label="Market Comparison Grid">
+    <h3>Market Comparison Grid</h3>
+
+    @if (Data?.Data != null)
+    {
+        <table class="table table-striped market-comparison-table" aria-label="Competitor price comparison">
+            <thead>
+                <tr>
+                    <th scope="col" class="sortable" @onclick="() => SortBy(nameof(ComparisonItem.sku))">
+                        SKU @GetSortIndicator(nameof(ComparisonItem.sku))
+                    </th>
+                    <th scope="col" class="sortable" @onclick="() => SortBy(nameof(ComparisonItem.ourPrice))">
+                        Our Price @GetSortIndicator(nameof(ComparisonItem.ourPrice))
+                    </th>
+                    <th scope="col" class="sortable" @onclick="() => SortBy(nameof(ComparisonItem.competitorPrice))">
+                        Competitor Price @GetSortIndicator(nameof(ComparisonItem.competitorPrice))
+                    </th>
+                    <th scope="col" class="sortable" @onclick="() => SortBy(nameof(ComparisonItem.deltaPercent))">
+                        Delta % @GetSortIndicator(nameof(ComparisonItem.deltaPercent))
+                    </th>
+                    <th scope="col">Trend</th>
+                    <th scope="col">Competitor</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in GetSortedItems())
+                {
+                    <tr>
+                        <th scope="row">@item.sku</th>
+                        <td class="price-cell">@item.ourPrice.ToString("C")</td>
+                        <td class="price-cell">@item.competitorPrice.ToString("C")</td>
+                        <td class="delta-cell @GetDeltaCssClass(item.deltaPercent)">
+                            @item.deltaPercent.ToString("+0.0%;-0.0%;0.0%")
+                        </td>
+                        <td class="trend-cell">
+                            <span class="trend-indicator @GetTrendCssClass(item.trend)" aria-label="@GetTrendLabel(item.trend)">
+                                @GetTrendIcon(item.trend)
+                            </span>
+                        </td>
+                        <td>@item.competitor</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Data { get; set; }
+
+    private string? _sortColumn;
+    private bool _sortAscending = true;
+
+    private record ComparisonItem(
+        string sku,
+        decimal ourPrice,
+        decimal competitorPrice,
+        decimal deltaPercent,
+        string trend,
+        string competitor
+    );
+
+    private IEnumerable<ComparisonItem> GetComparisonItems()
+    {
+        if (Data?.Data is not System.Text.Json.JsonElement jsonData)
+            return Enumerable.Empty<ComparisonItem>();
+
+        if (jsonData.TryGetProperty("comparisons", out var comparisons) && comparisons.ValueKind == System.Text.Json.JsonValueKind.Array)
+        {
+            return comparisons.EnumerateArray().Select(item =>
+            {
+                var sku = item.TryGetProperty("sku", out var s) ? s.GetString() ?? "" : "";
+                var ourPrice = item.TryGetProperty("ourPrice", out var op) ? op.GetDecimal() : 0m;
+                var competitorPrice = item.TryGetProperty("competitorPrice", out var cp) ? cp.GetDecimal() : 0m;
+                var deltaPercent = item.TryGetProperty("deltaPercent", out var dp) ? dp.GetDecimal() : 0m;
+                var trend = item.TryGetProperty("trend", out var t) ? t.GetString() ?? "stable" : "stable";
+                var competitor = item.TryGetProperty("competitor", out var c) ? c.GetString() ?? "" : "";
+
+                return new ComparisonItem(sku, ourPrice, competitorPrice, deltaPercent, trend, competitor);
+            });
+        }
+
+        return Enumerable.Empty<ComparisonItem>();
+    }
+
+    private IEnumerable<ComparisonItem> GetSortedItems()
+    {
+        var items = GetComparisonItems();
+
+        if (_sortColumn == null)
+            return items;
+
+        return _sortColumn switch
+        {
+            nameof(ComparisonItem.sku) => _sortAscending 
+                ? items.OrderBy(i => i.sku) 
+                : items.OrderByDescending(i => i.sku),
+            nameof(ComparisonItem.ourPrice) => _sortAscending 
+                ? items.OrderBy(i => i.ourPrice) 
+                : items.OrderByDescending(i => i.ourPrice),
+            nameof(ComparisonItem.competitorPrice) => _sortAscending 
+                ? items.OrderBy(i => i.competitorPrice) 
+                : items.OrderByDescending(i => i.competitorPrice),
+            nameof(ComparisonItem.deltaPercent) => _sortAscending 
+                ? items.OrderBy(i => i.deltaPercent) 
+                : items.OrderByDescending(i => i.deltaPercent),
+            _ => items
+        };
+    }
+
+    private void SortBy(string column)
+    {
+        if (_sortColumn == column)
+        {
+            _sortAscending = !_sortAscending;
+        }
+        else
+        {
+            _sortColumn = column;
+            _sortAscending = true;
+        }
+    }
+
+    private string GetSortIndicator(string column)
+    {
+        if (_sortColumn != column)
+            return "⇅";
+        return _sortAscending ? "↑" : "↓";
+    }
+
+    private string GetDeltaCssClass(decimal delta)
+    {
+        if (delta < 0) return "delta-negative";
+        if (delta > 0) return "delta-positive";
+        return "delta-neutral";
+    }
+
+    private string GetTrendCssClass(string trend) => trend.ToLowerInvariant() switch
+    {
+        "up" => "trend-up",
+        "down" => "trend-down",
+        _ => "trend-stable"
+    };
+
+    private string GetTrendIcon(string trend) => trend.ToLowerInvariant() switch
+    {
+        "up" => "↗",
+        "down" => "↘",
+        _ => "→"
+    };
+
+    private string GetTrendLabel(string trend) => trend.ToLowerInvariant() switch
+    {
+        "up" => "Price trending up",
+        "down" => "Price trending down",
+        _ => "Price stable"
+    };
+}

@@ -1,0 +1,39 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "SquadCommerce.A2A/1.0.0": {
+        "dependencies": {
+          "SquadCommerce.Contracts": "1.0.0"
+        },
+        "runtime": {
+          "SquadCommerce.A2A.dll": {}
+        }
+      },
+      "SquadCommerce.Contracts/1.0.0": {
+        "runtime": {
+          "SquadCommerce.Contracts.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "SquadCommerce.A2A/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "SquadCommerce.Contracts/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}
