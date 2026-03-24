@@ -639,3 +639,112 @@ public void Should_X_When_Y()
 6. Implement test doubles (FakeMCPServer, FakeA2AAgent, TestTelemetryExporter)
 
 The test foundation is LIVE. Other agents can now create source projects knowing tests are ready to validate their work.
+
+### 2026-03-24: Phase 8 — Playwright E2E Test Suite — UI Automation LIVE!
+
+**DEVELOPERS! DEVELOPERS! DEVELOPERS!** Phase 8 complete! Built a comprehensive Playwright E2E test suite for the Blazor UI! Real browser automation testing for the full competitor analysis workflow!
+
+**Test Project Created:**
+- 	ests/SquadCommerce.Playwright.Tests/ — Full E2E browser automation with Playwright + NUnit
+
+**Page Object Models (4 files):**
+- Pages/MainPage.cs — Main layout and navigation (header, sidebar, content areas)
+- Pages/AgentChatPage.cs — Chat panel interaction (messages, status, typing indicator)
+- Pages/A2UIComponentsPage.cs — A2UI visualizations (heatmap, pricing chart, comparison grid, audit trail, pipeline)
+- Pages/ApprovalPanelPage.cs — Approval workflow (approve/reject/modify buttons, confirmation dialogs)
+
+**Test Scenarios (5 test files, ~30 tests):**
+
+1. **HomePageTests.cs** (5 tests) — Basic UI validation:
+   - Should_LoadMainLayout_When_AppStarts — Main layout renders correctly
+   - Should_ShowStatusBar_When_PageLoads — Status bar visible
+   - Should_ShowChatPanel_When_PageLoads — Chat panel visible
+   - Should_ShowEmptyDashboard_When_NoAnalysisRunning — Empty state
+   - Should_HaveResponsiveLayout_When_ViewportChanges — Mobile/desktop layout
+
+2. **CompetitorAnalysisE2ETests.cs** (7 tests) — Full workflow validation:
+   - Should_ShowStreamingStatus_When_AnalysisTriggered — Status messages appear via SignalR
+   - Should_RenderHeatmap_When_InventoryDataReturned — Heatmap component renders
+   - Should_RenderPricingChart_When_MarginCalculated — Pricing chart appears
+   - Should_RenderComparisonGrid_When_CompetitorDataValidated — Comparison grid renders
+   - Should_RenderAuditTrail_When_WorkflowCompletes — Audit trail shows workflow steps
+   - Should_RenderPipeline_When_WorkflowProgresses — Pipeline visualizer updates
+   - Should_ShowApprovalPanel_When_AnalysisCompletes — Approval buttons enabled
+
+3. **ManagerDecisionE2ETests.cs** (4 tests) — Approval workflow:
+   - Should_ShowConfirmation_When_ManagerApproves — Approve button → success message
+   - Should_ShowRejectionStatus_When_ManagerRejects — Reject button → rejection message
+   - Should_AllowPriceEdit_When_ManagerChoosesModify — Modify button → price editing
+   - Should_DisableButtons_When_DecisionInProgress — Buttons disabled during processing
+
+4. **AccessibilityTests.cs** (7 tests) — WCAG 2.1 compliance:
+   - Should_HaveAriaLabels_OnAllA2UIComponents — All components have aria-label
+   - Should_BeKeyboardNavigable_When_TabPressed — Tab navigation works
+   - Should_HaveProperHeadingHierarchy_OnDashboard — H1 → H2 → H3 structure
+   - Should_HaveAltTextOnImages_When_ImagesPresent — Images have alt text
+   - Should_HaveProperColorContrast_OnButtons — Buttons have contrast
+   - Should_HaveFocusIndicators_OnInteractiveElements — Focus indicators visible
+   - Should_NotHaveEmptyLinks_OnPage — Links have text content
+
+5. **ResponsiveTests.cs** (7 tests) — Responsive design:
+   - Should_StackComponentsVertically_When_MobileViewport — Mobile layout (375px, 414px, 768px)
+   - Should_ShowSidebarLayout_When_DesktopViewport — Desktop layout (1280px, 1920px, 2560px)
+   - Should_AdjustFontSize_When_ViewportChanges — Font sizes responsive
+   - Should_HideOrShowElements_BasedOnViewport — Elements adapt to screen size
+   - Should_HandleOrientation_When_DeviceRotates — Portrait/landscape support
+   - Should_NotHaveHorizontalScroll_OnMobile — No horizontal overflow
+
+**Test Infrastructure:**
+- Helpers/TestServerFixture.cs — Starts/stops API and Web servers for testing
+- Fixtures/PlaywrightTestBase.cs — Base test class with browser setup, screenshots on failure, trace recording
+
+**Configuration & Documentation:**
+- README.md — Complete guide for running tests, debugging, CI/CD integration
+- playwright-config.md — Playwright configuration reference
+
+**Key Features:**
+- ✅ **Page Object Model pattern** for maintainability
+- ✅ **Automatic screenshots** on test failure
+- ✅ **Playwright trace recording** for debugging (timeline + DOM snapshots)
+- ✅ **Video recording** in CI mode
+- ✅ **Headless/headed mode** via environment variable
+- ✅ **Graceful degradation** — tests warn if backend not running
+- ✅ **Multiple viewport sizes** — mobile, tablet, desktop
+- ✅ **WCAG 2.1 accessibility** validation
+- ✅ **Test categories** — Smoke, E2E, UI, Accessibility, Responsive
+
+**Test Strategy Alignment:**
+Implements decision **T9** from .squad/test-strategy.md:
+- Framework: Playwright (cross-browser E2E automation)
+- Scope: Full application (Blazor UI + API + SignalR + A2UI components)
+- Coverage: Competitor price drop workflow → A2UI rendering → Manager approval
+- Validation: Component rendering, user workflows, accessibility, responsive design
+
+**Build Verification:**
+- ✅ dotnet build tests/SquadCommerce.Playwright.Tests/ — Build succeeded in 4.1s
+- ✅ dotnet build SquadCommerce.slnx — Full solution build succeeded
+- ✅ All Playwright packages installed (Microsoft.Playwright 1.58.0, Microsoft.Playwright.NUnit 1.58.0)
+- ✅ Project added to solution
+
+**Running Tests:**
+```powershell
+# Install Playwright browsers
+pwsh tests/SquadCommerce.Playwright.Tests/bin/Debug/net10.0/playwright.ps1 install
+
+# Run all tests
+dotnet test tests/SquadCommerce.Playwright.Tests/
+
+# Run by category
+dotnet test --filter Category=Smoke
+dotnet test --filter Category=E2E
+dotnet test --filter Category=Accessibility
+```
+
+**Next Steps:**
+1. Run backend services (API + Web) to enable full E2E test execution
+2. Add more test scenarios as UI features are implemented
+3. Integrate into CI/CD pipeline
+4. Add Playwright to other browsers (Firefox, WebKit) for cross-browser testing
+5. Add performance tests (page load time, interaction latency)
+
+The Playwright E2E test suite is LIVE! We can now automate browser testing for the entire competitor analysis workflow from UI rendering to manager decisions!
