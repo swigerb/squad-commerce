@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SquadCommerce.A2A.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+645c392b1542da12247217166a81991dcec733de")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+44711630139252e0fa43191509238dee17c2e8df")]
 [assembly: System.Reflection.AssemblyProductAttribute("SquadCommerce.A2A.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SquadCommerce.A2A.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

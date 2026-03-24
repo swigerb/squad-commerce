@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Http.HttpResults;
+using SquadCommerce.Agents.Orchestrator;
+using SquadCommerce.Agents.Policies;
 using SquadCommerce.Api.Services;
 using SquadCommerce.Observability;
 using System.Diagnostics;
@@ -32,42 +34,16 @@ public static class AgentEndpoints
     /// </summary>
     private static Ok<AgentListResponse> GetAgents()
     {
-        // Mock data for now - will be replaced with AgentPolicyRegistry
-        var agents = new[]
+        var policies = AgentPolicyRegistry.GetAllPolicies();
+        
+        var agents = policies.Select(policy => new AgentInfo
         {
-            new AgentInfo
-            {
-                Name = "ChiefSoftwareArchitect",
-                Role = "Orchestrator",
-                EntraIdScope = "SquadCommerce.Orchestrate",
-                AllowedTools = Array.Empty<string>(),
-                PreferredProtocol = "AGUI"
-            },
-            new AgentInfo
-            {
-                Name = "InventoryAgent",
-                Role = "Domain",
-                EntraIdScope = "SquadCommerce.Inventory.Read",
-                AllowedTools = new[] { "GetInventoryLevels" },
-                PreferredProtocol = "MCP"
-            },
-            new AgentInfo
-            {
-                Name = "PricingAgent",
-                Role = "Domain",
-                EntraIdScope = "SquadCommerce.Pricing.ReadWrite",
-                AllowedTools = new[] { "GetInventoryLevels", "UpdateStorePricing" },
-                PreferredProtocol = "MCP"
-            },
-            new AgentInfo
-            {
-                Name = "MarketIntelAgent",
-                Role = "Domain",
-                EntraIdScope = "SquadCommerce.MarketIntel.Read",
-                AllowedTools = Array.Empty<string>(),
-                PreferredProtocol = "A2A"
-            }
-        };
+            Name = policy.AgentName,
+            Role = policy.AgentName == "ChiefSoftwareArchitect" ? "Orchestrator" : "Domain",
+            EntraIdScope = policy.EntraIdScope,
+            AllowedTools = policy.AllowedTools.ToArray(),
+            PreferredProtocol = policy.PreferredProtocol
+        }).ToArray();
 
         return TypedResults.Ok(new AgentListResponse { Agents = agents });
     }
@@ -77,17 +53,16 @@ public static class AgentEndpoints
     /// </summary>
     private static Results<Ok<AgentStatusResponse>, NotFound> GetAgentStatus(string name)
     {
-        // Mock implementation - will be replaced with real agent status tracking
-        var validAgents = new[] { "ChiefSoftwareArchitect", "InventoryAgent", "PricingAgent", "MarketIntelAgent" };
+        var policy = AgentPolicyRegistry.GetPolicyByName(name);
         
-        if (!validAgents.Contains(name, StringComparer.OrdinalIgnoreCase))
+        if (policy == null)
         {
             return TypedResults.NotFound();
         }
 
         return TypedResults.Ok(new AgentStatusResponse
         {
-            AgentName = name,
+            AgentName = policy.AgentName,
             Status = "Idle",
             LastActivity = DateTimeOffset.UtcNow.AddMinutes(-5),
             ActiveSessions = 0
@@ -97,79 +72,95 @@ public static class AgentEndpoints
     /// <summary>
     /// Triggers the competitor price drop analysis scenario.
     /// </summary>
-    private static async Task<Accepted<AnalysisResponse>> TriggerAnalysis(
+    private static async Task<Results<Accepted<AnalysisResponse>, BadRequest<string>>> TriggerAnalysis(
         AnalysisRequest request,
         IAgUiStreamWriter streamWriter,
+        IServiceProvider serviceProvider,
         SquadCommerceMetrics metrics,
         ILogger<AnalysisRequest> logger,
         CancellationToken cancellationToken)
     {
-        var sessionId = Guid.NewGuid().ToString();
-        logger.LogInformation("Starting competitor price drop analysis: SessionId={SessionId}, Sku={Sku}, TraceId={TraceId}", 
-            sessionId, request.Sku, Activity.Current?.TraceId.ToString());
+        // Validate CompetitorPrice
+        if (!request.CompetitorPrice.HasValue || request.CompetitorPrice.Value <= 0)
+        {
+            return TypedResults.BadRequest("CompetitorPrice is required and must be greater than zero.");
+        }
 
-        // Simulate orchestrator triggering analysis workflow
+        var sessionId = Guid.NewGuid().ToString();
+        logger.LogInformation("Starting competitor price drop analysis: SessionId={SessionId}, Sku={Sku}, CompetitorPrice=${CompetitorPrice:F2}, TraceId={TraceId}", 
+            sessionId, request.Sku, request.CompetitorPrice.Value, Activity.Current?.TraceId.ToString());
+
+        // Orchestrate analysis workflow in background with proper DI scoping
         _ = Task.Run(async () =>
         {
             var stopwatch = Stopwatch.StartNew();
             
             try
             {
-                using var orchestratorActivity = metrics.StartAgentSpan("ChiefSoftwareArchitect", "Orchestrate");
-                orchestratorActivity?.SetTag("session.id", sessionId);
-                orchestratorActivity?.SetTag("sku", request.Sku);
-
+                // Create a new scope for background work to resolve scoped services
+                using var scope = serviceProvider.CreateScope();
+                var orchestrator = scope.ServiceProvider.GetRequiredService<ChiefSoftwareArchitectAgent>();
+                
+                logger.LogInformation("Invoking ChiefSoftwareArchitectAgent for session {SessionId}", sessionId);
+                
+                // Stream status before orchestration starts
                 await streamWriter.WriteStatusUpdateAsync(sessionId, "ChiefSoftwareArchitect orchestrating analysis...", cancellationToken);
-                await Task.Delay(500, cancellationToken);
-
-                // MarketIntelAgent phase
-                using (var marketIntelActivity = metrics.StartAgentSpan("MarketIntelAgent", "Execute"))
+                
+                // Call real orchestrator
+                var result = await orchestrator.ProcessCompetitorPriceDropAsync(
+                    request.Sku, 
+                    request.CompetitorPrice.Value, 
+                    cancellationToken);
+                
+                // Check if orchestration succeeded
+                if (!result.Success)
                 {
-                    marketIntelActivity?.SetTag("session.id", sessionId);
-                    logger.LogInformation("MarketIntelAgent executing: SessionId={SessionId}, Sku={Sku}", sessionId, request.Sku);
+                    logger.LogError("Orchestration failed for session {SessionId}: {ErrorMessage}", sessionId, result.ErrorMessage);
+                    await streamWriter.WriteStatusUpdateAsync(sessionId, $"Error: {result.ErrorMessage}", cancellationToken);
+                    await streamWriter.WriteTextDeltaAsync(sessionId, $"Analysis failed: {result.ErrorMessage}", cancellationToken);
+                    await streamWriter.WriteDoneAsync(sessionId, cancellationToken);
                     
-                    await streamWriter.WriteStatusUpdateAsync(sessionId, "MarketIntelAgent validating competitor pricing via A2A...", cancellationToken);
-                    await Task.Delay(800, cancellationToken);
-                    
-                    metrics.RecordAgentInvocation("MarketIntelAgent", 800, true);
+                    stopwatch.Stop();
+                    metrics.RecordAgentInvocation("ChiefSoftwareArchitect", stopwatch.Elapsed.TotalMilliseconds, false);
+                    return;
                 }
-
-                // InventoryAgent phase
-                using (var inventoryActivity = metrics.StartAgentSpan("InventoryAgent", "Execute"))
+                
+                // Stream A2UI payloads from each agent result
+                foreach (var agentResult in result.AgentResults)
                 {
-                    inventoryActivity?.SetTag("session.id", sessionId);
-                    logger.LogInformation("InventoryAgent executing: SessionId={SessionId}, Sku={Sku}", sessionId, request.Sku);
-                    
-                    await streamWriter.WriteStatusUpdateAsync(sessionId, "InventoryAgent querying store inventory via MCP...", cancellationToken);
-                    await Task.Delay(600, cancellationToken);
-                    
-                    metrics.RecordAgentInvocation("InventoryAgent", 600, true);
+                    if (agentResult.A2UIPayload != null)
+                    {
+                        await streamWriter.WriteA2UIPayloadAsync(sessionId, agentResult.A2UIPayload, cancellationToken);
+                        logger.LogInformation("Streamed A2UI payload for session {SessionId}", sessionId);
+                    }
                 }
-
-                // PricingAgent phase
-                using (var pricingActivity = metrics.StartAgentSpan("PricingAgent", "Execute"))
-                {
-                    pricingActivity?.SetTag("session.id", sessionId);
-                    logger.LogInformation("PricingAgent executing: SessionId={SessionId}, Sku={Sku}", sessionId, request.Sku);
-                    
-                    await streamWriter.WriteStatusUpdateAsync(sessionId, "PricingAgent calculating margin impact...", cancellationToken);
-                    await Task.Delay(700, cancellationToken);
-                    
-                    metrics.RecordAgentInvocation("PricingAgent", 700, true);
-                }
-
-                await streamWriter.WriteTextDeltaAsync(sessionId, $"Analysis complete for SKU {request.Sku}.", cancellationToken);
+                
+                // Stream executive summary as text delta
+                await streamWriter.WriteTextDeltaAsync(sessionId, result.ExecutiveSummary, cancellationToken);
+                
+                // Signal completion
                 await streamWriter.WriteDoneAsync(sessionId, cancellationToken);
 
                 stopwatch.Stop();
-                metrics.RecordAgentInvocation("ChiefSoftwareArchitect", stopwatch.Elapsed.TotalMilliseconds, true);
-                
                 logger.LogInformation("Analysis workflow completed: SessionId={SessionId}, Duration={DurationMs}ms", 
                     sessionId, stopwatch.Elapsed.TotalMilliseconds);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error during analysis workflow for session {SessionId}", sessionId);
+                
+                try
+                {
+                    await streamWriter.WriteStatusUpdateAsync(sessionId, $"Error: {ex.Message}", cancellationToken);
+                    await streamWriter.WriteTextDeltaAsync(sessionId, $"An unexpected error occurred: {ex.Message}", cancellationToken);
+                    await streamWriter.WriteDoneAsync(sessionId, cancellationToken);
+                }
+                catch
+                {
+                    // Best effort - don't throw in cleanup
+                }
+                
+                stopwatch.Stop();
                 metrics.RecordAgentInvocation("ChiefSoftwareArchitect", stopwatch.Elapsed.TotalMilliseconds, false);
             }
         }, cancellationToken);

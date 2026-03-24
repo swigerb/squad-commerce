@@ -254,3 +254,55 @@ Backend developer for squad-commerce. Responsible for ASP.NET Core infrastructur
 - Integration tests fail due to missing Mcp/Agents/A2A implementations — expected, not Anders' responsibility
 - Aspire Dashboard will automatically collect all OTLP traces/metrics via environment variable configuration
 
+
+### 2026-03-24: Wiring the Real ChiefSoftwareArchitectAgent into /api/agents/analyze Endpoint
+
+**Task: Replace simulated orchestration with real agent workflow**
+
+1. **TriggerAnalysis Endpoint** — Complete Overhaul:
+   - Replaced `Task.Delay` simulation with real `ChiefSoftwareArchitectAgent.ProcessCompetitorPriceDropAsync()`
+   - Added `IServiceProvider` injection to create DI scope for background work (agents are scoped services)
+   - Added validation: `CompetitorPrice` must be non-null and > 0, returns `BadRequest<string>` if invalid
+   - Background task creates new scope via `serviceProvider.CreateScope()` to resolve scoped agents correctly
+   - Orchestrator call returns `OrchestratorResult` with `Success`, `ExecutiveSummary`, `AgentResults[]`, and `ErrorMessage`
+   - Error handling: streams error status update and text delta if orchestration fails
+   - A2UI payload streaming: iterates through `result.AgentResults` and streams each `A2UIPayload` via `WriteA2UIPayloadAsync()`
+   - Executive summary streaming: streams `ExecutiveSummary` as text delta
+   - Proper metrics recording: records orchestrator invocation duration with success/failure status
+   - Return type changed to `Results<Accepted<AnalysisResponse>, BadRequest<string>>` to support validation
+
+2. **GetAgents Endpoint** — Real Policy Registry:
+   - Replaced mock data with `AgentPolicyRegistry.GetAllPolicies()`
+   - Maps `AgentPolicy` to `AgentInfo` response objects
+   - Determines role dynamically: "Orchestrator" for ChiefSoftwareArchitect, "Domain" for others
+   - All data now reflects actual registered agent policies (names, scopes, tools, protocols)
+
+3. **GetAgentStatus Endpoint** — Policy Validation:
+   - Uses `AgentPolicyRegistry.GetPolicyByName(name)` to validate agent existence
+   - Returns `NotFound` if agent name not in registry
+   - Status/LastActivity/ActiveSessions remain placeholders (future work: integrate with real agent state tracking)
+
+4. **Dependencies Added**:
+   - `using SquadCommerce.Agents.Orchestrator;` — for `ChiefSoftwareArchitectAgent`
+   - `using SquadCommerce.Agents.Policies;` — for `AgentPolicyRegistry`
+
+**Patterns Applied:**
+- **Scoped DI in Background Tasks** — `serviceProvider.CreateScope()` ensures agents resolve correctly (critical for Entity Framework and other scoped services)
+- **Error Propagation to AG-UI** — orchestrator failures stream error status + text delta + done event (user sees failure)
+- **A2UI Payload Iteration** — loops through `AgentResults`, streams non-null payloads (RetailStockHeatmap, PricingImpactChart, MarketComparisonGrid)
+- **Validation Before Orchestration** — prevents orchestrator from running with invalid input (saves resources)
+
+**Integration with Real Agents:**
+- ChiefSoftwareArchitect orchestrator already creates proper OpenTelemetry spans internally (no need to duplicate)
+- Each domain agent (InventoryAgent, PricingAgent, MarketIntelAgent) already records its own metrics and spans
+- Endpoint streams results to AG-UI as they're produced by agents
+- All telemetry (traces, metrics, logs) flows to Aspire Dashboard automatically
+
+**Build & Test Status:** ✅ Solution builds successfully, all 160 tests pass
+
+**Notes:**
+- The orchestrator already has comprehensive error handling and telemetry — endpoint just needs to call it and stream results
+- `IAgUiStreamWriter.WriteA2UIPayloadAsync()` already exists — no changes needed to the interface
+- Scoped DI resolution in background tasks is critical — without `CreateScope()`, agents would fail to resolve
+- Executive summary is plain text (Markdown format) — streamed as text delta, not A2UI payload
+- Future work: add real-time agent status tracking (ActiveSessions, LastActivity) beyond policy validation

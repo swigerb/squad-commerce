@@ -131,3 +131,48 @@ User Advocate and AG-UI Expert for squad-commerce. Responsible for Blazor fronte
 - API team must implement `/api/pricing/approve` and `/api/pricing/reject` endpoints
 - Agent team must emit A2UI payloads in correct format
 - Integration testing with real agent workflows
+
+### 2026-03-24: Comprehensive Demo Documentation
+
+**What was done:**
+- Created `docs/DEMO.md` — A complete step-by-step demo walkthrough for Squad-Commerce
+- Updated `README.md` to link to the demo guide with highlights
+
+**Documentation Structure:**
+- **Prerequisites:** .NET 10 SDK, Aspire workload, Docker Desktop requirements
+- **Quick Start:** Clone, restore, run commands with expected startup behavior and URLs
+- **Demo Walkthrough:** Complete competitor price drop scenario with 5 detailed steps:
+  1. Trigger Analysis — POST to `/api/agents/analyze` with realistic SKU-1001 (Wireless Mouse) example
+  2. Watch AG-UI Stream — SSE event types with example payloads and timeline (status_update, tool_call, a2ui_payload, text_delta, done)
+  3. Review A2UI Components — Detailed explanations of RetailStockHeatmap, PricingImpactChart, MarketComparisonGrid with visual examples
+  4. Manager Decision — Approve/Reject/Modify workflows with copy-paste curl commands
+  5. Verify in Aspire Dashboard — Traces, Metrics, and Logs navigation with real examples
+- **API Reference:** Complete endpoint documentation with request/response examples for all agent and pricing endpoints
+- **Architecture Overview:** System diagram reference, project structure table, agent flow diagram, protocol usage breakdown
+- **Demo Data:** 5 stores (SEA-001 through DEN-005), 8 SKUs (SKU-1001 through SKU-1008), sample inventory and pricing data with instructions for modification
+- **Troubleshooting:** 8 common issues with step-by-step solutions (agents not registered, SignalR connection, AG-UI stream, MCP tools, Aspire dashboard, A2UI rendering, pricing validation, slow execution)
+
+**Key documentation patterns:**
+- All curl commands are copy-paste ready for PowerShell and Bash
+- Real demo data used in examples (actual SKUs, stores, prices from InventoryRepository and PricingRepository)
+- Professional formatting for executive audiences (tables, code blocks, visual hierarchy)
+- AG-UI event timeline shows exact timing and event flow (0ms → 3700ms)
+- Aspire Dashboard sections include real metric names and example queries
+- Troubleshooting includes both symptoms and step-by-step solutions
+- Cross-references to architecture diagram at docs/squad-commerce-architecture.png
+
+**README updates:**
+- Simplified prerequisites (removed SQL Server and GitHub CLI — not needed for demo)
+- Added prominent link to DEMO.md with feature highlights
+- Highlighted key demo features (✅ checkmarks for scanability)
+
+**Audience focus:**
+- Written for executives and technical audiences
+- Professional tone, clear structure, visual elements
+- Emphasizes Microsoft technologies (MAF, A2A, MCP, AG-UI, A2UI, Aspire, OpenTelemetry)
+- Showcase-worthy presentation of agent orchestration capabilities
+
+**File locations:**
+- Demo guide: `docs/DEMO.md`
+- Updated README: `README.md`
+- Referenced diagram: `docs/squad-commerce-architecture.png`

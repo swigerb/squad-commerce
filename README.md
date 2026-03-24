@@ -83,10 +83,9 @@ Squad Commerce enforces **generative UI** — no raw markdown tables for complex
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [.NET Aspire workload](https://learn.microsoft.com/dotnet/aspire)
-- [SQL Server](https://www.microsoft.com/sql-server) (or SQL Server LocalDB)
-- [GitHub CLI](https://cli.github.com/) (`gh`)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop) (required for Aspire Dashboard)
 
-### Run the Application
+### Quick Start
 
 ```bash
 # Clone the repository
@@ -99,6 +98,24 @@ dotnet run --project src/SquadCommerce.AppHost
 ```
 
 The Aspire Dashboard will open automatically, giving you full visibility into agent orchestration, traces, and metrics.
+
+### 📖 Demo Walkthrough
+
+**New to Squad Commerce?** Follow our comprehensive step-by-step demo guide:
+
+👉 **[Read the Full Demo Walkthrough](docs/DEMO.md)** 👈
+
+The demo guide includes:
+- ✅ Complete setup instructions
+- ✅ Step-by-step scenario walkthrough (competitor price drop)
+- ✅ Copy-paste ready cURL commands
+- ✅ AG-UI stream examples with real event payloads
+- ✅ A2UI component explanations (RetailStockHeatmap, PricingImpactChart, MarketComparisonGrid)
+- ✅ Manager approval workflow (Approve/Reject/Modify)
+- ✅ Aspire Dashboard navigation (Traces, Metrics, Logs)
+- ✅ API reference with all endpoints
+- ✅ Demo data reference (5 stores, 8 SKUs)
+- ✅ Troubleshooting guide
 
 ---
 
