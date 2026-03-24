@@ -454,6 +454,32 @@ Orchestrator has empty `AllowedTools` list — delegates only, never calls tools
 
 ---
 
+### 2026-03-24: SQLite Persistence Layer
+**By:** Satya Nadella  
+**What:** Swap in-memory repositories for EF Core + SQLite persistence
+
+**Decision:**
+- Replace `InMemoryInventoryRepository` with `SqliteInventoryRepository` (EF Core DbSet)
+- Replace `InMemoryPricingRepository` with `SqlitePricingRepository` (EF Core DbSet)
+- Create `SquadCommerceDbContext` with entity mappings (InventoryEntity, PricingEntity)
+- Implement `DatabaseSeeder` with 80 seeded records (5 stores, 8 SKUs, competitor data)
+- Change repository DI registration from Singleton to Scoped lifecycle
+
+**Rationale:**
+- Persistence enables multi-instance horizontal scaling (scoped DbContext per request)
+- In-memory repositories renamed to InMemory* for test isolation
+- Zero API changes — repository abstraction preserved
+- Supports future cloud deployment with database replication
+
+**Impact:**
+- 160 tests passing — full validation of persistence layer
+- No UI or agent changes required
+- Foundation for stateful commerce operations (inventory tracking, pricing history)
+
+**Status:** ✅ Implemented and validated
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus
