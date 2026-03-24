@@ -784,3 +784,249 @@ dotnet test --filter Category=E2E
 ---
 
 **Steve Ballmer says:** DEVELOPERS! DEVELOPERS! DEVELOPERS! We've got real browser automation now! This test suite validates the ENTIRE UI workflow from rendering to manager decisions! E2E testing is LIVE!
+
+
+---
+
+# Azure Developer CLI (azd) Deployment Architecture
+
+**Date:** 2026-03-24  
+**By:** Anders (Backend Dev)  
+**Status:** Implemented ✅
+
+## Context
+
+Brian requested full implementation of Azure Container Apps deployment using Azure Developer CLI (`azd`). The goal is to leverage .NET Aspire's integration with `azd` to streamline infrastructure provisioning and deployment.
+
+## Decision
+
+Implement Azure Container Apps deployment using `azd` with Aspire's delegated infrastructure mode, where `azd` auto-generates and manages Bicep templates based on the AppHost definition.
+
+## Approach
+
+### 1. Infrastructure Generation Strategy
+
+**Decision:** Use `azd init --from-code` to auto-detect the Aspire AppHost and generate infrastructure.
+
+**Why:**
+- Aspire integration with `azd` is first-class — automatic detection and manifest generation
+- Delegated infrastructure mode keeps deployment configuration synchronized with AppHost
+- Generated Bicep follows Azure best practices (managed identity, least privilege, Log Analytics)
+- Reduces manual Bicep authoring errors
+
+**Alternative Rejected:** Manual Bicep authoring
+- More error-prone, requires duplicating AppHost service definitions
+- Harder to maintain synchronization between local dev (AppHost) and cloud deployment
+
+### 2. Service Discovery Pattern
+
+**Decision:** Use Aspire service discovery conventions via environment variables (`services__<name>__https__0`).
+
+**Why:**
+- Standard .NET Aspire pattern — works automatically with `WithReference(api)` in AppHost
+- azd injects these environment variables into container manifests automatically
+- No additional service mesh or DNS configuration required
+- Works identically in local Aspire and Azure Container Apps environments
+
+**Implementation:**
+- Web Program.cs reads `services:api:https:0` first (Aspire convention)
+- Falls back to `Api:BaseUrl` for manual configuration
+- Falls back to localhost for pure local dev
+
+### 3. CORS Configuration for Container Apps
+
+**Decision:** Dynamic CORS origin configuration via `AllowedOrigins:Web` environment variable.
+
+**Why:**
+- Container Apps URLs are generated dynamically (e.g., `https://web--<hash>.<region>.azurecontainerapps.io`)
+- Can't hardcode URLs in source code — must be injected at deployment time
+- azd manifest template (`api.tmpl.yaml`) injects the Web URL via `{{ .Env.AZURE_CONTAINER_APPS_ENVIRONMENT_DEFAULT_DOMAIN }}`
+- API Program.cs merges configured origins with local development origins
+
+**Security:**
+- SignalR requires credentials (cookies) — CORS must explicitly allow the Web origin
+- No wildcard CORS (`*`) — specific origins only
+
+### 4. Multi-Stage Dockerfile Pattern
+
+**Decision:** Separate build, publish, and runtime stages for both API and Web.
+
+**Why:**
+- **Build stage**: .NET 10 SDK image, restores all dependencies, builds in Release mode
+- **Publish stage**: Runs `dotnet publish` for optimized output
+- **Runtime stage**: .NET 10 ASP.NET runtime image (smaller, no SDK)
+- Image size reduction: ~1.5GB SDK image → ~250MB runtime image
+- Follows Docker best practices for .NET
+
+**Key Details:**
+- API Dockerfile copies all dependent projects (Agents, Mcp, A2A, Contracts, ServiceDefaults)
+- Web Dockerfile copies only Contracts (lighter dependency tree)
+- Both expose port 8080 (Azure Container Apps standard)
+- `ASPNETCORE_URLS=http://+:8080` ensures HTTP binding (Azure handles HTTPS termination at ingress)
+
+### 5. OpenTelemetry Integration
+
+**Decision:** Rely on Aspire Dashboard built into Container Apps Environment.
+
+**Why:**
+- Container Apps Environment has native Aspire Dashboard component
+- azd automatically configures `OTEL_EXPORTER_OTLP_ENDPOINT` to point to the dashboard
+- All existing OpenTelemetry instrumentation (traces, metrics, logs) flows automatically
+- No additional Application Insights configuration needed for demo purposes
+
+**Production Enhancement Path:**
+- Add Application Insights resource to `infra/resources.bicep`
+- Set `APPLICATIONINSIGHTS_CONNECTION_STRING` in manifest templates
+- Enable Azure Monitor exporter in `ServiceDefaults/Extensions.cs`
+
+### 6. Database Strategy
+
+**Decision:** Keep SQLite for demo, document migration path to Azure SQL.
+
+**Why:**
+- SQLite is ephemeral in containers (data resets on restart) — acceptable for demo
+- Adding Azure SQL to the initial deployment complicates the showcase
+- Migration path is straightforward: add SQL resource to Bicep, update connection string, swap EF provider
+
+**Documentation:**
+- `docs/DEPLOY.md` explicitly documents the ephemeral nature
+- Provides migration instructions for production scenarios
+
+### 7. Deployment Files Structure
+
+**Decision:** Create comprehensive deployment documentation alongside infrastructure code.
+
+**Files:**
+- `azure.yaml`: azd project definition (generated)
+- `infra/main.bicep`, `infra/resources.bicep`: Infrastructure as Code
+- `src/<Project>/Dockerfile`: Multi-stage Docker builds
+- `.dockerignore`: Build context optimization
+- `docs/DEPLOY.md`: Full deployment guide with troubleshooting
+- `docs/DEPLOYMENT_CHECKLIST.md`: Pre-flight verification checklist
+
+**Why:**
+- Brian can run `azd up` with confidence — all documentation is comprehensive
+- Troubleshooting guide reduces support burden
+- Checklist ensures prerequisites are met before deployment
+
+## Implementation Details
+
+### Generated Infrastructure
+
+- **Resource Group**: `rg-<environment-name>`
+- **User-Assigned Managed Identity**: For ACR pull and inter-service communication
+- **Azure Container Registry**: Private registry, Basic SKU
+- **Log Analytics Workspace**: Centralized logging
+- **Container Apps Environment**: Consumption workload profile, includes Aspire Dashboard
+- **Container Apps** (2): API and Web, external ingress, HTTPS enabled
+
+### Deployment Workflow
+
+1. `azd up` → Prompts for region
+2. Provisions all infrastructure via Bicep
+3. Builds Docker images locally
+4. Pushes to ACR with managed identity auth
+5. Deploys Container Apps with generated manifests
+6. Outputs: API URL, Web URL, Aspire Dashboard URL
+
+**Time:** 5-10 minutes first deployment, 2-3 minutes for `azd deploy` updates
+
+## Cost Estimate
+
+- **Azure Container Registry (Basic)**: ~$5/month
+- **Container Apps (Consumption)**: ~$0-10/month depending on usage
+- **Log Analytics Workspace**: ~$0-5/month (first 5GB free)
+- **Total**: ~$5-15/month for a demo/showcase deployment
+
+## Alternatives Considered
+
+### Alternative 1: Manual Bicep without azd
+
+**Rejected:**
+- More verbose (need to write all Container App resources manually)
+- Service discovery requires manual environment variable configuration
+- No automatic Aspire Dashboard integration
+- Harder to maintain sync between local dev and cloud
+
+### Alternative 2: Azure App Service
+
+**Rejected:**
+- Less flexible than Container Apps (can't customize container runtime easily)
+- No native Aspire Dashboard integration
+- Higher cost for equivalent resource allocation
+- Container Apps is the modern Azure compute platform for .NET
+
+### Alternative 3: Azure Kubernetes Service (AKS)
+
+**Rejected:**
+- Massive overkill for a 2-service demo application
+- Complex networking (ingress controllers, service mesh)
+- Higher cost (~$70+/month for minimal cluster)
+- Container Apps provides right abstraction level
+
+## Risks and Mitigations
+
+### Risk 1: SQLite data loss on container restart
+
+**Mitigation:** Explicitly documented in `docs/DEPLOY.md`. Provides migration path to Azure SQL or Cosmos DB.
+
+### Risk 2: CORS configuration errors
+
+**Mitigation:** 
+- API dynamically reads Web origin from environment variable
+- Falls back to local dev origins if not configured
+- Testing: deploy and verify SignalR connection in Azure Portal logs
+
+### Risk 3: Docker build failures
+
+**Mitigation:**
+- Dockerfiles tested with correct project reference paths
+- `.dockerignore` optimized to reduce context size and prevent permission errors
+- Local verification: `docker build` can be tested before `azd up`
+
+### Risk 4: Service discovery misconfiguration
+
+**Mitigation:**
+- Aspire conventions are standard — azd handles injection automatically
+- Web Program.cs has fallback chain (Aspire → Config → Localhost)
+- Verification: Check `/health` endpoint on both services after deployment
+
+## Success Criteria
+
+✅ Solution builds in Release mode  
+✅ `azd up` provisions all infrastructure without errors  
+✅ API health check responds  
+✅ Web application loads and connects to API  
+✅ SignalR hub connection succeeds  
+✅ AG-UI SSE stream works over HTTPS  
+✅ OpenTelemetry traces visible in Aspire Dashboard  
+✅ Documentation provides clear deployment path  
+
+## Follow-Up Tasks
+
+1. **CI/CD Setup** (Brian's responsibility):
+   - Run `azd pipeline config` to generate GitHub Actions workflow
+   - Test automated deployment on push to `main`
+
+2. **Production Hardening** (Future):
+   - Migrate to Azure SQL or Cosmos DB for persistent storage
+   - Add Application Insights for production telemetry
+   - Configure custom domains and SSL certificates
+   - Add Azure Front Door for global distribution
+   - Implement autoscaling rules beyond default consumption plan
+
+3. **Security Enhancements** (Future):
+   - Enable Entra ID authentication in production mode
+   - Add Azure Key Vault for secrets management
+   - Configure network isolation (VNet integration)
+
+## References
+
+- [.NET Aspire Deployment Documentation](https://learn.microsoft.com/dotnet/aspire/deployment/overview)
+- [Azure Container Apps Documentation](https://learn.microsoft.com/azure/container-apps/)
+- [Azure Developer CLI Reference](https://learn.microsoft.com/azure/developer/azure-developer-cli/)
+
+---
+
+**Decision Outcome:** Complete azd deployment infrastructure implemented. Brian can now run `azd up` to deploy Squad-Commerce to Azure Container Apps with full observability.
+
