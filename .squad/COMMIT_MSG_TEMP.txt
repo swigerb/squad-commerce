@@ -1,0 +1,8 @@
+fix: allow unsecured transport for local Aspire development
+
+- Add ASPIRE_ALLOW_UNSECURED_TRANSPORT=true to launch profiles
+- Fixes HTTPS certificate blocker for local dev
+- Enables azd up and Aspire orchestration workflows
+- Development-only setting; production unaffected
+
+Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>

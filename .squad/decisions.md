@@ -918,6 +918,26 @@ Implement Azure Container Apps deployment using `azd` with Aspire's delegated in
 **D2. Health Endpoints Available in All Environments**
 - Removed `IsDevelopment()` gate from `MapDefaultEndpoints()`
 - `/health` and `/alive` endpoints now available in production
+
+---
+
+### 2026-03-25: Aspire Unsecured Transport for Local Development — Anders (Backend Dev)
+**By:** Anders (Backend Dev)  
+**Date:** 2026-03-25  
+**Status:** Implemented
+
+**Problem:** Brian encountered HTTPS certificate blocker in local Aspire development:
+```
+System.AggregateException: 'One or more errors occurred. (The 'applicationUrl' setting must be an https address unless the 'ASPIRE_ALLOW_UNSECURED_TRANSPORT' environment variable is set to true.)'
+```
+
+**Solution:** Added `"ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true"` to `environmentVariables` in both `https` and `http` launch profiles in `src/SquadCommerce.AppHost/Properties/launchSettings.json`.
+
+**Impact:**
+- Removes local development HTTPS certificate configuration requirement
+- Enables clean `azd up` and Aspire orchestration workflows
+- Development-only setting; production unaffected
+- Applies to lines 12 (https profile) and 26 (http profile)
 - Required for Azure Container Apps health probes and container orchestrator liveness/readiness checks
 - File: `src/SquadCommerce.ServiceDefaults/Extensions.cs`
 

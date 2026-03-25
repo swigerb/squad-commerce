@@ -546,3 +546,12 @@ Backend developer for squad-commerce. Responsible for ASP.NET Core infrastructur
 - All workflows use `actions/checkout@v4` and `actions/setup-dotnet@v4` for consistency
 - Docker build context is repo root (`.`) as Dockerfiles reference solution file and multiple projects
 - Future enhancement: Add deployment smoke tests (health check after azd up completes)
+
+
+### 2026-03-25: Aspire Pattern Alignment (retail-intelligence-studio)
+
+**Changes to ServiceDefaults/Extensions.cs:**
+1. **Explicit OTLP exporter configuration** - Changed UseOtlpExporter() to UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(otlpEndpoint!)) with explicit gRPC protocol and endpoint URI. Added using OpenTelemetry.Exporter. Package was already referenced.
+2. **Health endpoints in all environments** - Removed IsDevelopment() gate from MapDefaultEndpoints, making /health and /alive endpoints available in all environments (production-ready for Azure Container Apps probes).
+
+**Rationale:** Aligns with patterns from Brian's retail-intelligence-studio reference project, as approved by team lead.
