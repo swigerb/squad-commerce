@@ -19,25 +19,50 @@ public class AgUiStreamService
         string userMessage,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        var request = new HttpRequestMessage(HttpMethod.Post, "/api/agui")
+        // Step 1: POST to chat bridge to get a sessionId
+        var chatRequest = new HttpRequestMessage(HttpMethod.Post, "/api/agui/chat")
         {
             Content = JsonContent.Create(new { message = userMessage })
         };
 
-        HttpResponseMessage? response = null;
+        var chatResponse = await _httpClient.SendAsync(chatRequest, cancellationToken);
+
+        if (!chatResponse.IsSuccessStatusCode)
+        {
+            var error = await chatResponse.Content.ReadAsStringAsync(cancellationToken);
+            _logger.LogError("Chat bridge returned {StatusCode}: {Error}", chatResponse.StatusCode, error);
+            yield return new StreamChunk(Text: $"Error: {error}");
+            yield break;
+        }
+
+        var responseJson = await chatResponse.Content.ReadAsStringAsync(cancellationToken);
+        var responseDoc = JsonDocument.Parse(responseJson);
+        var sessionId = responseDoc.RootElement.GetProperty("sessionId").GetString()!;
+
+        _logger.LogInformation("Chat bridge created session {SessionId}, subscribing to stream...", sessionId);
+
+        // Immediate feedback so the user knows something is happening
+        yield return new StreamChunk(Status: "Connecting to agent stream...");
+
+        // Step 2: GET the SSE stream with the sessionId
+        // Brief delay lets the background orchestration write its first event
+        await Task.Delay(500, cancellationToken);
+
+        var streamRequest = new HttpRequestMessage(HttpMethod.Get, $"/api/agui?sessionId={sessionId}");
+        HttpResponseMessage? streamResponse = null;
         Stream? stream = null;
         StreamReader? reader = null;
 
         try
         {
-            response = await _httpClient.SendAsync(
-                request,
+            streamResponse = await _httpClient.SendAsync(
+                streamRequest,
                 HttpCompletionOption.ResponseHeadersRead,
                 cancellationToken);
 
-            response.EnsureSuccessStatusCode();
+            streamResponse.EnsureSuccessStatusCode();
 
-            stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            stream = await streamResponse.Content.ReadAsStreamAsync(cancellationToken);
             reader = new StreamReader(stream);
 
             while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
@@ -139,7 +164,7 @@ public class AgUiStreamService
         {
             reader?.Dispose();
             stream?.Dispose();
-            response?.Dispose();
+            streamResponse?.Dispose();
         }
     }
 

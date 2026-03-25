@@ -260,3 +260,25 @@ User Advocate and AG-UI Expert for squad-commerce. Responsible for Blazor fronte
 - Demo guide: `docs/DEMO.md`
 - Updated README: `README.md`
 - Referenced diagram: `docs/squad-commerce-architecture.png`
+
+### 2026-03-25: AgUiStreamService Two-Step Chat Bridge Flow
+
+**What was done:**
+- Refactored `StreamAgUiAsync` from a single-step POST (to GET-only `/api/agui`) to a proper two-step flow:
+  1. POST to `/api/agui/chat` with `{ message }` → receives `{ sessionId, streamUrl }` (202 Accepted)
+  2. GET `/api/agui?sessionId={sessionId}` to subscribe to the SSE stream
+- Added immediate "Connecting to agent stream..." status feedback so the UI isn't blank during handoff
+- Added 500ms delay between POST and GET to let background orchestration start writing events
+- Added graceful error handling: if chat bridge returns non-success, shows error text in chat instead of crashing
+- All existing SSE parsing logic (a2ui, text_delta, status_update, tool_call, done) preserved unchanged
+
+**Key patterns:**
+- Two-step bridge: POST for session creation → GET for SSE subscription (matches Bill Gates' decision in `bill-gates-chat-driven-ui.md`)
+- Separate `HttpResponseMessage` lifecycle for chat response vs stream response (chat response consumed and discarded before stream starts)
+- Stream resources (response, stream, reader) managed in try/finally block as before
+
+**Build status:** ✅ Clean build, 1 pre-existing warning (CA2024). All 13 Web unit tests pass.
+
+**Dependencies:**
+- Requires Satya's `POST /api/agui/chat` endpoint on the API side (being implemented in parallel)
+- Existing `GET /api/agui?sessionId=` endpoint unchanged

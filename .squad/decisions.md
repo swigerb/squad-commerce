@@ -933,6 +933,41 @@ System.AggregateException: 'One or more errors occurred. (The 'applicationUrl' s
 
 **Solution:** Added `"ASPIRE_ALLOW_UNSECURED_TRANSPORT": "true"` to `environmentVariables` in both `https` and `http` launch profiles in `src/SquadCommerce.AppHost/Properties/launchSettings.json`.
 
+---
+
+### 2026-03-25: Aspire SDK 13.2.0 Upgrade, Web ServiceDefaults, DEMO.md Fixes — Anders (Backend Dev)
+**By:** Anders (Backend Dev)  
+**Date:** 2026-03-25  
+**Status:** ✅ **APPROVED**
+
+**What:** Three coordinated changes to complete Aspire instrumentation and fix user documentation.
+
+**D1: Aspire SDK Upgrade (13.1.0 → 13.2.0)**
+- Updated `src/SquadCommerce.AppHost/SquadCommerce.AppHost.csproj` SDK attribute
+- Build verified — no breaking changes
+
+**D2: Web Project ServiceDefaults Integration**
+- Added `ProjectReference` to `SquadCommerce.ServiceDefaults` in Web `.csproj`
+- Added `builder.AddServiceDefaults()` early in `Program.cs` (before `AddRazorComponents`)
+- Added `app.MapDefaultEndpoints()` at end of pipeline (before `app.Run()`)
+- **Why:** Without ServiceDefaults, the Blazor Web project had no OpenTelemetry instrumentation, no health check endpoints, and no service discovery — this is why web telemetry was missing from the Aspire Dashboard
+
+**D3: Docker Is NOT Required for Aspire Dashboard (Local Dev)**
+- Updated `docs/DEMO.md` to mark Docker as optional
+- Aspire Dashboard runs as a standalone .NET process — Docker is only needed if you add container-based resources
+- Current setup uses no container resources
+
+**D4: Aspire Assigns Ports Dynamically**
+- Removed all hardcoded port references (7000, 7001, 15888) from DEMO.md
+- Users must check console output or Aspire Dashboard for actual URLs
+- Added prominent note before curl examples explaining port placeholders
+
+**Impact:**
+- All Aspire-orchestrated services (Api + Web) now emit telemetry to the Dashboard
+- Web project gains health check endpoints (`/health`, `/alive`) for container probes
+- DEMO.md is now accurate for first-time users running locally
+- 178 tests passing, no breaking changes
+
 **Impact:**
 - Removes local development HTTPS certificate configuration requirement
 - Enables clean `azd up` and Aspire orchestration workflows
@@ -1284,4 +1319,454 @@ dotnet run --project src/SquadCommerce.AppHost
 \\\
 
 No Docker required. No changes needed.
+
+
+---
+
+# Decision: Chat-Driven AG-UI Integration
+
+**Date:** 2026-03-24  
+**Lead:** Bill Gates  
+**Issue:** Chat panel Send button is non-functional (CORS + API mismatch)  
+
+---
+
+## Problem Statement
+
+The AgentChat.razor component has a working UI with chat input/output, but the **Send button doesn't work** because of two cascading failures:
+
+1. **API Mismatch:**  
+   - `AgentChat.razor` calls `StreamService.StreamAgUiAsync(userMessage)`, which POSTs to `/api/agui` with `{ message: userMessage }`
+   - `/api/agui` is **GET-only** — it expects `sessionId` query param and subscribes to an existing SSE stream
+   - There's no POST handler to initiate analysis from free-text chat input
+   - The actual structured analysis endpoint `/api/agents/analyze` requires `{ sku, competitorName, competitorPrice }` — not free-text
+
+2. **CORS Blocking:**  
+   - `Program.cs` hardcodes allowed origins to `https://localhost:7001` and `http://localhost:5001`
+   - Aspire assigns ports dynamically (e.g., port 7234 for Web, 7089 for Api)
+   - Blazor UI sends requests from its actual port → CORS denies them
+   - The UI can render, but XHR/fetch calls are blocked
+
+---
+
+## Root Cause
+
+The system was built with:
+- **Structured domain analysis** (`/api/agents/analyze`): SKU + pricing data → orchestrator workflow
+- **SSE subscription** (`/api/agui`): Existing sessionId → stream results  
+- **No freeform chat bridge**: No endpoint to interpret natural language and route to appropriate domain analysis
+
+The two pieces never connected.
+
+---
+
+## Solution: Option A — New Chat-to-Analysis Bridge
+
+**Decision:** Implement `POST /api/agui/chat` as a purpose-built bridge for chat-driven interactions.
+
+### Endpoint Specification
+
+```csharp
+POST /api/agui/chat
+Content-Type: application/json
+
+{
+  "message": "Check inventory for SKU-100"
+}
+```
+
+**Response (HTTP 202 Accepted):**
+```json
+{
+  "sessionId": "uuid",
+  "streamUrl": "/api/agui?sessionId=uuid"
+}
+```
+
+**Behavior:**
+1. Creates a unique `sessionId`
+2. Returns immediately (202 Accepted)
+3. Launches background orchestration in parallel
+4. Client polls/streams `/api/agui?sessionId=...` to receive results
+
+### Implementation Details
+
+**File:** `src/SquadCommerce.Api/Endpoints/AgentEndpoints.cs`
+
+Add new handler:
+
+```csharp
+public static IEndpointRouteBuilder MapAgentEndpoints(this IEndpointRouteBuilder app)
+{
+    var group = app.MapGroup("/api/agents")
+        .WithTags("Agents");
+
+    // ... existing GET endpoints ...
+
+    group.MapPost("/analyze", TriggerAnalysis);
+    group.MapPost("/analyze/bulk", TriggerBulkAnalysis);
+    
+    // NEW: Chat bridge under /api/agui for Blazor UI
+    return app;
+}
+```
+
+**File:** `src/SquadCommerce.Api/Program.cs`
+
+Add new route:
+
+```csharp
+app.MapPost("/api/agui/chat", ChatBridge)
+    .WithName("ChatBridge")
+    .WithSummary("Accept freeform chat input, interpret intent, and start orchestration")
+    .WithTags("AG-UI");
+```
+
+**Handler Logic** (pseudo-code for clarity):
+```
+POST /api/agui/chat { message }
+├─ Validate message is not empty
+├─ Create sessionId (Guid)
+├─ Extract intent: "check inventory", "compare prices", "analyze market", etc.
+├─ Map intent to AnalysisRequest:
+│   - If "SKU-XXX" detected → extract SKU
+│   - If competitor name detected → extract name  
+│   - If price mentioned → extract price
+│   - If underspecified → queue DefaultScenario (see below)
+├─ Call existing TriggerAnalysis() logic with mapped request
+└─ Return 202 + sessionId + streamUrl
+```
+
+### Intent Mapping Strategy
+
+For **MVP phase**, use simple pattern matching:
+
+| Pattern | Extraction | Example |
+|---------|-----------|---------|
+| `SKU-\d+` | Sku | "Check inventory for **SKU-100**" → sku="SKU-100" |
+| `\$[\d.]+` | CompetitorPrice | "Competitor at **$29.99**" → price=29.99 |
+| Competitor names (Walmart, Amazon, etc.) | CompetitorName | "**Walmart** dropped price" → competitor="Walmart" |
+
+If message doesn't match enough patterns to satisfy `/api/agents/analyze` constraints:
+- Return **403 Insufficient Data** with hint: "Please include SKU and competitor price"  
+- OR queue a default scenario (e.g., "Market intelligence for all inventory")
+
+### Why Option A (Not B or C)
+
+| Option | Pros | Cons | Decision |
+|--------|------|------|----------|
+| **A: POST /api/agui/chat** | Clean separation of concerns; chat handler is pure adapter; existing endpoints unchanged; easy to test; predictable flow | One extra round-trip (202, then stream) | ✅ CHOSEN |
+| **B: Combined POST+SSE** | Single round-trip response | Response body is mixed (JSON header + SSE stream); client must parse hybrid format; harder to test; violates single responsibility | ❌ Rejected |
+| **C: Modify GET /api/agui** | Minimal code changes | GET endpoint should be idempotent; POST in GET violates REST semantics | ❌ Rejected |
+
+---
+
+## CORS Fix: Dynamic Aspire Service Discovery
+
+**Problem:** Hardcoded `https://localhost:7001` and `http://localhost:5001` fails when Aspire assigns dynamic ports.
+
+**Solution:** Use Aspire's service discovery environment variables.
+
+**File:** `src/SquadCommerce.Api/Program.cs`
+
+**Current (broken):**
+```csharp
+var localOrigins = new[] { "https://localhost:7001", "http://localhost:5001" };
+var azureWebOrigin = builder.Configuration["AllowedOrigins:Web"];
+var allowedOrigins = string.IsNullOrEmpty(azureWebOrigin) 
+    ? localOrigins 
+    : localOrigins.Concat(new[] { azureWebOrigin }).ToArray();
+```
+
+**Fixed:**
+```csharp
+var allowedOrigins = new List<string>();
+
+// Local development: use Aspire service discovery
+if (app.Environment.IsDevelopment())
+{
+    // Aspire injects services__<name>__https__0 and services__<name>__http__0
+    var webOriginHttps = builder.Configuration["services:web:https:0"];
+    var webOriginHttp = builder.Configuration["services:web:http:0"];
+    
+    if (!string.IsNullOrEmpty(webOriginHttps))
+        allowedOrigins.Add(webOriginHttps);
+    if (!string.IsNullOrEmpty(webOriginHttp))
+        allowedOrigins.Add(webOriginHttp);
+    
+    // Fallback for local dev without Aspire
+    if (allowedOrigins.Count == 0)
+    {
+        allowedOrigins.AddRange(new[] { "https://localhost:7001", "http://localhost:5001" });
+    }
+}
+
+// Azure production: explicit configuration
+if (!app.Environment.IsDevelopment())
+{
+    var azureWebOrigin = builder.Configuration["AllowedOrigins:Web"];
+    if (!string.IsNullOrEmpty(azureWebOrigin))
+        allowedOrigins.Add(azureWebOrigin);
+}
+
+policy.WithOrigins(allowedOrigins.ToArray())
+      .AllowAnyHeader()
+      .AllowAnyMethod()
+      .AllowCredentials();
+```
+
+**Why this works:**
+- Aspire's local Aspire AppHost automatically injects service URLs as environment variables
+- The pattern `services__<SERVICE>__https__0` is standard across Aspire 13.x
+- At runtime, the API service discovers the actual Web service URL (e.g., `https://localhost:7234`)
+- No hardcoding needed; scales to any port assignment
+
+---
+
+## AgUiStreamService: No Changes Required
+
+**File:** `src/SquadCommerce.Web/Services/AgUiStreamService.cs`
+
+The service already correctly:
+- POSTs to `/api/agui` with `{ message }`
+- Receives streaming response with SSE format
+- Parses chunks (a2ui, text_delta, status_update, done)
+
+**After we add POST /api/agui/chat:**
+- The service will receive 202 + sessionId  
+- It should **ignore the response body** and immediately call `GET /api/agui?sessionId=...` to subscribe
+- Or: modify the service to handle 202 + Location redirect to stream endpoint
+
+**Recommended update to AgUiStreamService:**
+
+```csharp
+public async IAsyncEnumerable<StreamChunk> StreamAgUiAsync(
+    string userMessage,
+    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+{
+    var request = new HttpRequestMessage(HttpMethod.Post, "/api/agui/chat")
+    {
+        Content = JsonContent.Create(new { message = userMessage })
+    };
+
+    HttpResponseMessage? response = null;
+    
+    try
+    {
+        response = await _httpClient.SendAsync(request, cancellationToken);
+        
+        if (response.StatusCode == System.Net.HttpStatusCode.Accepted)
+        {
+            // Extract sessionId from response
+            var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
+            var json = JsonDocument.Parse(responseBody);
+            var sessionId = json.RootElement.GetProperty("sessionId").GetString();
+            
+            // Now subscribe to the stream endpoint
+            yield return await foreach (var chunk in SubscribeToStream(sessionId, cancellationToken))
+            {
+                yield return chunk;
+            }
+        }
+        else
+        {
+            response.EnsureSuccessStatusCode();
+        }
+    }
+    finally
+    {
+        response?.Dispose();
+    }
+}
+
+private async IAsyncEnumerable<StreamChunk> SubscribeToStream(
+    string sessionId,
+    [EnumeratorCancellation] CancellationToken cancellationToken = default)
+{
+    // ... existing SSE parsing logic, targeting GET /api/agui?sessionId=...
+}
+```
+
+---
+
+## Summary of Changes
+
+| File | Change | Why |
+|------|--------|-----|
+| `Endpoints/AgentEndpoints.cs` | Add `POST /api/agui/chat` handler | Bridge chat to structured analysis |
+| `Program.cs` | Replace hardcoded CORS origins with Aspire service discovery | Dynamic port support |
+| `Web/Services/AgUiStreamService.cs` | Update to handle 202 + sessionId response | Client-side bridge completion |
+| `Contracts` | Add `ChatBridgeRequest`, `ChatBridgeResponse` (optional) | Type safety for chat endpoint |
+
+---
+
+## Testing Strategy
+
+### Unit Tests
+- **Intent mapping:** "SKU-100 vs Walmart $29.99" → `{ Sku, CompetitorName, CompetitorPrice }`
+- **Validation:** Empty message → 400 Bad Request
+- **Insufficient data:** "Tell me about competitors" (no SKU) → 400 or 403 with hint
+
+### Integration Tests
+- **Happy path:** POST chat message → 202 + sessionId → GET stream → receive A2UI + text
+- **CORS:** Blazor UI at `https://localhost:7234` → API at `https://localhost:7089` → allowed
+- **Cross-origin:** Verify preflight OPTIONS request succeeds
+
+### E2E Tests
+- Click Send button in Blazor UI
+- Type: "Check inventory for SKU-100"
+- Verify response streams in chat panel (previously failed)
+
+---
+
+## Rollout Plan
+
+1. **Hotfix Phase:**
+   - Add `POST /api/agui/chat` endpoint (10 lines)
+   - Fix CORS with Aspire discovery (15 lines)
+   - Update `AgUiStreamService` to handle 202 (5 lines)
+   - **Total: ~30 lines of changes**
+
+2. **Validation:**
+   - Run existing tests to ensure no regression
+   - Manual test: Send button in Blazor UI
+   - Verify CORS headers on successful request
+
+3. **Future Enhancements (Phase 2):**
+   - NLP/intent extraction (currently regex-based)
+   - Conversational context (session memory across messages)
+   - Multi-turn analysis workflow
+   - Voice input support
+
+---
+
+## Acceptance Criteria
+
+- ✅ Send button in AgentChat.razor is clickable and functional
+- ✅ Chat accepts free-text input (e.g., "Check inventory for SKU-100")
+- ✅ Chat message routes to appropriate domain analysis
+- ✅ Results stream back to UI in real-time
+- ✅ CORS no longer blocks local development (Aspire ports)
+- ✅ No breaking changes to existing `/api/agents/analyze` or `/api/agui` endpoints
+- ✅ Tests pass
+
+---
+
+## Notes
+
+- This maintains the **AG-UI protocol** (SSE streaming) unchanged
+- The bridge is **stateless** — idempotent intent mapping, no session affinity needed
+- CORS fix works for both local (Aspire) and production (Azure Container Apps) deployments
+- Future versions can swap intent extraction for LLM-based understanding without API changes
+
+---
+
+# Decision: Chat Bridge Endpoint + CORS Fix — Implementation Complete
+
+**Date:** 2026-03-25  
+**Lead:** Satya Nadella  
+**Implements:** bill-gates-chat-driven-ui.md (Option A)
+
+---
+
+## What Was Done
+
+### Task 1: `POST /api/agui/chat` Endpoint
+
+Added to `src/SquadCommerce.Api/Program.cs` alongside the existing `GET /api/agui` SSE endpoint.
+
+**Behavior:**
+1. Validates `message` is non-empty (400 if missing)
+2. Extracts intent via regex: `SKU-\d+`, `$X.XX`, competitor names
+3. Defaults: SKU-100, MegaMart, $24.99 when patterns not matched
+4. Launches `ChiefSoftwareArchitectAgent.ProcessCompetitorPriceDropAsync` in background
+5. Returns `202 Accepted` with `{ sessionId, streamUrl }` immediately
+6. Client subscribes to `GET /api/agui?sessionId=...` for SSE results
+
+**Pattern reuse:** Background task follows identical structure to `TriggerAnalysis` in `AgentEndpoints.cs` — scoped DI, stopwatch metrics, error handling with stream cleanup.
+
+### Task 2: CORS Fix
+
+Replaced hardcoded `localhost:7001`/`localhost:5001` origins with environment-aware policy:
+- **Development:** `SetIsOriginAllowed(origin => new Uri(origin).Host == "localhost")` — accepts any localhost port
+- **Production:** Explicit `AllowedOrigins:Web` config value only
+
+### New Type
+
+`ChatRequest` record added as top-level type in Program.cs:
+```csharp
+public sealed record ChatRequest
+{
+    public required string Message { get; init; }
+}
+```
+
+---
+
+## Verification
+
+- ✅ `dotnet build` — 0 errors
+- ✅ 178 unit/integration tests pass
+- ✅ No changes to existing endpoints
+
+---
+
+## Notes for Clippy (Web Service)
+
+The Web service's `AgUiStreamService` needs to:
+1. POST to `/api/agui/chat` (not `/api/agui`) with `{ "message": "..." }`
+2. Parse the `202 Accepted` response to get `sessionId`
+3. Subscribe to `GET /api/agui?sessionId=...` for SSE streaming
+
+See `clippy-stream-service-update.md` for the Web-side implementation plan.
+
+---
+
+## Future Enhancements
+
+- Replace regex intent extraction with LLM-based understanding (no API contract changes needed)
+- Add conversational context / multi-turn sessions
+- Add intent confidence scoring with fallback to "ask for clarification"
+
+---
+
+# Decision: AgUiStreamService Two-Step Chat Bridge Flow
+
+**Date:** 2026-03-25  
+**Lead:** Clippy (User Advocate / AG-UI Expert)  
+**Implements:** bill-gates-chat-driven-ui.md (Option A)  
+
+---
+
+## Change Summary
+
+Refactored `AgUiStreamService.StreamAgUiAsync` from a broken single-step POST to `/api/agui` (GET-only endpoint) into a proper two-step flow:
+
+1. **POST `/api/agui/chat`** with `{ message }` → receives `{ sessionId, streamUrl }` (202 Accepted)
+2. **GET `/api/agui?sessionId={sessionId}`** → subscribes to SSE stream
+
+## What Changed
+
+**File:** `src/SquadCommerce.Web/Services/AgUiStreamService.cs`
+
+- Replaced `POST /api/agui` with `POST /api/agui/chat` for session creation
+- Added second HTTP call: `GET /api/agui?sessionId=...` for SSE subscription
+- Added immediate `"Connecting to agent stream..."` status chunk for UX feedback
+- Added 500ms delay between POST and GET to let background orchestration initialize
+- Added error handling: non-success from chat bridge yields error text instead of throwing
+- All existing SSE parsing logic preserved unchanged
+
+## Why
+
+The Send button in AgentChat.razor was non-functional because the service POSTed to a GET-only endpoint. This two-step bridge pattern was chosen (per Bill Gates' architecture decision) because it cleanly separates session creation from stream subscription, follows REST semantics, and requires no changes to the existing SSE endpoint.
+
+## Dependencies
+
+- Requires `POST /api/agui/chat` endpoint on the API side (Satya implementing in parallel)
+- No breaking changes to existing endpoints or components
+
+## Verification
+
+- ✅ `dotnet build` — zero errors, 1 pre-existing warning (CA2024)
+- ✅ `dotnet test tests/SquadCommerce.Web.Tests` — 13/13 passed
 

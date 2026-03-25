@@ -555,3 +555,29 @@ Backend developer for squad-commerce. Responsible for ASP.NET Core infrastructur
 2. **Health endpoints in all environments** - Removed IsDevelopment() gate from MapDefaultEndpoints, making /health and /alive endpoints available in all environments (production-ready for Azure Container Apps probes).
 
 **Rationale:** Aligns with patterns from Brian's retail-intelligence-studio reference project, as approved by team lead.
+
+
+### 2026-03-25: Aspire SDK Upgrade + Web ServiceDefaults + DEMO.md Fixes
+
+**Task: Three fixes requested by Brian after local testing**
+
+1. **Aspire SDK 13.1.0 → 13.2.0** — Updated `AppHost.csproj` SDK attribute. Build confirmed.
+
+2. **Web project ServiceDefaults integration:**
+   - Added `ProjectReference` to `SquadCommerce.ServiceDefaults` in `SquadCommerce.Web.csproj`
+   - Added `builder.AddServiceDefaults()` before `AddRazorComponents()` in `Program.cs`
+   - Added `app.MapDefaultEndpoints()` before `app.Run()` in `Program.cs`
+   - This wires OpenTelemetry, health checks, and service discovery into the Blazor app — previously the Web project had no telemetry, which is why traces weren't appearing in the Aspire Dashboard
+
+3. **DEMO.md accuracy fixes:**
+   - Docker Desktop prerequisite changed from "required" to "optional" — Aspire Dashboard runs as a standalone .NET process, no Docker needed
+   - All hardcoded port references (7000, 7001, 15888) replaced with dynamic port guidance — Aspire assigns ports at startup
+   - Console output example updated to match actual Aspire output format
+   - URLs to Open table restructured to direct users to Dashboard/console for real URLs
+   - Added prominent note before curl examples explaining ports are placeholders
+   - Troubleshooting section updated to remove Docker dependency for Dashboard
+
+**Build Status:** ✅ Both Web and AppHost projects build successfully
+**Test Status:** ✅ All 178 unit/integration tests pass (Playwright tests require running app — pre-existing)
+
+**Key Learning:** The Web project was missing ServiceDefaults entirely — this is why Blazor telemetry wasn't appearing in the Aspire Dashboard. Every Aspire-orchestrated service needs `AddServiceDefaults()` + `MapDefaultEndpoints()` for proper observability.

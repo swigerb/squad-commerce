@@ -525,3 +525,34 @@ Lead developer for squad-commerce. Responsible for MAF agent orchestration, A2A 
 - Bulk operations use same telemetry spans and audit trail as single-SKU operations
 
 **Why:** Enables retailers to respond to competitor category-wide sales events (e.g., "TechMart drops all peripheral prices by 15%") with a single bulk analysis instead of running 20 individual analyses.
+
+### 2026-03-25: Chat Bridge Endpoint + CORS Fix (Satya Nadella)
+
+**What:** Implemented `POST /api/agui/chat` chat-to-analysis bridge and fixed CORS for Aspire dynamic ports. This unblocks the Blazor UI Send button.
+
+**Changes Implemented:**
+
+1. **New `POST /api/agui/chat` endpoint** in `src/SquadCommerce.Api/Program.cs`:
+   - Accepts `{ "message": "free text" }` via `ChatRequest` record
+   - Extracts SKU (`SKU-\d+`), price (`$X.XX`), and competitor name via regex pattern matching
+   - Defaults to SKU-100, MegaMart, $24.99 when not detected
+   - Launches background orchestration via `ChiefSoftwareArchitectAgent.ProcessCompetitorPriceDropAsync`
+   - Returns `202 Accepted` with `sessionId` + `streamUrl` for SSE subscription
+   - Full metrics recording (success/failure durations) via `SquadCommerceMetrics`
+   - Reuses exact same TriggerAnalysis background pattern from `AgentEndpoints.cs`
+
+2. **CORS fix** — replaced hardcoded `localhost:7001`/`localhost:5001` with dynamic origin handling:
+   - Development: `SetIsOriginAllowed` accepts any `localhost` origin (Aspire assigns ports dynamically)
+   - Production: explicit `AllowedOrigins:Web` configuration only
+   - No more CORS blocks when Aspire assigns e.g. port 7234 or 7089
+
+3. **ChatRequest record** — added at bottom of Program.cs as top-level type
+
+**Build & Test Results:**
+- ✅ API project builds (0 errors)
+- ✅ All 178 tests pass (83 Agents + 24 A2A + 30 Mcp + 41 Integration)
+- Playwright E2E tests not run (require running app)
+
+**Architecture Decision:** Followed Bill Gates' Option A design — chat bridge as pure adapter, no changes to existing endpoints. Simple pattern matching for MVP; can swap for LLM-based intent extraction later without API changes.
+
+**Why:** The Blazor chat UI's Send button was non-functional — CORS blocked XHR calls, and there was no POST endpoint to accept free-text chat input. This closes both gaps.
