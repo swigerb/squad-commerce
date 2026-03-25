@@ -6,6 +6,7 @@ WORKDIR /src
 # Copy solution and project files for dependency resolution
 COPY ["SquadCommerce.slnx", "./"]
 COPY ["src/SquadCommerce.Web/SquadCommerce.Web.csproj", "src/SquadCommerce.Web/"]
+COPY ["src/SquadCommerce.ServiceDefaults/SquadCommerce.ServiceDefaults.csproj", "src/SquadCommerce.ServiceDefaults/"]
 COPY ["src/SquadCommerce.Contracts/SquadCommerce.Contracts.csproj", "src/SquadCommerce.Contracts/"]
 
 # Restore dependencies
@@ -13,6 +14,7 @@ RUN dotnet restore "src/SquadCommerce.Web/SquadCommerce.Web.csproj"
 
 # Copy all source code
 COPY ["src/SquadCommerce.Web/", "src/SquadCommerce.Web/"]
+COPY ["src/SquadCommerce.ServiceDefaults/", "src/SquadCommerce.ServiceDefaults/"]
 COPY ["src/SquadCommerce.Contracts/", "src/SquadCommerce.Contracts/"]
 
 # Build and publish the application
