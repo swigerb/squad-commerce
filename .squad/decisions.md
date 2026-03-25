@@ -900,6 +900,32 @@ Implement Azure Container Apps deployment using `azd` with Aspire's delegated in
 - `azure.yaml`: azd project definition (generated)
 - `infra/main.bicep`, `infra/resources.bicep`: Infrastructure as Code
 - `src/<Project>/Dockerfile`: Multi-stage Docker builds
+
+---
+
+### 2026-03-25: Aspire ServiceDefaults Pattern Alignment — Anders (Backend Dev)
+**By:** Anders (Backend Dev)  
+**Date:** 2026-03-25  
+**Status:** Implemented (approved by lead)
+
+**Context:** Brian requested alignment with patterns from retail-intelligence-studio reference project. Two changes approved by team lead.
+
+**D1. Explicit OTLP Exporter Configuration**
+- Changed from parameterless `UseOtlpExporter()` to `UseOtlpExporter(OtlpExportProtocol.Grpc, new Uri(otlpEndpoint!))`
+- Makes transport protocol (gRPC) and endpoint explicit; prevents silent fallback if OTLP environment variables change format
+- File: `src/SquadCommerce.ServiceDefaults/Extensions.cs`
+
+**D2. Health Endpoints Available in All Environments**
+- Removed `IsDevelopment()` gate from `MapDefaultEndpoints()`
+- `/health` and `/alive` endpoints now available in production
+- Required for Azure Container Apps health probes and container orchestrator liveness/readiness checks
+- File: `src/SquadCommerce.ServiceDefaults/Extensions.cs`
+
+**Impact:** ServiceDefaults consumers automatically receive both changes — no per-project updates needed. Production deployments now expose health endpoints by design.
+
+**Validation:** All builds clean, 191 tests passing.
+
+---
 - `.dockerignore`: Build context optimization
 - `docs/DEPLOY.md`: Full deployment guide with troubleshooting
 - `docs/DEPLOYMENT_CHECKLIST.md`: Pre-flight verification checklist
