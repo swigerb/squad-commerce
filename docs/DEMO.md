@@ -39,8 +39,8 @@ Before running the demo, ensure you have the following installed:
    dotnet workload install aspire
    ```
 
-3. **[Docker Desktop](https://www.docker.com/products/docker-desktop)** (required for Aspire Dashboard)
-   - Ensure Docker is running before starting the application
+3. **[Docker Desktop](https://www.docker.com/products/docker-desktop)** (optional — only needed if you add container-based resources like databases or Redis)
+   - Not required for the default Aspire Dashboard or local development
 
 4. **A modern web browser**
    - Chrome, Edge, Firefox, or Safari
@@ -55,7 +55,7 @@ dotnet --version
 # Verify Aspire workload
 dotnet workload list | findstr aspire
 
-# Verify Docker is running
+# Verify Docker is running (only if using container-based resources)
 docker ps
 ```
 
@@ -84,17 +84,17 @@ dotnet run --project src\SquadCommerce.AppHost
 
 When you run the application:
 
-1. **Aspire Dashboard opens automatically** at `https://localhost:15888`
+1. **Aspire Dashboard opens automatically** (port assigned dynamically)
    - View all running services
    - Monitor traces, metrics, and logs
    - See real-time health status
 
-2. **API service starts** at `https://localhost:7000`
+2. **API service starts** (port assigned dynamically by Aspire)
    - RESTful endpoints for agent orchestration
    - AG-UI streaming endpoint (`/api/agui`)
    - SignalR hub for real-time updates
 
-3. **Blazor Web UI starts** at `https://localhost:7001`
+3. **Blazor Web UI starts** (port assigned dynamically by Aspire)
    - Interactive A2UI components
    - Real-time agent chat panel
    - Manager approval workflow
@@ -106,27 +106,27 @@ When you run the application:
 
 ### Expected Startup Output
 
+> **Note:** Ports are assigned dynamically by Aspire. The URLs below are examples — check your console output or Aspire Dashboard for the actual addresses.
+
 ```
-info: SquadCommerce.AppHost[0]
-      Starting Aspire Dashboard on https://localhost:15888
-info: SquadCommerce.Api[0]
-      API service listening on https://localhost:7000
-info: SquadCommerce.Web[0]
-      Blazor Web UI listening on https://localhost:7001
-info: SquadCommerce.Agents[0]
-      4 agents registered with policy enforcement
-info: SquadCommerce.Mcp[0]
-      2 MCP tools registered: GetInventoryLevels, UpdateStorePricing
+info: Aspire.Hosting.DistributedApplication[0]
+      Aspire Dashboard is available at https://localhost:<port>
+info: Aspire.Hosting.DistributedApplication[0]
+      Resource api started (http://localhost:<port>)
+info: Aspire.Hosting.DistributedApplication[0]
+      Resource webfrontend started (http://localhost:<port>)
 ```
 
 ### URLs to Open
 
-| Service | URL | Purpose |
-|---------|-----|---------|
-| **Aspire Dashboard** | `https://localhost:15888` | Monitor traces, metrics, logs, and service health |
-| **API Service** | `https://localhost:7000` | REST API and AG-UI streaming endpoint |
-| **Blazor Web UI** | `https://localhost:7001` | Interactive frontend with A2UI components |
-| **Swagger UI** | `https://localhost:7000/swagger` | API documentation and testing |
+> **Note:** Aspire assigns ports dynamically at startup. The table below shows the services you'll access — find the actual URLs in the Aspire Dashboard or console output.
+
+| Service | How to Find URL | Purpose |
+|---------|----------------|---------|
+| **Aspire Dashboard** | First URL printed to console | Monitor traces, metrics, logs, and service health |
+| **API Service** | Listed as `api` in the Dashboard | REST API and AG-UI streaming endpoint |
+| **Blazor Web UI** | Listed as `webfrontend` in the Dashboard | Interactive frontend with A2UI components |
+| **Swagger UI** | API URL + `/swagger` | API documentation and testing |
 
 ---
 
@@ -145,6 +145,8 @@ Squad Commerce answers this question automatically by orchestrating four special
 **Trigger the competitor price analysis** by sending a POST request to the `/api/agents/analyze` endpoint.
 
 #### Using cURL (PowerShell)
+
+> **Note:** The port numbers in curl/Invoke-RestMethod examples below (e.g., `7000`) are placeholders. Your actual ports will differ — check the Aspire Dashboard or console output for the real API URL and substitute it in these commands.
 
 ```powershell
 # Trigger analysis for SKU-1001 (Wireless Mouse) with competitor price drop
@@ -475,7 +477,7 @@ Invoke-RestMethod -Uri "https://localhost:7000/api/pricing/modify" `
 
 The **Aspire Dashboard** provides full observability into the agent orchestration pipeline.
 
-**Open the Dashboard:** `https://localhost:15888`
+**Open the Dashboard:** Check console output for the Aspire Dashboard URL (assigned dynamically at startup).
 
 #### View 1: Traces — Full Orchestration Hierarchy
 
@@ -978,14 +980,11 @@ To add or modify demo data:
    ```bash
    dotnet workload list | findstr aspire
    ```
-2. Check Docker is running:
-   ```bash
-   docker ps
-   ```
-3. Manually open the dashboard:
-   - Look for the URL in startup logs: `Starting Aspire Dashboard on https://localhost:15888`
-   - Navigate to `https://localhost:15888` in your browser
-4. If port 15888 is in use, Aspire will auto-assign a new port (check logs for actual URL)
+2. Manually find the dashboard URL:
+   - Look for the URL in startup logs: `Aspire Dashboard is available at https://localhost:<port>`
+   - Navigate to that URL in your browser
+3. Docker is **not** required for the Aspire Dashboard — it runs as a standalone .NET process
+4. If the auto-assigned port is in use, Aspire will assign a different one (check logs for actual URL)
 
 ---
 
