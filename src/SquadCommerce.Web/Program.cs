@@ -17,7 +17,7 @@ builder.Services.AddHttpClient<AgUiStreamService>(client =>
     var apiBaseUrl = builder.Configuration["services:api:https:0"] 
                      ?? builder.Configuration["services:api:http:0"]
                      ?? builder.Configuration["Api:BaseUrl"] 
-                     ?? "https://localhost:7001";
+                     ?? "http://localhost:5000";
     
     client.BaseAddress = new Uri(apiBaseUrl);
     client.Timeout = TimeSpan.FromMinutes(5); // Long timeout for streaming
@@ -25,6 +25,9 @@ builder.Services.AddHttpClient<AgUiStreamService>(client =>
 
 // Register SignalR state service
 builder.Services.AddSingleton<SignalRStateService>();
+
+// Register chat command service for action card → chat integration
+builder.Services.AddSingleton<ChatCommandService>();
 
 // Add logging
 builder.Services.AddLogging(logging =>
@@ -44,7 +47,11 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
-app.UseHttpsRedirection();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAntiforgery();
 

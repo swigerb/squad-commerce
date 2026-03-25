@@ -581,3 +581,32 @@ Backend developer for squad-commerce. Responsible for ASP.NET Core infrastructur
 **Test Status:** ✅ All 178 unit/integration tests pass (Playwright tests require running app — pre-existing)
 
 **Key Learning:** The Web project was missing ServiceDefaults entirely — this is why Blazor telemetry wasn't appearing in the Aspire Dashboard. Every Aspire-orchestrated service needs `AddServiceDefaults()` + `MapDefaultEndpoints()` for proper observability.
+### 2026-03-25: Build Warning Cleanup — Zero Warnings Achieved
+
+**Warnings Fixed (9 total):**
+- **CS8604** (2x) in McpServerSetup.cs — Added null-forgiving operator after ToString() calls where null was already validated
+- **CA2024** in AgUiStreamService.cs — Replaced reader.EndOfStream with ReadLineAsync returning null pattern
+- **NU1510** in SquadCommerce.Api.csproj — Removed redundant Microsoft.AspNetCore.SignalR v1.2.9 PackageReference
+- **CS0219** in ErrorHandlingScenarioTests.cs — Removed unused ourPrice variable
+- **xUnit1031** (4x) in SystemSmokeTests.cs — Converted sync test with .Wait()/.Result to async/await
+
+**Build Status:** All 191 unit/integration tests pass. Zero warnings.
+**Key Learning:** ToString() on non-null object still returns string? in nullable context — use ! post-fix. StreamReader.EndOfStream triggers a sync read internally, flagged by CA2024 in async methods.
+
+### 2026-03-24: Fix Web Project Telemetry Not Appearing in Aspire Dashboard
+
+**Problem:** Blazor Web UI showed as "Running" in Aspire resources but did NOT emit traces/telemetry to the Aspire Dashboard. ServiceDefaults was wired (`AddServiceDefaults()` + `MapDefaultEndpoints()`), so the issue was elsewhere in the middleware pipeline.
+
+**Root Causes Found:**
+
+1. **`UseHttpsRedirection()` not gated for Development** — When running under Aspire with `ASPIRE_ALLOW_UNSECURED_TRANSPORT=true`, the app runs on HTTP. `UseHttpsRedirection()` tries to redirect all requests to HTTPS but there's no HTTPS endpoint configured. This interfered with the OTLP collector communication and health check probes. HSTS was already gated behind `IsDevelopment()` but `UseHttpsRedirection()` was not.
+
+2. **Fallback API URL was wrong** — The fallback URL `https://localhost:7001` was incorrect: port 7001 was the old Web port, not the API port. Also used `https` scheme which doesn't work with unsecured transport mode. Changed to `http://localhost:5000` as a sensible fallback.
+
+**Fixes Applied to `src/SquadCommerce.Web/Program.cs`:**
+- Gated `UseHttpsRedirection()` behind `!app.Environment.IsDevelopment()` (line 48-51)
+- Changed fallback API URL from `https://localhost:7001` to `http://localhost:5000` (line 20)
+
+**Build Status:** ✅ Web project builds successfully (0 errors)
+
+**Key Learning:** When using Aspire with `ASPIRE_ALLOW_UNSECURED_TRANSPORT=true`, `UseHttpsRedirection()` must be disabled in Development. It blocks HTTP-based OTLP export and health check probes, preventing the service from appearing in the Aspire Dashboard even though ServiceDefaults is correctly wired. Always gate `UseHttpsRedirection()` the same way you gate `UseHsts()`.

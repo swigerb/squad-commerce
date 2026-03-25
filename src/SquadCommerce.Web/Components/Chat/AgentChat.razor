@@ -1,5 +1,7 @@
 @inject Services.AgUiStreamService StreamService
+@inject Services.ChatCommandService CommandService
 @inject IJSRuntime JS
+@implements IDisposable
 
 <div class="agent-chat" role="region" aria-label="Agent Chat">
     <div class="chat-header">
@@ -128,11 +130,27 @@
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        CommandService.OnCommandRequested += HandleCommand;
         _messages.Add(new ChatMessage(
             "System",
             "Welcome! I'm your Squad Commerce AI team. Ask me about inventory levels, pricing strategies, or competitor analysis.",
             DateTime.Now
         ));
+    }
+
+    private async void HandleCommand(string command)
+    {
+        _inputText = command;
+        await InvokeAsync(async () =>
+        {
+            StateHasChanged();
+            await SendMessage();
+        });
+    }
+
+    public void Dispose()
+    {
+        CommandService.OnCommandRequested -= HandleCommand;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

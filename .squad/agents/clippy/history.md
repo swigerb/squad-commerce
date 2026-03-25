@@ -282,3 +282,28 @@ User Advocate and AG-UI Expert for squad-commerce. Responsible for Blazor fronte
 **Dependencies:**
 - Requires Satya's `POST /api/agui/chat` endpoint on the API side (being implemented in parallel)
 - Existing `GET /api/agui?sessionId=` endpoint unchanged
+
+### 2026-03-25: Critical Interactivity Fix — Send Button & Action Cards
+
+**Problem:**
+Brian reported that the Send button does NOTHING when clicked, and the "Try These Commands" action cards are not clickable. The web app looked good but was completely non-functional.
+
+**Root Cause:**
+In .NET 10 Blazor, without an explicit render mode, components render as **static SSR** — meaning `@bind`, `@onsubmit`, `@onclick`, `@onkeydown` are all inert. The `AgentChat` component lives in `MainLayout.razor` which had no render mode. Only `Home.razor` had `@rendermode InteractiveServer`, but that only affects the page body — NOT layout components (AgentChat, AgentStatusBar).
+
+**Fix Applied:**
+
+1. **App.razor** — Added `@rendermode="InteractiveServer"` to `<Routes />` component. This makes the ENTIRE app interactive via a single SignalR circuit. All components (layout + pages) now have working event handlers.
+
+2. **Home.razor** — Removed redundant `@rendermode InteractiveServer` (now inherited from Routes level). Added `@onclick` handlers to all three action cards that send commands via `ChatCommandService`. Added `role="button"` and `tabindex="0"` for accessibility.
+
+3. **Created `ChatCommandService.cs`** — Simple event-based service enabling cross-component communication between action cards (Home.razor) and chat panel (AgentChat.razor).
+
+4. **Program.cs** — Registered `ChatCommandService` as singleton in DI.
+
+5. **AgentChat.razor** — Injected `ChatCommandService`, subscribed to `OnCommandRequested` events in `OnInitializedAsync`, implemented `IDisposable` for cleanup. When a command arrives from an action card, it auto-populates the input and sends the message.
+
+**Key Learning:**
+In .NET 10 Blazor with per-page/component render modes, ANY interactive component that lives in a layout MUST have the render mode set at or above the Routes level. Setting it only on individual pages does NOT propagate to layout components. This is the single most common "dead button" bug in Blazor apps.
+
+**Build status:** ✅ Clean build (0 warnings, 0 errors). All 13 Web unit tests pass.

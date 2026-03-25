@@ -1,5 +1,5 @@
 ﻿@page "/"
-@rendermode InteractiveServer
+@inject Services.ChatCommandService CommandService
 
 <PageTitle>Squad Commerce - Dashboard</PageTitle>
 
@@ -15,19 +15,19 @@
     <div class="quick-actions">
         <h2>🚀 Try These Commands</h2>
         <div class="action-cards">
-            <div class="action-card">
+            <div class="action-card" @onclick='() => CommandService.SendCommand("Show me inventory levels for SKU-100 across all stores")' role="button" tabindex="0">
                 <div class="action-icon">📦</div>
                 <h3>Check Inventory</h3>
                 <p>"Show me inventory levels for SKU-100 across all stores"</p>
                 <span class="action-badge">Inventory Agent</span>
             </div>
-            <div class="action-card">
+            <div class="action-card" @onclick='() => CommandService.SendCommand("Calculate margin impact if we match competitor prices")' role="button" tabindex="0">
                 <div class="action-icon">💰</div>
                 <h3>Analyze Pricing</h3>
                 <p>"Calculate margin impact if we match competitor prices"</p>
                 <span class="action-badge">Pricing Agent</span>
             </div>
-            <div class="action-card">
+            <div class="action-card" @onclick='() => CommandService.SendCommand("Compare our prices with MegaMart for electronics")' role="button" tabindex="0">
                 <div class="action-icon">📊</div>
                 <h3>Compare Market</h3>
                 <p>"Compare our prices with MegaMart for electronics"</p>
