@@ -1185,3 +1185,57 @@ Balances code quality with developer velocity. Squad Commerce is a showcase proj
 **Verification:** All 3 workflows created, README updated, PR template created  
 **Deployment:** Ready for Azure deployment once GitHub secrets are configured  
 **Quality Gates:** Enforces 80% coverage, code formatting, and test success on all PRs
+---
+
+### 2026-03-25: Aspire Local Development Architecture — Bill Gates (Lead)
+**By:** Bill Gates
+**Date:** 2026-03-25
+**Status:** ✅ **APPROVED**
+
+**What:** Can the Aspire Dashboard run locally without containerizing Aspire itself? Should squad-commerce adopt practices from retail-intelligence-studio reference project?
+
+**Analysis Summary:**
+- **squad-commerce:** Uses AddProject<>() for AppHost + embedded Aspire Dashboard. OpenTelemetry auto-detects OTEL endpoint. Health checks gated to Development environment.
+- **retail-intelligence-studio:** Uses identical AddProject<>() pattern + embedded dashboard. OTEL explicit protocol. Health checks available in all environments.
+- **Verdict:** Both projects work identically for local dev. Dashboard accessible at http://localhost:15902 without Docker.
+
+**Key Differences:**
+| Aspect | squad-commerce | retail-intelligence-studio |
+|--------|---------------|-----------------------------|
+| Aspire SDK | 13.1.0 | 13.1.0 |
+| Project binding | AddProject<>() | AddProject<>() |
+| OTEL exporter | Auto-detect | Explicit (protocol + URI) |
+| Health endpoints | Dev-only | All environments |
+| Dashboard access | ✅ Works locally | ✅ Works locally |
+
+**Decision:** ✅ **No action required on AppHost or health checks.**
+
+squad-commerce already runs locally without Docker. Architecture is correct and optimal.
+
+**Why This Works:**
+1. AddProject<>() runs projects in-process on local machine during dotnet run
+2. Aspire Dashboard embedded in AppHost — no separate container needed
+3. Service discovery via environment variables (same in local and Azure Container Apps)
+4. OpenTelemetry auto-detects OTEL endpoint; gracefully no-ops if missing (perfect for local dev)
+
+**Optional Improvement (Low Priority):**
+Expose health checks in all environments for parity with reference project:
+\\\csharp
+// Replace current dev-only guard with:
+app.MapHealthChecks(HealthEndpointPath);
+\\\
+
+**Recommendation:** Keep current implementation. Health checks in Development is secure and sufficient for a showcase project.
+
+**Outcome:**
+✅ squad-commerce is ready for local development with Aspire Dashboard out-of-the-box.
+
+\\\ash
+dotnet run --project src/SquadCommerce.AppHost
+# Dashboard: http://localhost:15902
+# API: http://localhost:7001
+# Web: http://localhost:5001
+\\\
+
+No Docker required. No changes needed.
+

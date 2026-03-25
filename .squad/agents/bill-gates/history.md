@@ -37,3 +37,12 @@ Lead architect for squad-commerce. This project is a Microsoft showcase of excel
 - **A2AServer stubs:** All handler methods return hardcoded stub messages — server-side A2A incomplete
 - **README drift:** Says `SquadCommerce.Shared` (should be `Contracts`), lists SQL Server prerequisite (data is in-memory), code example doesn't match actual DI pattern
 - **Key learning:** Individual project quality was excellent across the board. The team built strong foundations. The gap was always going to be integration — that's the hardest part and should be the explicit focus of any remaining work.
+
+### 2026-03-24: Aspire Local Development Architecture Decision
+- **Request:** Brian asked if squad-commerce can run locally without containerizing Aspire (referenced retail-intelligence-studio as model)
+- **Finding:** ✅ **squad-commerce already runs locally without Docker** — AppHost uses `AddProject<>()` (not containers), Aspire Dashboard is embedded
+- **Analysis:** Compared against reference project — both use same pattern (Aspire 13.1.0, `AddProject<>()`, local service discovery via env vars)
+- **Only difference:** Health checks. Reference exposes them in all environments; squad-commerce gates them to Development. This is intentional security vs. observability tradeoff.
+- **OTLP exporter:** Both use OpenTelemetry; squad-commerce auto-detects (gracefully no-ops if endpoint missing), reference uses explicit URI. Functionally equivalent for local dev.
+- **Decision:** No changes needed. Current architecture is optimal. Developers run `dotnet run --project src/SquadCommerce.AppHost` and get Dashboard at `http://localhost:15902` automatically.
+- **Decision doc:** `.squad/decisions/inbox/bill-gates-aspire-local.md` — approved and ready for team consensus
