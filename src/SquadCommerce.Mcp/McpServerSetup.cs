@@ -157,8 +157,8 @@ internal sealed class McpToolRegistry : IMcpToolRegistry
                 parameters.TryGetValue("storeId", out var storeIdVal) ? storeIdVal?.ToString() : null,
                 cancellationToken),
             "UpdateStorePricing" => await scope.ServiceProvider.GetRequiredService<UpdateStorePricingTool>().ExecuteAsync(
-                parameters.TryGetValue("storeId", out var storeIdVal2) && storeIdVal2 != null ? storeIdVal2.ToString() : throw new ArgumentException("storeId is required"),
-                parameters.TryGetValue("sku", out var skuVal2) && skuVal2 != null ? skuVal2.ToString() : throw new ArgumentException("sku is required"),
+                parameters.TryGetValue("storeId", out var storeIdVal2) && storeIdVal2 != null ? storeIdVal2.ToString()! : throw new ArgumentException("storeId is required"),
+                parameters.TryGetValue("sku", out var skuVal2) && skuVal2 != null ? skuVal2.ToString()! : throw new ArgumentException("sku is required"),
                 parameters.TryGetValue("newPrice", out var priceVal) && priceVal != null ? Convert.ToDecimal(priceVal) : throw new ArgumentException("newPrice is required"),
                 cancellationToken),
             _ => throw new ArgumentException($"Unknown tool: {toolName}", nameof(toolName))

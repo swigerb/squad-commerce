@@ -103,21 +103,15 @@ public class SystemSmokeTests
     }
 
     [Fact]
-    public void Should_HaveDemoData_When_RepositoriesCreated()
+    public async Task Should_HaveDemoData_When_RepositoriesCreated()
     {
         // Arrange
         var inventoryRepo = new SquadCommerce.Mcp.Data.InMemoryInventoryRepository();
         var pricingRepo = new SquadCommerce.Mcp.Data.InMemoryPricingRepository();
 
         // Act - Query demo data
-        var inventoryTask = inventoryRepo.GetInventoryLevelsAsync("SKU-1001", CancellationToken.None);
-        var pricingTask = pricingRepo.GetCurrentPriceAsync("SEA-001", "SKU-1001", CancellationToken.None);
-
-        inventoryTask.Wait();
-        pricingTask.Wait();
-
-        var inventory = inventoryTask.Result;
-        var price = pricingTask.Result;
+        var inventory = await inventoryRepo.GetInventoryLevelsAsync("SKU-1001", CancellationToken.None);
+        var price = await pricingRepo.GetCurrentPriceAsync("SEA-001", "SKU-1001", CancellationToken.None);
 
         // Assert - Demo data loaded
         inventory.Should().NotBeEmpty("inventory should have demo data for 5 stores");

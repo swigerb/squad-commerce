@@ -154,7 +154,6 @@ public class ErrorHandlingScenarioTests
             NullLogger<ExternalDataValidator>.Instance);
 
         var sku = "SKU-1006"; // Noise-Cancelling Headphones
-        var ourPrice = 199.99m;
         var suspiciousPrice = 50.00m; // 75% below our price - SUSPICIOUS!
 
         // Act - Validator should flag suspicious data

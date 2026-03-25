@@ -65,9 +65,10 @@ public class AgUiStreamService
             stream = await streamResponse.Content.ReadAsStreamAsync(cancellationToken);
             reader = new StreamReader(stream);
 
-            while (!reader.EndOfStream && !cancellationToken.IsCancellationRequested)
+            while (!cancellationToken.IsCancellationRequested)
             {
                 var line = await reader.ReadLineAsync(cancellationToken);
+                if (line == null) break;
 
                 if (string.IsNullOrWhiteSpace(line))
                     continue;
