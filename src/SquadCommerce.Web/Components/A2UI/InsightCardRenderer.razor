@@ -1,0 +1,306 @@
+@using SquadCommerce.Contracts.A2UI
+@using System.Text.Json
+
+<CommandCard>
+<div class="insight-card @GetSeverityClass()" role="article" aria-label="Insight: @(_data?.Title ?? "Loading")">
+    @if (_data != null)
+    {
+        <div class="insight-header">
+            <span class="insight-icon">@GetSeverityIcon()</span>
+            <h4 class="insight-title">@_data.Title</h4>
+        </div>
+
+        <div class="insight-metric-container">
+            <div class="insight-key-metric @GetTrendClass()">
+                @_data.KeyMetric
+            </div>
+            <div class="insight-trend-indicator">
+                <span class="trend-arrow @GetTrendClass()">@GetTrendArrow()</span>
+            </div>
+            <div class="insight-metric-label">@_data.MetricLabel</div>
+        </div>
+
+        <p class="insight-summary">@_data.Summary</p>
+
+        @if (!string.IsNullOrEmpty(_data.ActionLabel))
+        {
+            <div class="insight-action">
+                <button class="btn btn-sm insight-action-btn @GetActionBtnClass()" aria-label="@_data.ActionLabel">
+                    @_data.ActionLabel →
+                </button>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="insight-placeholder">
+            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+            Loading insight...
+        </div>
+    }
+</div>
+</CommandCard>
+
+<style>
+    .insight-card {
+        position: relative;
+        border-left: 3px solid rgba(102, 126, 234, 0.5);
+        padding: 0.25rem 0;
+        transition: all 0.3s ease;
+    }
+
+    .insight-card:hover {
+        border-left-color: rgba(102, 126, 234, 0.9);
+    }
+
+    /* Severity accent borders */
+    .insight-card.severity-info {
+        border-left-color: #60a5fa;
+    }
+
+    .insight-card.severity-warning {
+        border-left-color: #f59e0b;
+    }
+
+    .insight-card.severity-critical {
+        border-left-color: #ef4444;
+    }
+
+    .insight-card.severity-success {
+        border-left-color: #10b981;
+    }
+
+    .insight-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 1rem;
+    }
+
+    .insight-icon {
+        font-size: 1.3rem;
+    }
+
+    .insight-title {
+        margin: 0;
+        font-size: 1.05rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.95);
+        letter-spacing: 0.01em;
+    }
+
+    .insight-metric-container {
+        text-align: center;
+        padding: 1rem 0;
+        margin-bottom: 0.75rem;
+    }
+
+    .insight-key-metric {
+        font-size: 2.4rem;
+        font-weight: 800;
+        font-family: 'Consolas', 'Courier New', monospace;
+        line-height: 1.1;
+        letter-spacing: -0.02em;
+        background: linear-gradient(135deg, #e0e0e0 0%, #ffffff 50%, #e0e0e0 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .insight-key-metric.trend-up {
+        background: linear-gradient(135deg, #6ee7b7 0%, #10b981 50%, #059669 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .insight-key-metric.trend-down {
+        background: linear-gradient(135deg, #fca5a5 0%, #ef4444 50%, #dc2626 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .insight-key-metric.trend-neutral {
+        background: linear-gradient(135deg, #d1d5db 0%, #9ca3af 50%, #6b7280 100%);
+        background-clip: text;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .insight-trend-indicator {
+        margin: 0.25rem 0;
+    }
+
+    .trend-arrow {
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .trend-arrow.trend-up {
+        color: #10b981;
+    }
+
+    .trend-arrow.trend-down {
+        color: #ef4444;
+    }
+
+    .trend-arrow.trend-neutral {
+        color: #9ca3af;
+    }
+
+    .insight-metric-label {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.5);
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-weight: 500;
+    }
+
+    .insight-summary {
+        font-size: 0.9rem;
+        line-height: 1.6;
+        color: rgba(255, 255, 255, 0.75);
+        margin: 0 0 0.75rem 0;
+    }
+
+    .insight-action {
+        text-align: right;
+    }
+
+    .insight-action-btn {
+        font-size: 0.8rem;
+        font-weight: 600;
+        padding: 0.35rem 1rem;
+        border-radius: 6px;
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        background: rgba(255, 255, 255, 0.05);
+        color: rgba(255, 255, 255, 0.85);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .insight-action-btn:hover {
+        background: rgba(255, 255, 255, 0.1);
+        border-color: rgba(255, 255, 255, 0.25);
+        transform: translateY(-1px);
+    }
+
+    .insight-action-btn.btn-info {
+        border-color: rgba(96, 165, 250, 0.4);
+        color: #60a5fa;
+    }
+
+    .insight-action-btn.btn-warning {
+        border-color: rgba(245, 158, 11, 0.4);
+        color: #f59e0b;
+    }
+
+    .insight-action-btn.btn-critical {
+        border-color: rgba(239, 68, 68, 0.4);
+        color: #ef4444;
+    }
+
+    .insight-action-btn.btn-success {
+        border-color: rgba(16, 185, 129, 0.4);
+        color: #10b981;
+    }
+
+    .insight-placeholder {
+        text-align: center;
+        padding: 2rem;
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    @@keyframes insightFadeIn {
+        from {
+            opacity: 0;
+            transform: translateY(8px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .insight-card {
+        animation: insightFadeIn 0.4s ease-out;
+    }
+
+    @@media (max-width: 768px) {
+        .insight-key-metric {
+            font-size: 1.8rem;
+        }
+
+        .insight-title {
+            font-size: 0.95rem;
+        }
+    }
+</style>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Payload { get; set; }
+
+    private InsightCardData? _data;
+
+    protected override void OnParametersSet()
+    {
+        if (Payload?.Data != null)
+        {
+            if (Payload.Data is JsonElement jsonElement)
+            {
+                _data = JsonSerializer.Deserialize<InsightCardData>(
+                    jsonElement.GetRawText(),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            else if (Payload.Data is InsightCardData typedData)
+            {
+                _data = typedData;
+            }
+        }
+    }
+
+    private string GetSeverityClass() => _data?.Severity?.ToLowerInvariant() switch
+    {
+        "info" => "severity-info",
+        "warning" => "severity-warning",
+        "critical" => "severity-critical",
+        "success" => "severity-success",
+        _ => "severity-info"
+    };
+
+    private string GetSeverityIcon() => _data?.Severity?.ToLowerInvariant() switch
+    {
+        "info" => "💡",
+        "warning" => "⚠️",
+        "critical" => "🚨",
+        "success" => "✅",
+        _ => "💡"
+    };
+
+    private string GetTrendClass() => _data?.TrendDirection?.ToLowerInvariant() switch
+    {
+        "up" => "trend-up",
+        "down" => "trend-down",
+        "neutral" => "trend-neutral",
+        _ => "trend-neutral"
+    };
+
+    private string GetTrendArrow() => _data?.TrendDirection?.ToLowerInvariant() switch
+    {
+        "up" => "▲",
+        "down" => "▼",
+        "neutral" => "─",
+        _ => "─"
+    };
+
+    private string GetActionBtnClass() => _data?.Severity?.ToLowerInvariant() switch
+    {
+        "info" => "btn-info",
+        "warning" => "btn-warning",
+        "critical" => "btn-critical",
+        "success" => "btn-success",
+        _ => "btn-info"
+    };
+}

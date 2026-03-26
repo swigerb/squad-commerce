@@ -1,0 +1,612 @@
+@implements IDisposable
+@inject Services.SignalRStateService SignalR
+
+<div class="pipeline-node-graph">
+    <div class="graph-header">
+        <h3>🔗 Orchestration Pipeline</h3>
+        <div class="graph-legend">
+            <span class="legend-item"><span class="legend-dot idle"></span>Idle</span>
+            <span class="legend-item"><span class="legend-dot thinking"></span>Thinking</span>
+            <span class="legend-item"><span class="legend-dot complete"></span>Complete</span>
+            <span class="legend-item"><span class="legend-dot error"></span>Error</span>
+        </div>
+    </div>
+
+    <div class="graph-viewport">
+        <svg class="graph-svg" viewBox="0 0 700 340" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+                <!-- Gradient for active edges -->
+                <linearGradient id="edge-active-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stop-color="#667eea" />
+                    <stop offset="50%" stop-color="#764ba2" />
+                    <stop offset="100%" stop-color="#667eea" />
+                </linearGradient>
+
+                <!-- Glow filter for active nodes -->
+                <filter id="node-glow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="6" result="blur" />
+                    <feMerge>
+                        <feMergeNode in="blur" />
+                        <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                </filter>
+
+                <!-- Subtle shadow for nodes -->
+                <filter id="node-shadow" x="-10%" y="-10%" width="120%" height="130%">
+                    <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.5)" />
+                </filter>
+
+                <!-- Animated dash pattern for active edges -->
+                <pattern id="flow-pattern" patternUnits="userSpaceOnUse" width="20" height="4">
+                    <rect width="10" height="4" fill="#667eea" opacity="0.8">
+                        <animate attributeName="x" from="0" to="20" dur="0.6s" repeatCount="indefinite" />
+                    </rect>
+                </pattern>
+            </defs>
+
+            <!-- === EDGES (drawn first, behind nodes) === -->
+
+            <!-- Orchestrator → MarketIntel -->
+            <g class="edge @GetEdgeClass("MarketIntelAgent")">
+                <line x1="350" y1="105" x2="140" y2="215"
+                      class="edge-line-bg" />
+                <line x1="350" y1="105" x2="140" y2="215"
+                      class="edge-line" />
+                <line x1="350" y1="105" x2="140" y2="215"
+                      class="edge-line-flow" />
+                <!-- Animated data packet -->
+                @if (GetAgentStatus("MarketIntelAgent") == "thinking")
+                {
+                    <circle r="4" class="data-packet">
+                        <animateMotion dur="1.2s" repeatCount="indefinite"
+                                       path="M350,105 L140,215" />
+                    </circle>
+                }
+            </g>
+
+            <!-- Orchestrator → Inventory -->
+            <g class="edge @GetEdgeClass("InventoryAgent")">
+                <line x1="350" y1="105" x2="350" y2="215"
+                      class="edge-line-bg" />
+                <line x1="350" y1="105" x2="350" y2="215"
+                      class="edge-line" />
+                <line x1="350" y1="105" x2="350" y2="215"
+                      class="edge-line-flow" />
+                @if (GetAgentStatus("InventoryAgent") == "thinking")
+                {
+                    <circle r="4" class="data-packet">
+                        <animateMotion dur="1.2s" repeatCount="indefinite"
+                                       path="M350,105 L350,215" />
+                    </circle>
+                }
+            </g>
+
+            <!-- Orchestrator → Pricing -->
+            <g class="edge @GetEdgeClass("PricingAgent")">
+                <line x1="350" y1="105" x2="560" y2="215"
+                      class="edge-line-bg" />
+                <line x1="350" y1="105" x2="560" y2="215"
+                      class="edge-line" />
+                <line x1="350" y1="105" x2="560" y2="215"
+                      class="edge-line-flow" />
+                @if (GetAgentStatus("PricingAgent") == "thinking")
+                {
+                    <circle r="4" class="data-packet">
+                        <animateMotion dur="1.2s" repeatCount="indefinite"
+                                       path="M350,105 L560,215" />
+                    </circle>
+                }
+            </g>
+
+            <!-- === NODES === -->
+
+            <!-- Orchestrator Node (top center) -->
+            <g class="node @GetNodeClass("ChiefSoftwareArchitect")" transform="translate(350, 65)"
+               filter="@(GetAgentStatus("ChiefSoftwareArchitect") == "thinking" ? "url(#node-glow)" : "url(#node-shadow)")">
+                <rect x="-90" y="-40" width="180" height="80" rx="12" ry="12"
+                      class="node-bg" />
+                <rect x="-90" y="-40" width="180" height="80" rx="12" ry="12"
+                      class="node-border" />
+                <text x="0" y="-10" text-anchor="middle" class="node-icon">🏗️</text>
+                <text x="0" y="12" text-anchor="middle" class="node-label">Orchestrator</text>
+                <text x="0" y="28" text-anchor="middle" class="node-status">@GetStatusLabel("ChiefSoftwareArchitect")</text>
+            </g>
+
+            <!-- MarketIntel Node (bottom left) -->
+            <g class="node @GetNodeClass("MarketIntelAgent")" transform="translate(140, 255)"
+               filter="@(GetAgentStatus("MarketIntelAgent") == "thinking" ? "url(#node-glow)" : "url(#node-shadow)")">
+                <rect x="-80" y="-40" width="160" height="80" rx="12" ry="12"
+                      class="node-bg" />
+                <rect x="-80" y="-40" width="160" height="80" rx="12" ry="12"
+                      class="node-border" />
+                <text x="0" y="-10" text-anchor="middle" class="node-icon">📊</text>
+                <text x="0" y="12" text-anchor="middle" class="node-label">Market Intel</text>
+                <text x="0" y="28" text-anchor="middle" class="node-status">@GetStatusLabel("MarketIntelAgent")</text>
+            </g>
+
+            <!-- Inventory Node (bottom center) -->
+            <g class="node @GetNodeClass("InventoryAgent")" transform="translate(350, 255)"
+               filter="@(GetAgentStatus("InventoryAgent") == "thinking" ? "url(#node-glow)" : "url(#node-shadow)")">
+                <rect x="-80" y="-40" width="160" height="80" rx="12" ry="12"
+                      class="node-bg" />
+                <rect x="-80" y="-40" width="160" height="80" rx="12" ry="12"
+                      class="node-border" />
+                <text x="0" y="-10" text-anchor="middle" class="node-icon">📦</text>
+                <text x="0" y="12" text-anchor="middle" class="node-label">Inventory</text>
+                <text x="0" y="28" text-anchor="middle" class="node-status">@GetStatusLabel("InventoryAgent")</text>
+            </g>
+
+            <!-- Pricing Node (bottom right) -->
+            <g class="node @GetNodeClass("PricingAgent")" transform="translate(560, 255)"
+               filter="@(GetAgentStatus("PricingAgent") == "thinking" ? "url(#node-glow)" : "url(#node-shadow)")">
+                <rect x="-80" y="-40" width="160" height="80" rx="12" ry="12"
+                      class="node-bg" />
+                <rect x="-80" y="-40" width="160" height="80" rx="12" ry="12"
+                      class="node-border" />
+                <text x="0" y="-10" text-anchor="middle" class="node-icon">💰</text>
+                <text x="0" y="12" text-anchor="middle" class="node-label">Pricing</text>
+                <text x="0" y="28" text-anchor="middle" class="node-status">@GetStatusLabel("PricingAgent")</text>
+            </g>
+        </svg>
+    </div>
+
+    @if (_activeAgents.Count > 0 || _completedAgents.Count > 0)
+    {
+        <div class="graph-activity-bar">
+            @foreach (var agent in _agentOrder)
+            {
+                var status = GetAgentStatus(agent);
+                <div class="activity-chip @status" title="@agent: @status">
+                    <span class="chip-icon">@GetAgentIcon(agent)</span>
+                    <span class="chip-label">@GetShortName(agent)</span>
+                    @if (status == "complete")
+                    {
+                        <span class="chip-check">✅</span>
+                    }
+                    else if (status == "thinking")
+                    {
+                        <span class="chip-spinner"></span>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    private readonly HashSet<string> _activeAgents = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _completedAgents = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _errorAgents = new(StringComparer.OrdinalIgnoreCase);
+
+    private static readonly string[] _agentOrder =
+    [
+        "ChiefSoftwareArchitect",
+        "MarketIntelAgent",
+        "InventoryAgent",
+        "PricingAgent"
+    ];
+
+    protected override void OnInitialized()
+    {
+        SignalR.OnThinkingState += HandleThinkingState;
+        SignalR.OnReasoningStep += HandleReasoningStep;
+    }
+
+    private void HandleThinkingState(string sessionId, string agentName, bool isThinking)
+    {
+        var normalized = NormalizeAgentName(agentName);
+
+        if (isThinking)
+        {
+            _activeAgents.Add(normalized);
+            _completedAgents.Remove(normalized);
+            _errorAgents.Remove(normalized);
+        }
+        else
+        {
+            _activeAgents.Remove(normalized);
+            if (!_errorAgents.Contains(normalized))
+            {
+                _completedAgents.Add(normalized);
+            }
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleReasoningStep(SquadCommerce.Contracts.ReasoningStep step)
+    {
+        var normalized = NormalizeAgentName(step.AgentName);
+
+        if (step.StepType == SquadCommerce.Contracts.ReasoningStepType.Error)
+        {
+            _errorAgents.Add(normalized);
+            _activeAgents.Remove(normalized);
+        }
+        else if (step.StepType == SquadCommerce.Contracts.ReasoningStepType.Decision)
+        {
+            // A decision usually means the agent finished its work
+            _completedAgents.Add(normalized);
+            _activeAgents.Remove(normalized);
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string GetAgentStatus(string agentName)
+    {
+        if (_errorAgents.Contains(agentName)) return "error";
+        if (_activeAgents.Contains(agentName)) return "thinking";
+        if (_completedAgents.Contains(agentName)) return "complete";
+        return "idle";
+    }
+
+    private string GetNodeClass(string agentName) =>
+        $"node-{GetAgentStatus(agentName)}";
+
+    private string GetEdgeClass(string agentName) =>
+        $"edge-{GetAgentStatus(agentName)}";
+
+    private string GetStatusLabel(string agentName) => GetAgentStatus(agentName) switch
+    {
+        "thinking" => "⏳ Working...",
+        "complete" => "✅ Done",
+        "error" => "❌ Error",
+        _ => "● Idle"
+    };
+
+    private static string GetAgentIcon(string agentName) => agentName switch
+    {
+        "ChiefSoftwareArchitect" => "🏗️",
+        "MarketIntelAgent" => "📊",
+        "InventoryAgent" => "📦",
+        "PricingAgent" => "💰",
+        _ => "🤖"
+    };
+
+    private static string GetShortName(string agentName) => agentName switch
+    {
+        "ChiefSoftwareArchitect" => "Orchestrator",
+        "MarketIntelAgent" => "Market",
+        "InventoryAgent" => "Inventory",
+        "PricingAgent" => "Pricing",
+        _ => agentName
+    };
+
+    private static string NormalizeAgentName(string name)
+    {
+        // Handle variations like "ChiefSoftwareArchitectAgent", "chief-software-architect", etc.
+        foreach (var known in _agentOrder)
+        {
+            if (name.Contains(known, StringComparison.OrdinalIgnoreCase) ||
+                known.Contains(name, StringComparison.OrdinalIgnoreCase))
+            {
+                return known;
+            }
+        }
+
+        // Try partial matching for common patterns
+        if (name.Contains("Market", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("Intel", StringComparison.OrdinalIgnoreCase))
+            return "MarketIntelAgent";
+
+        if (name.Contains("Inventory", StringComparison.OrdinalIgnoreCase))
+            return "InventoryAgent";
+
+        if (name.Contains("Pricing", StringComparison.OrdinalIgnoreCase))
+            return "PricingAgent";
+
+        if (name.Contains("Architect", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("Orchestrat", StringComparison.OrdinalIgnoreCase) ||
+            name.Contains("Chief", StringComparison.OrdinalIgnoreCase))
+            return "ChiefSoftwareArchitect";
+
+        return name;
+    }
+
+    public void Dispose()
+    {
+        SignalR.OnThinkingState -= HandleThinkingState;
+        SignalR.OnReasoningStep -= HandleReasoningStep;
+    }
+}
+
+<style>
+    /* ============================================
+       Pipeline Node Graph — DAG Visualization
+       ============================================ */
+
+    .pipeline-node-graph {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    }
+
+    .graph-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+    }
+
+    .graph-header h3 {
+        margin: 0;
+        font-size: 1.15rem;
+        color: rgba(255, 255, 255, 0.9);
+        font-weight: 600;
+    }
+
+    .graph-legend {
+        display: flex;
+        gap: 1rem;
+        flex-wrap: wrap;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-size: 0.75rem;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .legend-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+    }
+
+    .legend-dot.idle { background: #4a5568; }
+    .legend-dot.thinking { background: #667eea; animation: legendPulse 1.5s ease-in-out infinite; }
+    .legend-dot.complete { background: #3fb950; }
+    .legend-dot.error { background: #f56565; }
+
+    /* SVG Viewport */
+    .graph-viewport {
+        width: 100%;
+        overflow: hidden;
+    }
+
+    .graph-svg {
+        width: 100%;
+        height: auto;
+        max-height: 340px;
+    }
+
+    /* ============================================
+       Edge Styles
+       ============================================ */
+
+    .edge-line-bg {
+        stroke: rgba(255, 255, 255, 0.06);
+        stroke-width: 3;
+        stroke-linecap: round;
+    }
+
+    .edge-line {
+        stroke: #4a5568;
+        stroke-width: 2;
+        stroke-linecap: round;
+        stroke-dasharray: 8, 4;
+        transition: stroke 0.5s ease;
+    }
+
+    .edge-line-flow {
+        stroke: transparent;
+        stroke-width: 3;
+        stroke-linecap: round;
+        stroke-dasharray: 12, 8;
+        transition: stroke 0.3s ease;
+    }
+
+    /* Edge states */
+    .edge-idle .edge-line {
+        stroke: #4a5568;
+        stroke-dasharray: 8, 4;
+    }
+
+    .edge-thinking .edge-line {
+        stroke: #667eea;
+        stroke-width: 2.5;
+        stroke-dasharray: 12, 6;
+        animation: edgeFlowDash 0.8s linear infinite;
+    }
+
+    .edge-thinking .edge-line-flow {
+        stroke: rgba(102, 126, 234, 0.3);
+        stroke-width: 6;
+        stroke-dasharray: 4, 16;
+        animation: edgeFlowDash 1.2s linear infinite reverse;
+    }
+
+    .edge-complete .edge-line {
+        stroke: #3fb950;
+        stroke-width: 2;
+        stroke-dasharray: none;
+        opacity: 0.8;
+    }
+
+    .edge-error .edge-line {
+        stroke: #f56565;
+        stroke-width: 2;
+        stroke-dasharray: 4, 4;
+    }
+
+    /* Data packet on active edges */
+    .data-packet {
+        fill: #667eea;
+        filter: url(#node-glow);
+    }
+
+    /* ============================================
+       Node Styles
+       ============================================ */
+
+    .node-bg {
+        fill: #1a1f2e;
+        transition: fill 0.4s ease;
+    }
+
+    .node-border {
+        fill: none;
+        stroke: #4a5568;
+        stroke-width: 2;
+        transition: stroke 0.4s ease, stroke-width 0.3s ease;
+    }
+
+    .node-icon {
+        font-size: 20px;
+        dominant-baseline: middle;
+    }
+
+    .node-label {
+        fill: rgba(255, 255, 255, 0.9);
+        font-size: 12px;
+        font-weight: 600;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    .node-status {
+        fill: rgba(255, 255, 255, 0.45);
+        font-size: 10px;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    }
+
+    /* Node states */
+    .node-idle .node-bg { fill: #1a1f2e; }
+    .node-idle .node-border { stroke: #4a5568; stroke-width: 2; }
+
+    .node-thinking .node-bg { fill: rgba(102, 126, 234, 0.15); }
+    .node-thinking .node-border {
+        stroke: #667eea;
+        stroke-width: 2.5;
+        animation: nodePulse 2s ease-in-out infinite;
+    }
+    .node-thinking .node-label { fill: #a3b8ff; }
+    .node-thinking .node-status { fill: #667eea; }
+
+    .node-complete .node-bg { fill: rgba(63, 185, 80, 0.1); }
+    .node-complete .node-border { stroke: #3fb950; stroke-width: 2; }
+    .node-complete .node-label { fill: #7ee787; }
+    .node-complete .node-status { fill: #3fb950; }
+
+    .node-error .node-bg { fill: rgba(245, 101, 101, 0.1); }
+    .node-error .node-border { stroke: #f56565; stroke-width: 2; }
+    .node-error .node-label { fill: #fca5a5; }
+    .node-error .node-status { fill: #f56565; }
+
+    /* ============================================
+       Activity Bar (bottom chips)
+       ============================================ */
+
+    .graph-activity-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .activity-chip {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.3rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        background: rgba(255, 255, 255, 0.04);
+        color: rgba(255, 255, 255, 0.6);
+        transition: all 0.3s ease;
+    }
+
+    .activity-chip.thinking {
+        background: rgba(102, 126, 234, 0.15);
+        border-color: rgba(102, 126, 234, 0.4);
+        color: #a3b8ff;
+    }
+
+    .activity-chip.complete {
+        background: rgba(63, 185, 80, 0.1);
+        border-color: rgba(63, 185, 80, 0.3);
+        color: #7ee787;
+    }
+
+    .activity-chip.error {
+        background: rgba(245, 101, 101, 0.1);
+        border-color: rgba(245, 101, 101, 0.3);
+        color: #fca5a5;
+    }
+
+    .chip-icon { font-size: 0.9rem; }
+    .chip-label { white-space: nowrap; }
+    .chip-check { font-size: 0.7rem; }
+
+    .chip-spinner {
+        width: 10px;
+        height: 10px;
+        border: 2px solid rgba(102, 126, 234, 0.3);
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: chipSpin 0.8s linear infinite;
+    }
+
+    /* ============================================
+       Animations
+       ============================================ */
+
+    @@keyframes edgeFlowDash {
+        to { stroke-dashoffset: -20; }
+    }
+
+    @@keyframes nodePulse {
+        0%, 100% { stroke-opacity: 1; stroke-width: 2.5; }
+        50% { stroke-opacity: 0.5; stroke-width: 3.5; }
+    }
+
+    @@keyframes legendPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    @@keyframes chipSpin {
+        to { transform: rotate(360deg); }
+    }
+
+    /* ============================================
+       Responsive
+       ============================================ */
+
+    @@media (max-width: 640px) {
+        .pipeline-node-graph {
+            padding: 1rem;
+        }
+
+        .graph-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .graph-legend {
+            gap: 0.5rem;
+        }
+
+        .graph-svg {
+            max-height: 280px;
+        }
+
+        .activity-chip {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+    }
+</style>

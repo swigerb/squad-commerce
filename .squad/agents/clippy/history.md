@@ -547,3 +547,31 @@ In .NET 10 Blazor with per-page/component render modes, ANY interactive componen
 - Session-aware: auto-clear lists when `SessionId` changes across steps
 
 **Build status:** ✅ Successful — 0 warnings, 0 errors
+
+### 2026-03-25: Phase 3.1 — Interactive Node-Graph Pipeline Visualization
+
+**What was done:**
+- Created `PipelineNodeGraph.razor` — A DAG-style SVG node graph showing agent orchestration as nodes and data flow as edges
+- Integrated into `Home.razor` above the Agent Reasoning section with "Orchestration Pipeline" header and live badge
+
+**Component Features:**
+- **SVG DAG Layout**: 4 agent nodes (Orchestrator at top, MarketIntel/Inventory/Pricing fanned below) connected by animated edges
+- **Real-time state**: Subscribes to `SignalRStateService.OnThinkingState` and `OnReasoningStep` to drive node/edge state
+- **Status color coding**: idle=gray, thinking=animated-blue with glow, complete=green, error=red
+- **Animated data packets**: SVG circles travel along edges via `<animateMotion>` when agents are active
+- **Edge animations**: Dashed stroke animation (`edgeFlowDash`) for active connections, solid green for complete
+- **Node glow filter**: SVG `feGaussianBlur` filter applied to active nodes for visual emphasis
+- **Activity bar**: Bottom chip strip showing agent status with spinners and checkmarks
+- **Agent name normalization**: Fuzzy matching handles variations like "ChiefSoftwareArchitectAgent" or "chief-software-architect"
+- **Glassmorphism wrapper**: Matches CommandCard styling with backdrop-filter blur
+- **Dark theme native**: All colors use the project palette (#667eea, #764ba2, #3fb950, #0d1117)
+- **Responsive**: SVG viewBox scales to container width; layout adjusts at 640px breakpoint
+
+**Technical approach:**
+- Pure CSS + inline SVG — zero JavaScript, zero external libraries
+- `preserveAspectRatio="xMidYMid meet"` ensures the graph scales proportionally
+- SVG `<defs>` block contains reusable gradients, glow filters, and flow patterns
+- `IDisposable` pattern for SignalR event cleanup
+- `InvokeAsync(StateHasChanged)` for thread-safe UI updates from SignalR callbacks
+
+**Build status:** ✅ Clean build — 0 warnings, 0 errors

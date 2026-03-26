@@ -24,6 +24,9 @@
             case "AgentPipelineVisualizer":
                 <AgentPipelineVisualizer Data="Payload" />
                 break;
+            case "InsightCard":
+                <InsightCardRenderer Payload="Payload" />
+                break;
             default:
                 <div class="alert alert-warning" role="alert">
                     <strong>Unknown A2UI component:</strong> @Payload.RenderAs

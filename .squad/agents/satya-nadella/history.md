@@ -579,3 +579,29 @@ Lead developer for squad-commerce. Responsible for MAF agent orchestration, A2A 
 - Helper method generates StepId, passes via metadata, and returns it — keeps hierarchy consistent without modifying the interface contract
 - All trace emissions wrapped in try/catch — observability never disrupts business logic
 - `Stopwatch` used for measurable durations; root/decision steps use aggregate timing
+
+### Phase 3, Item 3.5: Generative Insight Cards
+
+**What:** Added `InsightCard` as a new A2UI payload type — visually rich summary cards the orchestrator emits alongside existing analysis components.
+
+**Files Created:**
+1. `src/SquadCommerce.Contracts/A2UI/InsightCardData.cs` — Sealed record with Title, KeyMetric, MetricLabel, TrendDirection, Summary, optional ActionLabel and Severity
+2. `src/SquadCommerce.Web/Components/A2UI/InsightCardRenderer.razor` — Blazor component with glassmorphism CommandCard wrapper, gradient key metric, trend arrows (▲/▼/─), severity-based accent borders, fade-in animation, responsive layout
+
+**Files Modified:**
+3. `src/SquadCommerce.Web/Components/A2UI/A2UIRenderer.razor` — Added `InsightCard` case to RenderAs switch
+4. `src/SquadCommerce.Agents/Orchestrator/ChiefSoftwareArchitectAgent.cs`:
+   - OrchestratorResult gained `InsightCards` property (IReadOnlyList<InsightCardData>)
+   - `BuildInsightCards()` generates 3 cards from single-SKU results: Margin Impact, Competitive Position, Recommended Action
+   - `BuildBulkInsightCards()` generates 3 cards from bulk results with portfolio-level metrics
+   - Helper methods `ExtractPercentage()` and `ExtractCount()` parse agent summaries
+   - All insight generation wrapped in try/catch — never breaks the workflow
+
+**Design Decisions:**
+- Named `InsightCardData` (not `InsightCard`) to match existing convention (MarketComparisonGridData, PricingImpactChartData, etc.)
+- Cards derive insights from agent TextSummary via regex extraction with sensible fallback defaults
+- Severity levels (info/warning/critical/success) drive border color, icon, and action button styling
+- TrendDirection controls gradient-colored hero metric numbers and arrow indicators
+- Non-breaking addition — all existing endpoints/tests unaffected
+
+**Build & Test:** ✅ 0 errors, 0 warnings, 191 tests pass (83 Agents + 24 A2A + 30 Mcp + 41 Integration + 13 Web)
