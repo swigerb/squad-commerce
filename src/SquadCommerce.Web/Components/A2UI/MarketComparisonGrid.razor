@@ -1,6 +1,7 @@
 @using SquadCommerce.Contracts.A2UI
 @using System.Text.Json
 
+<CommandCard>
 <div class="market-comparison-grid" role="region" aria-label="Market Comparison Grid">
     <div class="component-header">
         <h3>📊 Competitive Price Comparison</h3>
@@ -46,10 +47,24 @@
                             <th scope="row">@competitor.CompetitorName</th>
                             <td class="numeric-col price-cell">@competitor.Price.ToString("C")</td>
                             <td class="numeric-col delta-cell">
-                                <span class="@GetDeltaCssClass(delta)">
-                                    @delta.ToString("+$0.00;-$0.00;$0.00")
-                                    <span class="delta-percent">(@deltaPercent.ToString("+0.0%;-0.0%;0.0%"))</span>
-                                </span>
+                                @if (delta > 0)
+                                {
+                                    <FluentBadge Class="delta-badge delta-badge-positive" title="Our advantage: competitor is more expensive">
+                                        ▲ @delta.ToString("+$0.00;-$0.00;$0.00") (@deltaPercent.ToString("+0.0%;-0.0%;0.0%"))
+                                    </FluentBadge>
+                                }
+                                else if (delta < 0)
+                                {
+                                    <FluentBadge Class="delta-badge delta-badge-negative" title="Competitor advantage: competitor is cheaper">
+                                        ▼ @delta.ToString("+$0.00;-$0.00;$0.00") (@deltaPercent.ToString("+0.0%;-0.0%;0.0%"))
+                                    </FluentBadge>
+                                }
+                                else
+                                {
+                                    <FluentBadge Class="delta-badge delta-badge-neutral" title="Equal pricing">
+                                        – $0.00 (0.0%)
+                                    </FluentBadge>
+                                }
                             </td>
                             <td class="status-col">
                                 @if (competitor.Verified)
@@ -101,6 +116,35 @@
         <div class="alert alert-info">No competitor data available</div>
     }
 </div>
+</CommandCard>
+
+<style>
+    .delta-badge {
+        font-weight: 600;
+        font-size: 0.85rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 4px;
+        display: inline-block;
+    }
+
+    .delta-badge-positive {
+        background: rgba(16, 185, 129, 0.15) !important;
+        color: #10b981 !important;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .delta-badge-negative {
+        background: rgba(239, 68, 68, 0.15) !important;
+        color: #ef4444 !important;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .delta-badge-neutral {
+        background: rgba(107, 114, 128, 0.15) !important;
+        color: #9ca3af !important;
+        border: 1px solid rgba(107, 114, 128, 0.3);
+    }
+</style>
 
 @code {
     [Parameter]

@@ -1,6 +1,7 @@
 @using SquadCommerce.Contracts.A2UI
 @using System.Text.Json
 
+<CommandCard>
 <div class="retail-stock-heatmap" role="region" aria-label="Retail Stock Heatmap">
     <div class="component-header">
         <h3>📦 Retail Stock Levels</h3>
@@ -37,16 +38,18 @@
                         var cssClass = GetCellCssClass(percent);
                         <tr class="@cssClass">
                             <th scope="row">@store.StoreName</th>
-                            <td class="numeric-col" aria-label="@store.UnitsOnHand units">@store.UnitsOnHand</td>
+                            <td class="numeric-col @GetQuantityCssClass(percent)" aria-label="@store.UnitsOnHand units">
+                                <span class="quantity-value">@store.UnitsOnHand</span>
+                            </td>
                             <td class="numeric-col" aria-label="@store.ReorderPoint reorder point">@store.ReorderPoint</td>
                             <td class="status-col">
-                                <span class="status-badge status-@store.StockStatus.ToLowerInvariant()">
-                                    @GetStatusIcon(store.StockStatus) @store.StockStatus
+                                <span class="stock-status-indicator status-@store.StockStatus.ToLowerInvariant()">
+                                    @GetStatusIndicator(store.StockStatus)
                                 </span>
                             </td>
                             <td class="percent-col" aria-label="@percent percent of target">
                                 <div class="percent-bar-container">
-                                    <div class="percent-bar" style="width: @(Math.Min(percent, 100))%"></div>
+                                    <div class="percent-bar @GetPercentBarClass(percent)" style="width: @(Math.Min(percent, 100))%"></div>
                                     <span class="percent-text">@percent%</span>
                                 </div>
                             </td>
@@ -56,13 +59,13 @@
             </table>
             <div class="heatmap-legend" role="img" aria-label="Heatmap color legend">
                 <span class="legend-item">
-                    <span class="legend-color bg-danger"></span> Critical (&lt; 10% of target)
+                    <span class="legend-color legend-critical"></span> 🔴 Critical (&lt; 10% of target)
                 </span>
                 <span class="legend-item">
-                    <span class="legend-color bg-warning"></span> Low (10-30% of target)
+                    <span class="legend-color legend-low"></span> 🟡 Low (10-30% of target)
                 </span>
                 <span class="legend-item">
-                    <span class="legend-color bg-success"></span> Good (≥ 30% of target)
+                    <span class="legend-color legend-good"></span> 🟢 Good (≥ 30% of target)
                 </span>
             </div>
         </div>
@@ -72,6 +75,87 @@
         <div class="alert alert-info">No inventory data available</div>
     }
 </div>
+</CommandCard>
+
+<style>
+    .quantity-value {
+        font-weight: 700;
+        font-family: 'Consolas', 'Courier New', monospace;
+        font-size: 1rem;
+    }
+
+    .quantity-critical {
+        color: #ef4444 !important;
+    }
+
+    .quantity-critical .quantity-value {
+        text-shadow: 0 0 6px rgba(239, 68, 68, 0.3);
+    }
+
+    .quantity-low {
+        color: #f59e0b !important;
+    }
+
+    .quantity-good {
+        color: #10b981 !important;
+    }
+
+    .stock-status-indicator {
+        font-weight: 600;
+        padding: 0.2rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.85rem;
+        display: inline-block;
+    }
+
+    .stock-status-indicator.status-critical {
+        background: rgba(239, 68, 68, 0.15);
+        color: #ef4444;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .stock-status-indicator.status-low {
+        background: rgba(245, 158, 11, 0.15);
+        color: #f59e0b;
+        border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .stock-status-indicator.status-adequate {
+        background: rgba(16, 185, 129, 0.15);
+        color: #10b981;
+        border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .stock-status-indicator.status-overstocked {
+        background: rgba(96, 165, 250, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(96, 165, 250, 0.3);
+    }
+
+    .percent-bar.bar-critical {
+        background: linear-gradient(90deg, #ef4444, #dc2626) !important;
+    }
+
+    .percent-bar.bar-low {
+        background: linear-gradient(90deg, #f59e0b, #d97706) !important;
+    }
+
+    .percent-bar.bar-good {
+        background: linear-gradient(90deg, #10b981, #059669) !important;
+    }
+
+    .legend-critical {
+        background-color: #ef4444 !important;
+    }
+
+    .legend-low {
+        background-color: #f59e0b !important;
+    }
+
+    .legend-good {
+        background-color: #10b981 !important;
+    }
+</style>
 
 @code {
     [Parameter]
@@ -136,4 +220,27 @@
         "overstocked" => "🔵",
         _ => "⚪"
     };
+
+    private string GetStatusIndicator(string status) => status.ToLowerInvariant() switch
+    {
+        "critical" => "🔴 Critical",
+        "low" => "🟡 Low",
+        "adequate" => "🟢 Adequate",
+        "overstocked" => "🔵 Overstocked",
+        _ => "⚪ Unknown"
+    };
+
+    private string GetQuantityCssClass(int percent)
+    {
+        if (percent < 10) return "quantity-critical";
+        if (percent < 30) return "quantity-low";
+        return "quantity-good";
+    }
+
+    private string GetPercentBarClass(int percent)
+    {
+        if (percent < 10) return "bar-critical";
+        if (percent < 30) return "bar-low";
+        return "bar-good";
+    }
 }

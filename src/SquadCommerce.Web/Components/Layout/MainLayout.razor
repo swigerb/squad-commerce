@@ -1,32 +1,35 @@
 ﻿@inherits LayoutComponentBase
 
-<div class="app-layout">
-    <header class="app-header">
-        <div class="header-brand">
-            <h1>🛒 Squad Commerce</h1>
-            <span class="header-subtitle">AI-Powered Retail Management</span>
-        </div>
+<FluentStack Orientation="Orientation.Vertical" Style="height: 100vh; overflow: hidden; gap: 0;">
+    <FluentHeader Class="app-header" Style="min-height: auto; height: auto;">
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 0.75rem;">
+            <span class="header-icon">🛒</span>
+            <FluentStack Orientation="Orientation.Vertical" Style="gap: 0;">
+                <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.35rem; color: white; line-height: 1.2;">Squad Commerce</FluentLabel>
+                <FluentLabel Style="font-size: 0.8rem; opacity: 0.85; color: rgba(255,255,255,0.85); line-height: 1;">AI-Powered Retail Management</FluentLabel>
+            </FluentStack>
+        </FluentStack>
         <AgentStatusBar />
-    </header>
+    </FluentHeader>
 
-    <div class="app-content">
+    <FluentStack Orientation="Orientation.Horizontal" Style="flex: 1; overflow: hidden; gap: 0;">
         <aside class="sidebar-left">
             <div class="sidebar-header">
-                <h2>💬 Conversation</h2>
+                <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.125rem; color: rgba(255,255,255,0.9);">💬 Conversation</FluentLabel>
             </div>
             <AgentChat />
         </aside>
 
         <main class="main-content">
             <div class="content-header">
-                <h2>📊 Analysis Dashboard</h2>
+                <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.125rem; color: rgba(255,255,255,0.9);">📊 Analysis Dashboard</FluentLabel>
             </div>
             <article class="content-body">
                 @Body
             </article>
         </main>
-    </div>
-</div>
+    </FluentStack>
+</FluentStack>
 
 <div id="blazor-error-ui" data-nosnippet>
     <div class="blazor-error-content">

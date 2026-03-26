@@ -80,6 +80,11 @@ h1:focus {
     z-index: 100;
 }
 
+.header-icon {
+    font-size: 1.75rem;
+    line-height: 1;
+}
+
 .header-brand h1 {
     margin: 0;
     font-size: 1.5rem;
@@ -147,7 +152,6 @@ h1:focus {
 }
 
 /* Additional custom styles from squad-commerce CSS file */
-}
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
     color: var(--bs-secondary-color);

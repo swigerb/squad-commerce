@@ -363,3 +363,55 @@ In .NET 10 Blazor with per-page/component render modes, ANY interactive componen
 - `src/SquadCommerce.Web/Components/Chat/AgentStatusBar.razor` — Agent personas + thinking dots
 - `src/SquadCommerce.Web/Components/Pages/Home.razor` — CommandCard wrappers + dark theme restyling
 - `src/SquadCommerce.Web/wwwroot/app.css` — Dark theme base colors, removed broken squad-commerce.css import
+
+### 2026-03-26: Phase 1 Items 1.2 + 1.5 + 1.6 + 1.8 — Command Center Layout & Component Polish
+
+**What was done:**
+
+- **Item 1.2 — Convert MainLayout to Fluent Shell:**
+  - Replaced raw HTML `<div class="app-layout">` with `<FluentStack Orientation="Vertical">` for semantic flex layout
+  - Replaced `<header>` with `<FluentHeader>` for proper Fluent UI header semantics
+  - Replaced `<div class="app-content">` with `<FluentStack Orientation="Horizontal">` for the content area
+  - Used `<FluentLabel>` with `Weight="FontWeight.Bold"` for header text and section titles
+  - Kept 3-column structure (sidebar chat, main content, status bar) intact
+  - Fixed stray `}` CSS syntax error in app.css (line 150)
+
+- **Item 1.5 — Polish A2UI Components:**
+  - **MarketComparisonGrid:** Replaced plain delta text with `<FluentBadge>` components color-coded green (▲ our advantage), red (▼ competitor advantage), gray (– equal). Wrapped entire component in `<CommandCard>` glassmorphism.
+  - **PricingImpactChart:** Added bold monospace styling for metric values (`.metric-value-highlight`), margin delta indicators showing percentage-point changes (▲/▼ with green/red coloring), text-shadow glow for emphasis. Wrapped in `<CommandCard>`.
+  - **RetailStockHeatmap:** Added color-coded quantity cells (red=critical, amber=low, green=good), enhanced status indicators with pill-shaped badges per status level, color-coded progress bars, improved legend with emoji. Wrapped in `<CommandCard>`.
+
+- **Item 1.6 — Pipeline Progress Animation:**
+  - Added `stageSlideIn` CSS animation: stages slide in from left with staggered delays (0s, 0.15s, 0.3s, ...) for up to 6 stages
+  - Enhanced `pulseGlow` animation for active/running stages: dual box-shadow glow with pulsing intensity
+  - Enhanced completed stage styling: green gradient background, green-tinted stage number circle, ✅ checkmark overlay via CSS `::after` pseudo-element
+  - Added `position: relative` to stage-card for absolute positioning of checkmark
+  - Failed stages now have subtle red background tint
+
+- **Item 1.8 — Integrate ThinkingState in AgentStatusBar:**
+  - Added `OnThinkingState` event to `SignalRStateService` with `(string sessionId, string agentName, bool isThinking)` signature
+  - Registered `ThinkingState` SignalR handler in the hub connection alongside existing handlers
+  - Added `_thinkingAgents` HashSet (case-insensitive) to AgentStatusBar for tracking which agents are thinking
+  - `HandleThinkingState` normalizes agent names to match persona dictionary keys (handles suffix variations like "Agent")
+  - Updated `IsAgentActive()` to prioritize real ThinkingState from SignalR, falling back to status-text heuristic for backward compatibility
+  - Properly subscribes/unsubscribes to `OnThinkingState` in lifecycle methods
+
+**Key patterns:**
+- FluentStack with `Style="gap: 0;"` prevents unwanted spacing between layout sections
+- FluentHeader with `Style="min-height: auto; height: auto;"` prevents fixed height
+- FluentBadge with CSS class overrides for custom colors (shadow DOM won't block class-based styling)
+- CommandCard wrapping pattern: wrap component content without Title param to avoid double headers
+- Agent name normalization: case-insensitive matching + "Agent" suffix stripping for flexible backend integration
+- CSS `::after` pseudo-element for checkmark overlay on completed pipeline stages
+
+**Build status:** ✅ Clean build, 0 errors. All 13 Web unit tests pass. Playwright tests are pre-existing failures (require running app server).
+
+**Files changed:**
+- `src/SquadCommerce.Web/Components/Layout/MainLayout.razor` — FluentStack + FluentHeader + FluentLabel conversion
+- `src/SquadCommerce.Web/wwwroot/app.css` — Fixed stray brace, added header-icon style
+- `src/SquadCommerce.Web/Services/SignalRStateService.cs` — Added OnThinkingState event + handler registration
+- `src/SquadCommerce.Web/Components/Chat/AgentStatusBar.razor` — ThinkingState integration with agent tracking
+- `src/SquadCommerce.Web/Components/A2UI/MarketComparisonGrid.razor` — FluentBadge deltas + CommandCard wrap
+- `src/SquadCommerce.Web/Components/A2UI/PricingImpactChart.razor` — Bold metrics + margin deltas + CommandCard wrap
+- `src/SquadCommerce.Web/Components/A2UI/RetailStockHeatmap.razor` — Color-coded quantities + enhanced status + CommandCard wrap
+- `src/SquadCommerce.Web/Components/A2UI/AgentPipelineVisualizer.razor` — Slide-in animation + glow + checkmark

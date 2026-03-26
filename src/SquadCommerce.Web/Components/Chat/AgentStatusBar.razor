@@ -163,6 +163,7 @@
     private PipelineProgress? _pipelineProgress;
     private string _connectionState = "disconnected";
     private System.Threading.Timer? _badgeCleanupTimer;
+    private readonly HashSet<string> _thinkingAgents = new(StringComparer.OrdinalIgnoreCase);
 
     private record UrgencyBadge(string Level, string Message, DateTime Timestamp, Guid Id);
     
@@ -185,6 +186,11 @@
 
     private bool IsAgentActive(string agentKey)
     {
+        // Use real-time ThinkingState from SignalR when available
+        if (_thinkingAgents.Contains(agentKey))
+            return true;
+
+        // Fall back to status text heuristic for backward compatibility
         if (string.IsNullOrEmpty(_currentStatus)) return false;
         var lower = _currentStatus.ToLowerInvariant();
         return agentKey switch
@@ -201,6 +207,7 @@
     {
         StateService.OnStatusUpdate += HandleStatusUpdate;
         StateService.OnUrgencyBadge += HandleUrgencyBadge;
+        StateService.OnThinkingState += HandleThinkingState;
 
         try
         {
@@ -243,6 +250,22 @@
     {
         var badge = new UrgencyBadge(level, message, DateTime.Now, Guid.NewGuid());
         _urgencyBadges.Add(badge);
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleThinkingState(string sessionId, string agentName, bool isThinking)
+    {
+        // Normalize agent name to match persona keys
+        var key = _agentPersonas.Keys.FirstOrDefault(k =>
+            k.Equals(agentName, StringComparison.OrdinalIgnoreCase) ||
+            agentName.Contains(k, StringComparison.OrdinalIgnoreCase) ||
+            k.Contains(agentName.Replace("Agent", ""), StringComparison.OrdinalIgnoreCase)) ?? agentName;
+
+        if (isThinking)
+            _thinkingAgents.Add(key);
+        else
+            _thinkingAgents.Remove(key);
 
         InvokeAsync(StateHasChanged);
     }
@@ -368,6 +391,7 @@
     {
         StateService.OnStatusUpdate -= HandleStatusUpdate;
         StateService.OnUrgencyBadge -= HandleUrgencyBadge;
+        StateService.OnThinkingState -= HandleThinkingState;
         _badgeCleanupTimer?.Dispose();
     }
 }

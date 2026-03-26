@@ -1,6 +1,7 @@
 @using SquadCommerce.Contracts.A2UI
 @using System.Text.Json
 
+<CommandCard>
 <div class="pricing-impact-chart" role="region" aria-label="Pricing Impact Analysis">
     <div class="component-header">
         <h3>💰 Pricing Impact Analysis</h3>
@@ -38,6 +39,7 @@
             @foreach (var scenario in _data.Scenarios)
             {
                 var marginPercent = scenario.EstimatedMargin * 100;
+                var marginDelta = scenario.EstimatedMargin - GetBaselineMargin();
                 <div class="scenario-card" role="article" aria-label="Scenario: @scenario.ScenarioName">
                     <div class="scenario-header">
                         <h4 class="scenario-name">@scenario.ScenarioName</h4>
@@ -46,19 +48,25 @@
                     <div class="scenario-body">
                         <div class="metric-row">
                             <span class="metric-label">💹 Estimated Margin:</span>
-                            <span class="metric-value margin @GetMarginCssClass(scenario.EstimatedMargin)">
+                            <span class="metric-value-highlight @GetMarginCssClass(scenario.EstimatedMargin)">
                                 @marginPercent.ToString("0.0")%
+                                @if (marginDelta != 0)
+                                {
+                                    <span class="margin-delta @(marginDelta > 0 ? "positive" : "negative")">
+                                        @(marginDelta > 0 ? "▲" : "▼") @Math.Abs(marginDelta * 100).ToString("0.0")pp
+                                    </span>
+                                }
                             </span>
                         </div>
                         <div class="metric-row">
                             <span class="metric-label">💵 Estimated Revenue:</span>
-                            <span class="metric-value revenue @GetRevenueCssClass(scenario.EstimatedRevenue)">
+                            <span class="metric-value-highlight @GetRevenueCssClass(scenario.EstimatedRevenue)">
                                 @scenario.EstimatedRevenue.ToString("C0")
                             </span>
                         </div>
                         <div class="metric-row">
                             <span class="metric-label">📦 Projected Units Sold:</span>
-                            <span class="metric-value units">
+                            <span class="metric-value-highlight units">
                                 @scenario.ProjectedUnitsSold.ToString("N0")
                             </span>
                         </div>
@@ -85,6 +93,57 @@
         <div class="alert alert-info">No pricing scenarios available</div>
     }
 </div>
+</CommandCard>
+
+<style>
+    .metric-value-highlight {
+        font-weight: 700;
+        font-size: 1.1rem;
+        font-family: 'Consolas', 'Courier New', monospace;
+    }
+
+    .metric-value-highlight.text-success {
+        color: #10b981 !important;
+        text-shadow: 0 0 6px rgba(16, 185, 129, 0.2);
+    }
+
+    .metric-value-highlight.text-danger {
+        color: #ef4444 !important;
+        text-shadow: 0 0 6px rgba(239, 68, 68, 0.2);
+    }
+
+    .metric-value-highlight.text-warning {
+        color: #f59e0b !important;
+        text-shadow: 0 0 6px rgba(245, 158, 11, 0.2);
+    }
+
+    .metric-value-highlight.units {
+        color: #60a5fa;
+    }
+
+    .margin-delta {
+        font-size: 0.8rem;
+        margin-left: 0.5rem;
+        padding: 0.1rem 0.4rem;
+        border-radius: 4px;
+        font-weight: 600;
+    }
+
+    .margin-delta.positive {
+        color: #10b981;
+        background: rgba(16, 185, 129, 0.12);
+    }
+
+    .margin-delta.negative {
+        color: #ef4444;
+        background: rgba(239, 68, 68, 0.12);
+    }
+
+    .price-delta {
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+</style>
 
 @code {
     [Parameter]
@@ -110,6 +169,13 @@
                 _data = typedData;
             }
         }
+    }
+
+    private decimal GetBaselineMargin()
+    {
+        if (_data == null || _data.CurrentPrice == 0) return 0;
+        // Use the first scenario's margin as baseline, or 0 if none
+        return _data.Scenarios?.FirstOrDefault()?.EstimatedMargin ?? 0;
     }
 
     private async Task SelectScenario(PriceScenario scenario)

@@ -12,6 +12,7 @@ public class SignalRStateService : IAsyncDisposable
     public event Action<string, string>? OnUrgencyBadge;
     public event Action<object>? OnA2UIPayload;
     public event Action<string>? OnNotification;
+    public event Action<string, string, bool>? OnThinkingState;
 
     public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
     public HubConnectionState ConnectionState => _hubConnection?.State ?? HubConnectionState.Disconnected;
@@ -105,6 +106,12 @@ public class SignalRStateService : IAsyncDisposable
         {
             _logger.LogDebug("Received Notification: {Message}", message);
             OnNotification?.Invoke(message);
+        });
+
+        _hubConnection.On<string, string, bool>("ThinkingState", (sessionId, agentName, isThinking) =>
+        {
+            _logger.LogDebug("Received ThinkingState: Agent={AgentName}, IsThinking={IsThinking}, Session={SessionId}", agentName, isThinking, sessionId);
+            OnThinkingState?.Invoke(sessionId, agentName, isThinking);
         });
 
         try
