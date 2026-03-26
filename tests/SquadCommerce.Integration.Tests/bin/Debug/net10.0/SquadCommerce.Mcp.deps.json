@@ -12,6 +12,8 @@
           "Microsoft.EntityFrameworkCore.Sqlite": "10.0.5",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "ModelContextProtocol": "1.1.0",
+          "ModelContextProtocol.AspNetCore": "1.1.0",
           "SquadCommerce.Contracts": "1.0.0",
           "SquadCommerce.ServiceDefaults": "1.0.0"
         },
@@ -408,6 +410,14 @@
           }
         }
       },
+      "Microsoft.Extensions.AI.Abstractions/10.3.0": {
+        "runtime": {
+          "lib/net10.0/Microsoft.Extensions.AI.Abstractions.dll": {
+            "assemblyVersion": "10.3.0.0",
+            "fileVersion": "10.300.26.10911"
+          }
+        }
+      },
       "Microsoft.Extensions.AmbientMetadata.Application/10.1.0": {
         "runtime": {
           "lib/net10.0/Microsoft.Extensions.AmbientMetadata.Application.dll": {
@@ -648,6 +658,41 @@
           "lib/net8.0/Microsoft.VisualStudio.SolutionPersistence.dll": {
             "assemblyVersion": "1.0.0.0",
             "fileVersion": "1.0.52.6595"
+          }
+        }
+      },
+      "ModelContextProtocol/1.1.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Caching.Abstractions": "10.0.5",
+          "ModelContextProtocol.Core": "1.1.0"
+        },
+        "runtime": {
+          "lib/net10.0/ModelContextProtocol.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "ModelContextProtocol.AspNetCore/1.1.0": {
+        "dependencies": {
+          "ModelContextProtocol": "1.1.0"
+        },
+        "runtime": {
+          "lib/net10.0/ModelContextProtocol.AspNetCore.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        }
+      },
+      "ModelContextProtocol.Core/1.1.0": {
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5"
+        },
+        "runtime": {
+          "lib/net10.0/ModelContextProtocol.Core.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
           }
         }
       },
@@ -1138,6 +1183,13 @@
       "path": "microsoft.entityframeworkcore.sqlite.core/10.0.5",
       "hashPath": "microsoft.entityframeworkcore.sqlite.core.10.0.5.nupkg.sha512"
     },
+    "Microsoft.Extensions.AI.Abstractions/10.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-hDjDvUERvUH3HBMs2MDusOcGJBjAHOG5pJIU2x/HZEa4e1UthNKt89cwMi3B+ogJo6skki1XFjfgGN3ksnVqvQ==",
+      "path": "microsoft.extensions.ai.abstractions/10.3.0",
+      "hashPath": "microsoft.extensions.ai.abstractions.10.3.0.nupkg.sha512"
+    },
     "Microsoft.Extensions.AmbientMetadata.Application/10.1.0": {
       "type": "package",
       "serviceable": true,
@@ -1291,6 +1343,27 @@
       "sha512": "sha512-oNv2JtYXhpdJrX63nibx1JT3uCESOBQ1LAk7Dtz/sr0+laW0KRM6eKp4CZ3MHDR2siIkKsY8MmUkeP5DKkQQ5w==",
       "path": "microsoft.visualstudio.solutionpersistence/1.0.52",
       "hashPath": "microsoft.visualstudio.solutionpersistence.1.0.52.nupkg.sha512"
+    },
+    "ModelContextProtocol/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-dr7MeQocnOD9exXF2TIZc/80xp/wNVw3WpJZlz0X+ezMcOCXXkAwdMbpM5hohvnXw+KF29iaaYPJwUFbni+NCQ==",
+      "path": "modelcontextprotocol/1.1.0",
+      "hashPath": "modelcontextprotocol.1.1.0.nupkg.sha512"
+    },
+    "ModelContextProtocol.AspNetCore/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-I6jXZq7tTYzP9oWpZSnyUqveHWXOLykmPv9mrTyyYqwb0ZUgqVajp96Iu2opSeL/bjBfKV4Lwc2hZUXWCnAUnA==",
+      "path": "modelcontextprotocol.aspnetcore/1.1.0",
+      "hashPath": "modelcontextprotocol.aspnetcore.1.1.0.nupkg.sha512"
+    },
+    "ModelContextProtocol.Core/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3E/qGSPxAnuenD8uBT2NsHCP91ztn4WC9SfV7miKjpzDYQgVvGwbxnPhhZ8PAvltYWJ/P4wWbRmJ+2M5rZkrDQ==",
+      "path": "modelcontextprotocol.core/1.1.0",
+      "hashPath": "modelcontextprotocol.core.1.1.0.nupkg.sha512"
     },
     "Mono.TextTemplating/3.0.0": {
       "type": "package",

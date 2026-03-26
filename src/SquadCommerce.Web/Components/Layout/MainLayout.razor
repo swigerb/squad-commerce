@@ -36,6 +36,13 @@
         </aside>
 
         <main class="main-content" tabindex="-1" aria-label="Dashboard panel">
+            @if (_hitlPending)
+            {
+                <div class="hitl-banner" role="alert">
+                    <ProtocolBadge Protocol="HITL" />
+                    <span>Manager approval required — pricing change pending review</span>
+                </div>
+            }
             <div class="content-header">
                 <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.125rem; color: rgba(255,255,255,0.9);">📊 Analysis Dashboard</FluentLabel>
             </div>
@@ -69,6 +76,7 @@
     private bool _fleetVisible = true;
     private bool _audioMuted = true;
     private bool _settingsPanelOpen;
+    private bool _hitlPending;
     private AudioCueService? _audioCueService;
     private IJSObjectReference? _jsModule;
     private DotNetObjectReference<MainLayout>? _dotNetRef;

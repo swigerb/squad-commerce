@@ -1,0 +1,26 @@
+.command-card[b-9mmjwss1us] {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+    transition: all 0.3s ease;
+}
+
+.command-card:hover[b-9mmjwss1us] {
+    border-color: rgba(102, 126, 234, 0.3);
+    box-shadow: 0 4px 30px rgba(102, 126, 234, 0.15);
+}
+
+.command-card-header h3[b-9mmjwss1us] {
+    margin: 0 0 1rem 0;
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1rem;
+    font-weight: 600;
+}
+
+.command-card-body[b-9mmjwss1us] {
+    color: rgba(255, 255, 255, 0.85);
+}

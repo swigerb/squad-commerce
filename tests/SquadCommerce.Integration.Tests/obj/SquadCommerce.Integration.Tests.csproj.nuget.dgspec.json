@@ -57,6 +57,10 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "dependencies": {
+            "Microsoft.Agents.AI": {
+              "target": "Package",
+              "version": "[1.0.0-rc4, )"
+            },
             "Microsoft.Extensions.Logging.Abstractions": {
               "target": "Package",
               "version": "[10.0.5, )"
@@ -415,6 +419,14 @@
         "net10.0": {
           "targetAlias": "net10.0",
           "dependencies": {
+            "Microsoft.Agents.AI": {
+              "target": "Package",
+              "version": "[1.0.0-rc4, )"
+            },
+            "Microsoft.Agents.AI.Workflows": {
+              "target": "Package",
+              "version": "[1.0.0-rc4, )"
+            },
             "Microsoft.Extensions.DependencyInjection.Abstractions": {
               "target": "Package",
               "version": "[10.0.5, )"
@@ -779,12 +791,6 @@
       "frameworks": {
         "net10.0": {
           "targetAlias": "net10.0",
-          "dependencies": {
-            "Microsoft.AspNetCore.SignalR": {
-              "target": "Package",
-              "version": "[1.2.9, )"
-            }
-          },
           "imports": [
             "net461",
             "net462",
@@ -1631,6 +1637,14 @@
             "Microsoft.Extensions.Logging.Abstractions": {
               "target": "Package",
               "version": "[10.0.5, )"
+            },
+            "ModelContextProtocol": {
+              "target": "Package",
+              "version": "[1.1.0, )"
+            },
+            "ModelContextProtocol.AspNetCore": {
+              "target": "Package",
+              "version": "[1.1.0, )"
             }
           },
           "imports": [

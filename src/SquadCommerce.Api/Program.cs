@@ -159,8 +159,19 @@ app.MapPost("/api/agui/chat", async (ChatRequest chatRequest, IAgUiStreamWriter 
         }
     }
 
-    logger.LogInformation("Chat bridge: SessionId={SessionId}, Message={Message}, Extracted: Sku={Sku}, Competitor={Competitor}, Price={Price}",
-        sessionId, message, sku, competitorName, competitorPrice);
+    // Detect scenario type from message keywords
+    var scenarioType = "CompetitorPriceDrop"; // default
+    if (Regex.IsMatch(message, @"\b(delayed|shipment|storm|supply\s*chain|reroute)\b", RegexOptions.IgnoreCase))
+        scenarioType = "SupplyChainShock";
+    else if (Regex.IsMatch(message, @"\b(viral|TikTok|trending|spike|demand|influencer)\b", RegexOptions.IgnoreCase))
+        scenarioType = "ViralSpike";
+    else if (Regex.IsMatch(message, @"\b(certification|Fair\s*Trade|ESG|sustainability|compliance|supplier)\b", RegexOptions.IgnoreCase))
+        scenarioType = "ESGAudit";
+    else if (Regex.IsMatch(message, @"\b(new\s*store|opening|flagship|layout|floorplan|foot\s*traffic)\b", RegexOptions.IgnoreCase))
+        scenarioType = "StoreReadiness";
+
+    logger.LogInformation("Chat bridge: SessionId={SessionId}, Message={Message}, Scenario={Scenario}, Extracted: Sku={Sku}, Competitor={Competitor}, Price={Price}",
+        sessionId, message, scenarioType, sku, competitorName, competitorPrice);
 
     // Launch orchestration in background with its own cancellation token.
     // The HTTP request token gets cancelled when the 202 response completes,

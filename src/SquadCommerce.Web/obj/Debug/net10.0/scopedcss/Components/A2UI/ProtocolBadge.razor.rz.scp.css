@@ -1,0 +1,128 @@
+/* ============================================
+   ProtocolBadge — Glassmorphism Protocol Pills
+   ============================================ */
+
+.protocol-badge[b-w2zkdqrxjm] {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    line-height: 1.4;
+    white-space: nowrap;
+    vertical-align: middle;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: box-shadow 0.3s ease, background 0.3s ease;
+}
+
+.badge-icon[b-w2zkdqrxjm] {
+    font-size: 0.75rem;
+    line-height: 1;
+    flex-shrink: 0;
+}
+
+.badge-text[b-w2zkdqrxjm] {
+    letter-spacing: 0.03em;
+}
+
+/* ── MCP — Blue ─────────────────────────── */
+.badge-mcp[b-w2zkdqrxjm] {
+    background: rgba(88, 166, 255, 0.15);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    color: #58a6ff;
+    box-shadow: 0 0 12px rgba(88, 166, 255, 0.4);
+}
+
+/* ── A2A — Purple ───────────────────────── */
+.badge-a2a[b-w2zkdqrxjm] {
+    background: rgba(188, 140, 255, 0.15);
+    border: 1px solid rgba(188, 140, 255, 0.3);
+    color: #bc8cff;
+    box-shadow: 0 0 12px rgba(188, 140, 255, 0.4);
+}
+
+/* ── AG-UI — Cyan ───────────────────────── */
+.badge-agui[b-w2zkdqrxjm] {
+    background: rgba(86, 212, 221, 0.15);
+    border: 1px solid rgba(86, 212, 221, 0.3);
+    color: #56d4dd;
+    box-shadow: 0 0 12px rgba(86, 212, 221, 0.4);
+}
+
+/* ── A2UI — Amber ───────────────────────── */
+.badge-a2ui[b-w2zkdqrxjm] {
+    background: rgba(210, 153, 34, 0.15);
+    border: 1px solid rgba(210, 153, 34, 0.3);
+    color: #d29922;
+    box-shadow: 0 0 12px rgba(210, 153, 34, 0.4);
+}
+
+/* ── HITL — Red ─────────────────────────── */
+.badge-hitl[b-w2zkdqrxjm] {
+    background: rgba(248, 81, 73, 0.15);
+    border: 1px solid rgba(248, 81, 73, 0.3);
+    color: #f85149;
+    box-shadow: 0 0 12px rgba(248, 81, 73, 0.4);
+}
+
+/* ============================================
+   Animations
+   ============================================ */
+
+/* Entrance: fade-in + scale */
+.badge-enter[b-w2zkdqrxjm] {
+    animation: badgeEnter-b-w2zkdqrxjm 0.3s ease-out both;
+}
+
+@keyframes badgeEnter-b-w2zkdqrxjm {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+/* HITL: continuous pulse */
+.badge-pulse[b-w2zkdqrxjm] {
+    animation: badgeEnter-b-w2zkdqrxjm 0.3s ease-out both, badgePulse-b-w2zkdqrxjm 2s ease-in-out infinite 0.3s;
+}
+
+@keyframes badgePulse-b-w2zkdqrxjm {
+    0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+    50% {
+        opacity: 0.7;
+        transform: scale(0.98);
+    }
+}
+
+/* A2UI: brief bright flash then settle (simulates JSON blueprint flash) */
+.badge-flash[b-w2zkdqrxjm] {
+    animation: badgeEnter-b-w2zkdqrxjm 0.3s ease-out both, badgeFlash-b-w2zkdqrxjm 0.5s ease-out 0.3s both;
+}
+
+@keyframes badgeFlash-b-w2zkdqrxjm {
+    0% {
+        background: rgba(210, 153, 34, 0.6);
+        box-shadow: 0 0 24px rgba(210, 153, 34, 0.8);
+        color: #fff;
+    }
+    40% {
+        background: rgba(210, 153, 34, 0.35);
+        box-shadow: 0 0 18px rgba(210, 153, 34, 0.6);
+        color: #ffe0a0;
+    }
+    100% {
+        background: rgba(210, 153, 34, 0.15);
+        box-shadow: 0 0 12px rgba(210, 153, 34, 0.4);
+        color: #d29922;
+    }
+}

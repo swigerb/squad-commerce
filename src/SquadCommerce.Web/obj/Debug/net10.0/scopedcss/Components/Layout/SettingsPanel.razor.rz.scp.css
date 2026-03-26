@@ -1,0 +1,267 @@
+/* ── Settings Panel Flyout ────────────── */
+
+.settings-backdrop[b-vbaxz5nr0o] {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 9998;
+    animation: settings-fade-in-b-vbaxz5nr0o 0.2s ease-out;
+}
+
+@keyframes settings-fade-in-b-vbaxz5nr0o {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes settings-slide-in-b-vbaxz5nr0o {
+    from { transform: translateX(100%); }
+    to { transform: translateX(0); }
+}
+
+.settings-panel[b-vbaxz5nr0o] {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 320px;
+    max-width: 90vw;
+    height: 100vh;
+    background: rgba(13, 17, 23, 0.95);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-left: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: -8px 0 40px rgba(0, 0, 0, 0.5);
+    z-index: 9999;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: settings-slide-in-b-vbaxz5nr0o 0.25s ease-out;
+}
+
+/* ── Header ── */
+.settings-header[b-vbaxz5nr0o] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-shrink: 0;
+}
+
+.settings-title[b-vbaxz5nr0o] {
+    font-weight: 600;
+    font-size: 1.05rem;
+    color: #e6edf3;
+}
+
+.settings-close[b-vbaxz5nr0o] {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.5);
+    font-size: 1rem;
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    transition: background 0.15s, color 0.15s;
+    line-height: 1;
+}
+
+.settings-close:hover[b-vbaxz5nr0o] {
+    background: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+/* ── Scrollable Body ── */
+.settings-body[b-vbaxz5nr0o] {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.75rem 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.settings-body[b-vbaxz5nr0o]::-webkit-scrollbar {
+    width: 6px;
+}
+
+.settings-body[b-vbaxz5nr0o]::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+/* ── Collapsible Sections ── */
+.settings-section[b-vbaxz5nr0o] {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.section-header[b-vbaxz5nr0o] {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #8b949e;
+    cursor: pointer;
+    user-select: none;
+    list-style: none;
+    transition: color 0.15s;
+}
+
+.section-header[b-vbaxz5nr0o]::-webkit-details-marker {
+    display: none;
+}
+
+.section-header[b-vbaxz5nr0o]::before {
+    content: "▸";
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.3);
+    transition: transform 0.2s ease;
+}
+
+details[open] > .section-header[b-vbaxz5nr0o]::before {
+    transform: rotate(90deg);
+}
+
+.section-header:hover[b-vbaxz5nr0o] {
+    color: #e6edf3;
+}
+
+.section-content[b-vbaxz5nr0o] {
+    padding: 0.25rem 1.25rem 0.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.625rem;
+}
+
+/* ── Field Groups ── */
+.field-group[b-vbaxz5nr0o] {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.field-label[b-vbaxz5nr0o] {
+    font-size: 0.78rem;
+    color: #8b949e;
+    font-weight: 500;
+}
+
+/* Style Fluent text fields to match dark theme */
+.field-group[b-vbaxz5nr0o]  fluent-text-field {
+    --neutral-fill-input-rest: #161b22;
+    --neutral-fill-input-hover: #1c2129;
+    --neutral-stroke-rest: rgba(255, 255, 255, 0.12);
+    --neutral-stroke-hover: rgba(88, 166, 255, 0.3);
+    --neutral-foreground-rest: #e6edf3;
+    border-radius: 4px;
+}
+
+.field-group[b-vbaxz5nr0o]  fluent-select {
+    --neutral-fill-input-rest: #161b22;
+    --neutral-fill-input-hover: #1c2129;
+    --neutral-stroke-rest: rgba(255, 255, 255, 0.12);
+    --neutral-foreground-rest: #e6edf3;
+    border-radius: 4px;
+}
+
+/* ── Agent Toggle Rows ── */
+.agent-toggle-row[b-vbaxz5nr0o] {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0;
+}
+
+.agent-dot[b-vbaxz5nr0o] {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    box-shadow: 0 0 6px currentColor;
+}
+
+.agent-label[b-vbaxz5nr0o] {
+    flex: 1;
+    font-size: 0.85rem;
+    color: #e6edf3;
+}
+
+.agent-toggle-row[b-vbaxz5nr0o]  fluent-switch {
+    --neutral-fill-input-rest: rgba(255, 255, 255, 0.1);
+    --accent-fill-rest: #58a6ff;
+}
+
+/* ── Info Rows (System Info) ── */
+.info-row[b-vbaxz5nr0o] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.3rem 0;
+}
+
+.info-label[b-vbaxz5nr0o] {
+    font-size: 0.8rem;
+    color: #8b949e;
+}
+
+.info-value[b-vbaxz5nr0o] {
+    font-size: 0.8rem;
+    color: #e6edf3;
+    font-family: 'Cascadia Code', 'Fira Code', monospace;
+    background: rgba(255, 255, 255, 0.06);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+}
+
+/* ── Footer ── */
+.settings-footer[b-vbaxz5nr0o] {
+    padding: 0.75rem 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.reset-link[b-vbaxz5nr0o] {
+    background: none;
+    border: none;
+    color: #8b949e;
+    font-size: 0.78rem;
+    cursor: pointer;
+    text-align: center;
+    padding: 0.25rem;
+    border-radius: 4px;
+    transition: color 0.15s, background 0.15s;
+}
+
+.reset-link:hover[b-vbaxz5nr0o] {
+    color: #f85149;
+    background: rgba(248, 81, 73, 0.1);
+}
+
+.settings-footer[b-vbaxz5nr0o]  fluent-button[appearance="accent"] {
+    --accent-fill-rest: #58a6ff;
+    --accent-fill-hover: #79b8ff;
+    --accent-fill-active: #4090e0;
+    --accent-foreground-rest: #0d1117;
+    border-radius: 6px;
+    font-weight: 600;
+}
+
+/* ── Slider styling ── */
+.section-content[b-vbaxz5nr0o]  fluent-slider {
+    --neutral-foreground-rest: #8b949e;
+    --accent-fill-rest: #58a6ff;
+    margin-top: 0.25rem;
+}
+
+/* ── Responsive ── */
+@media (max-width: 480px) {
+    .settings-panel[b-vbaxz5nr0o] {
+        width: 100vw;
+        max-width: 100vw;
+    }
+}

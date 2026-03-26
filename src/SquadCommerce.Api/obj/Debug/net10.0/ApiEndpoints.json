@@ -1,0 +1,330 @@
+[
+  {
+    "ContainingType": "SquadCommerce.Api.Endpoints.AgentEndpoints",
+    "Method": "GetAgents",
+    "RelativePath": "api/agents/",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [],
+    "ReturnTypes": [
+      {
+        "Type": "SquadCommerce.Api.Endpoints.AgentListResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "Agents"
+    ],
+    "EndpointName": "GetAgents",
+    "Summary": "List registered agents and their policies"
+  },
+  {
+    "ContainingType": "SquadCommerce.Api.Endpoints.AgentEndpoints",
+    "Method": "GetAgentStatus",
+    "RelativePath": "api/agents/{name}/status",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "name",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SquadCommerce.Api.Endpoints.AgentStatusResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 200
+      },
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 404
+      }
+    ],
+    "Tags": [
+      "Agents"
+    ],
+    "EndpointName": "GetAgentStatus",
+    "Summary": "Get agent status"
+  },
+  {
+    "ContainingType": "SquadCommerce.Api.Endpoints.AgentEndpoints",
+    "Method": "TriggerAnalysis",
+    "RelativePath": "api/agents/analyze",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SquadCommerce.Api.Endpoints.AnalysisRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SquadCommerce.Api.Endpoints.AnalysisResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 202
+      },
+      {
+        "Type": "System.String",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 400
+      }
+    ],
+    "Tags": [
+      "Agents"
+    ],
+    "EndpointName": "TriggerAnalysis",
+    "Summary": "Trigger competitor price drop analysis scenario"
+  },
+  {
+    "ContainingType": "SquadCommerce.Api.Endpoints.AgentEndpoints",
+    "Method": "TriggerBulkAnalysis",
+    "RelativePath": "api/agents/analyze/bulk",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SquadCommerce.Api.Endpoints.BulkAnalysisRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SquadCommerce.Api.Endpoints.AnalysisResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 202
+      },
+      {
+        "Type": "System.String",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 400
+      }
+    ],
+    "Tags": [
+      "Agents"
+    ],
+    "EndpointName": "TriggerBulkAnalysis",
+    "Summary": "Trigger bulk competitor price drop analysis for multiple SKUs"
+  },
+  {
+    "ContainingType": "Program\u002B\u003C\u003Ec",
+    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_1",
+    "RelativePath": "api/agui",
+    "HttpMethod": "GET",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "sessionId",
+        "Type": "System.String",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "AG-UI"
+    ],
+    "EndpointName": "GetAgUiStream",
+    "Summary": "AG-UI Server-Sent Events stream for agent communication"
+  },
+  {
+    "ContainingType": "Program\u002B\u003C\u003Ec",
+    "Method": "\u003C\u003CMain\u003E$\u003Eb__0_2",
+    "RelativePath": "api/agui/chat",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "chatRequest",
+        "Type": "ChatRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "System.Void",
+        "MediaTypes": [],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "AG-UI"
+    ],
+    "EndpointName": "ChatBridge",
+    "Summary": "Accept freeform chat input, interpret intent, and start orchestration"
+  },
+  {
+    "ContainingType": "SquadCommerce.Api.Endpoints.PricingEndpoints",
+    "Method": "ApproveProposal",
+    "RelativePath": "api/pricing/approve",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SquadCommerce.Api.Endpoints.PricingApprovalRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SquadCommerce.Api.Endpoints.PricingActionResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "Pricing"
+    ],
+    "EndpointName": "ApproveProposal",
+    "Summary": "Approve pricing proposal and execute store updates"
+  },
+  {
+    "ContainingType": "SquadCommerce.Api.Endpoints.PricingEndpoints",
+    "Method": "ApproveBulkProposal",
+    "RelativePath": "api/pricing/approve/bulk",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SquadCommerce.Api.Endpoints.BulkPricingApprovalRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SquadCommerce.Api.Endpoints.PricingActionResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "Pricing"
+    ],
+    "EndpointName": "ApproveBulkProposal",
+    "Summary": "Approve multiple pricing proposals in bulk"
+  },
+  {
+    "ContainingType": "SquadCommerce.Api.Endpoints.PricingEndpoints",
+    "Method": "ModifyProposal",
+    "RelativePath": "api/pricing/modify",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SquadCommerce.Api.Endpoints.PricingModificationRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SquadCommerce.Api.Endpoints.PricingActionResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 202
+      }
+    ],
+    "Tags": [
+      "Pricing"
+    ],
+    "EndpointName": "ModifyProposal",
+    "Summary": "Modify proposed prices and re-trigger calculation"
+  },
+  {
+    "ContainingType": "SquadCommerce.Api.Endpoints.PricingEndpoints",
+    "Method": "RejectProposal",
+    "RelativePath": "api/pricing/reject",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SquadCommerce.Api.Endpoints.PricingRejectionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SquadCommerce.Api.Endpoints.PricingActionResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "Pricing"
+    ],
+    "EndpointName": "RejectProposal",
+    "Summary": "Reject pricing proposal with no action taken"
+  },
+  {
+    "ContainingType": "SquadCommerce.Api.Endpoints.PricingEndpoints",
+    "Method": "RejectBulkProposal",
+    "RelativePath": "api/pricing/reject/bulk",
+    "HttpMethod": "POST",
+    "IsController": false,
+    "Order": 0,
+    "Parameters": [
+      {
+        "Name": "request",
+        "Type": "SquadCommerce.Api.Endpoints.BulkPricingRejectionRequest",
+        "IsRequired": true
+      }
+    ],
+    "ReturnTypes": [
+      {
+        "Type": "SquadCommerce.Api.Endpoints.PricingActionResponse",
+        "MediaTypes": [
+          "application/json"
+        ],
+        "StatusCode": 200
+      }
+    ],
+    "Tags": [
+      "Pricing"
+    ],
+    "EndpointName": "RejectBulkProposal",
+    "Summary": "Reject multiple pricing proposals in bulk"
+  }
+]

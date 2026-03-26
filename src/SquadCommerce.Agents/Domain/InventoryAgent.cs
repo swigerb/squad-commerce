@@ -251,6 +251,13 @@ public sealed class InventoryAgent : IDomainAgent
         "SFO-003" => "Airport Terminal",
         "LAX-004" => "University District",
         "DEN-005" => "Waterfront Plaza",
+        "NYC-006" => "Times Square Flagship",
+        "BOS-007" => "Back Bay Mall",
+        "PHI-008" => "Center City Plaza",
+        "MIA-009" => "Miami Flagship",
+        "TPA-010" => "Tampa Gateway",
+        "ORL-011" => "Orlando Resort District",
+        "ATL-012" => "Peachtree Center",
         _ => storeId
     };
 }

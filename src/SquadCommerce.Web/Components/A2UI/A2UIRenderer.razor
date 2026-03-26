@@ -10,22 +10,37 @@
         @switch (Payload.RenderAs)
         {
             case "RetailStockHeatmap":
+                <ProtocolBadge Protocol="MCP" />
                 <RetailStockHeatmap Data="Payload" />
                 break;
             case "PricingImpactChart":
+                <ProtocolBadge Protocol="MCP" />
                 <PricingImpactChart Data="Payload" />
                 break;
             case "MarketComparisonGrid":
+                <ProtocolBadge Protocol="A2A" />
                 <MarketComparisonGrid Data="Payload" />
                 break;
             case "DecisionAuditTrail":
+                <ProtocolBadge Protocol="A2UI" />
                 <DecisionAuditTrail Data="Payload" />
                 break;
             case "AgentPipelineVisualizer":
+                <ProtocolBadge Protocol="AGUI" />
                 <AgentPipelineVisualizer Data="Payload" />
                 break;
             case "InsightCard":
+                <ProtocolBadge Protocol="A2UI" />
                 <InsightCardRenderer Payload="Payload" />
+                break;
+            case "ReroutingMap":
+            case "SocialSentimentGraph":
+            case "SupplierRiskMatrix":
+            case "InteractiveFloorplan":
+            case "CampaignPreview":
+                <div class="a2ui-placeholder">
+                    <span>🚧 @Payload.RenderAs — Coming in next phase</span>
+                </div>
                 break;
             default:
                 <div class="alert alert-warning" role="alert">

@@ -52,17 +52,17 @@
           "dependencies": {
             "Aspire.Dashboard.Sdk.win-x64": {
               "target": "Package",
-              "version": "[13.1.0, )",
+              "version": "[13.2.0, )",
               "autoReferenced": true
             },
             "Aspire.Hosting.AppHost": {
               "target": "Package",
-              "version": "[13.1.0, )",
+              "version": "[13.2.0, )",
               "autoReferenced": true
             },
             "Aspire.Hosting.Orchestration.win-x64": {
               "target": "Package",
-              "version": "[13.1.0, )",
+              "version": "[13.2.0, )",
               "autoReferenced": true
             }
           },

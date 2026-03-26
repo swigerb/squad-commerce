@@ -361,6 +361,75 @@
           "lib/net6.0/FluentAssertions.dll": {}
         }
       },
+      "Google.Protobuf/3.30.2": {
+        "runtime": {
+          "lib/net5.0/Google.Protobuf.dll": {
+            "assemblyVersion": "3.30.2.0",
+            "fileVersion": "3.30.2.0"
+          }
+        },
+        "compile": {
+          "lib/net5.0/Google.Protobuf.dll": {}
+        }
+      },
+      "Microsoft.Agents.AI/1.0.0-rc4": {
+        "dependencies": {
+          "Microsoft.Agents.AI.Abstractions": "1.0.0-rc4",
+          "Microsoft.Extensions.AI": "10.3.0",
+          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "Microsoft.Extensions.VectorData.Abstractions": "9.7.0",
+          "Microsoft.ML.Tokenizers": "2.0.0"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.Agents.AI.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.Agents.AI.dll": {}
+        }
+      },
+      "Microsoft.Agents.AI.Abstractions/1.0.0-rc4": {
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.Agents.AI.Abstractions.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.Agents.AI.Abstractions.dll": {}
+        }
+      },
+      "Microsoft.Agents.AI.Workflows/1.0.0-rc4": {
+        "dependencies": {
+          "Microsoft.Agents.AI": "1.0.0-rc4",
+          "Microsoft.Agents.AI.Abstractions": "1.0.0-rc4",
+          "Microsoft.Extensions.AI": "10.3.0",
+          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "Microsoft.Extensions.VectorData.Abstractions": "9.7.0",
+          "Microsoft.ML.Tokenizers": "2.0.0",
+          "OpenTelemetry.Api": "1.14.0"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.Agents.AI.Workflows.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.Agents.AI.Workflows.dll": {}
+        }
+      },
       "Microsoft.AspNetCore.Mvc.Testing/10.0.5": {
         "dependencies": {
           "Microsoft.AspNetCore.TestHost": "10.0.5",
@@ -503,6 +572,35 @@
         },
         "compile": {
           "lib/net10.0/Microsoft.EntityFrameworkCore.Sqlite.dll": {}
+        }
+      },
+      "Microsoft.Extensions.AI/10.3.0": {
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
+          "Microsoft.Extensions.Caching.Abstractions": "10.0.5",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "System.Numerics.Tensors": "10.0.3"
+        },
+        "runtime": {
+          "lib/net10.0/Microsoft.Extensions.AI.dll": {
+            "assemblyVersion": "10.3.0.0",
+            "fileVersion": "10.300.26.10911"
+          }
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.Extensions.AI.dll": {}
+        }
+      },
+      "Microsoft.Extensions.AI.Abstractions/10.3.0": {
+        "runtime": {
+          "lib/net10.0/Microsoft.Extensions.AI.Abstractions.dll": {
+            "assemblyVersion": "10.3.0.0",
+            "fileVersion": "10.300.26.10911"
+          }
+        },
+        "compile": {
+          "lib/net10.0/Microsoft.Extensions.AI.Abstractions.dll": {}
         }
       },
       "Microsoft.Extensions.AmbientMetadata.Application/10.1.0": {
@@ -1168,6 +1266,34 @@
           "lib/net10.0/Microsoft.Extensions.Telemetry.Abstractions.dll": {}
         }
       },
+      "Microsoft.Extensions.VectorData.Abstractions/9.7.0": {
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.3.0"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.Extensions.VectorData.Abstractions.dll": {
+            "assemblyVersion": "9.0.0.0",
+            "fileVersion": "9.0.0.0"
+          }
+        },
+        "compile": {
+          "lib/net8.0/Microsoft.Extensions.VectorData.Abstractions.dll": {}
+        }
+      },
+      "Microsoft.ML.Tokenizers/2.0.0": {
+        "dependencies": {
+          "Google.Protobuf": "3.30.2"
+        },
+        "runtime": {
+          "lib/net8.0/Microsoft.ML.Tokenizers.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "2.0.25.55704"
+          }
+        },
+        "compile": {
+          "lib/net8.0/Microsoft.ML.Tokenizers.dll": {}
+        }
+      },
       "Microsoft.NET.Test.Sdk/17.14.1": {
         "dependencies": {
           "Microsoft.CodeCoverage": "17.14.1",
@@ -1430,6 +1556,51 @@
           "lib/net8.0/Microsoft.VisualStudio.TestPlatform.Common.dll": {},
           "lib/net8.0/Microsoft.VisualStudio.TestPlatform.ObjectModel.dll": {},
           "lib/net8.0/testhost.dll": {}
+        }
+      },
+      "ModelContextProtocol/1.1.0": {
+        "dependencies": {
+          "Microsoft.Extensions.Caching.Abstractions": "10.0.5",
+          "Microsoft.Extensions.Hosting.Abstractions": "10.0.5",
+          "ModelContextProtocol.Core": "1.1.0"
+        },
+        "runtime": {
+          "lib/net10.0/ModelContextProtocol.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        },
+        "compile": {
+          "lib/net10.0/ModelContextProtocol.dll": {}
+        }
+      },
+      "ModelContextProtocol.AspNetCore/1.1.0": {
+        "dependencies": {
+          "ModelContextProtocol": "1.1.0"
+        },
+        "runtime": {
+          "lib/net10.0/ModelContextProtocol.AspNetCore.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        },
+        "compile": {
+          "lib/net10.0/ModelContextProtocol.AspNetCore.dll": {}
+        }
+      },
+      "ModelContextProtocol.Core/1.1.0": {
+        "dependencies": {
+          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.5"
+        },
+        "runtime": {
+          "lib/net10.0/ModelContextProtocol.Core.dll": {
+            "assemblyVersion": "1.1.0.0",
+            "fileVersion": "1.1.0.0"
+          }
+        },
+        "compile": {
+          "lib/net10.0/ModelContextProtocol.Core.dll": {}
         }
       },
       "Moq/4.20.72": {
@@ -1792,6 +1963,17 @@
           "lib/net10.0/System.Diagnostics.EventLog.dll": {}
         }
       },
+      "System.Numerics.Tensors/10.0.3": {
+        "runtime": {
+          "lib/net10.0/System.Numerics.Tensors.dll": {
+            "assemblyVersion": "10.0.0.3",
+            "fileVersion": "10.0.326.7603"
+          }
+        },
+        "compile": {
+          "lib/net10.0/System.Numerics.Tensors.dll": {}
+        }
+      },
       "xunit/2.9.3": {
         "dependencies": {
           "xunit.analyzers": "1.18.0",
@@ -1857,6 +2039,7 @@
       },
       "SquadCommerce.A2A/1.0.0": {
         "dependencies": {
+          "Microsoft.Agents.AI": "1.0.0-rc4",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
           "SquadCommerce.Contracts": "1.0.0",
           "SquadCommerce.ServiceDefaults": "1.0.0"
@@ -1873,6 +2056,8 @@
       },
       "SquadCommerce.Agents/1.0.0": {
         "dependencies": {
+          "Microsoft.Agents.AI": "1.0.0-rc4",
+          "Microsoft.Agents.AI.Workflows": "1.0.0-rc4",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
           "SquadCommerce.A2A": "1.0.0",
@@ -1924,6 +2109,8 @@
           "Microsoft.EntityFrameworkCore.Sqlite": "10.0.5",
           "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
           "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "ModelContextProtocol": "1.1.0",
+          "ModelContextProtocol.AspNetCore": "1.1.0",
           "SquadCommerce.Contracts": "1.0.0",
           "SquadCommerce.ServiceDefaults": "1.0.0"
         },
@@ -3673,6 +3860,34 @@
       "path": "fluentassertions/8.9.0",
       "hashPath": "fluentassertions.8.9.0.nupkg.sha512"
     },
+    "Google.Protobuf/3.30.2": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Y2aOVLIt75yeeEWigg9V9YnjsEm53sADtLGq0gLhwaXpk3iu8tYSoauolyhenagA2sWno2TQ2WujI0HQd6s1Vw==",
+      "path": "google.protobuf/3.30.2",
+      "hashPath": "google.protobuf.3.30.2.nupkg.sha512"
+    },
+    "Microsoft.Agents.AI/1.0.0-rc4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-fDsowhBBbWjJmm7kT0RJG4ED3I5X5xqsOg4R4gW2eR/ptzT2OLqsOJiO0rCPUrqWsPcpL0hbCD0heD4oMfirFQ==",
+      "path": "microsoft.agents.ai/1.0.0-rc4",
+      "hashPath": "microsoft.agents.ai.1.0.0-rc4.nupkg.sha512"
+    },
+    "Microsoft.Agents.AI.Abstractions/1.0.0-rc4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3/5gnZxpod0WUyeQtLmgXDoa7HFKLau4pp6+cHcd9A5wYuZmIXlIltonp9kw0akBbPF/0X6dYIFCq2r+yHduOw==",
+      "path": "microsoft.agents.ai.abstractions/1.0.0-rc4",
+      "hashPath": "microsoft.agents.ai.abstractions.1.0.0-rc4.nupkg.sha512"
+    },
+    "Microsoft.Agents.AI.Workflows/1.0.0-rc4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Zv7ejlslPVA2pCUdA6cCpiBZH5/x2uiiXPcs/TGeD357hIc7seLdytjD3mplt0ZK54CtcdOUEKBk949vyMZDcA==",
+      "path": "microsoft.agents.ai.workflows/1.0.0-rc4",
+      "hashPath": "microsoft.agents.ai.workflows.1.0.0-rc4.nupkg.sha512"
+    },
     "Microsoft.AspNetCore.Mvc.Testing/10.0.5": {
       "type": "package",
       "serviceable": true,
@@ -3742,6 +3957,20 @@
       "sha512": "sha512-rVH43bcUyZiMn0SnCpVnvFpl4PFxT4GwmuVVLcT4JL0NtzuHY9ymKV+Llb5cjuJ+6+gEl4eixy2rE8nxOPcBSA==",
       "path": "microsoft.entityframeworkcore.sqlite.core/10.0.5",
       "hashPath": "microsoft.entityframeworkcore.sqlite.core.10.0.5.nupkg.sha512"
+    },
+    "Microsoft.Extensions.AI/10.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-zJYAHVM+zA74MNHifAyYE/jnfilI5WOnyQqnYobQZ5JW1VRSMGfQl/oqYdK3p2AdQOX8VcxSW6C+UsZYnpFB+A==",
+      "path": "microsoft.extensions.ai/10.3.0",
+      "hashPath": "microsoft.extensions.ai.10.3.0.nupkg.sha512"
+    },
+    "Microsoft.Extensions.AI.Abstractions/10.3.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-hDjDvUERvUH3HBMs2MDusOcGJBjAHOG5pJIU2x/HZEa4e1UthNKt89cwMi3B+ogJo6skki1XFjfgGN3ksnVqvQ==",
+      "path": "microsoft.extensions.ai.abstractions/10.3.0",
+      "hashPath": "microsoft.extensions.ai.abstractions.10.3.0.nupkg.sha512"
     },
     "Microsoft.Extensions.AmbientMetadata.Application/10.1.0": {
       "type": "package",
@@ -4030,6 +4259,20 @@
       "path": "microsoft.extensions.telemetry.abstractions/10.1.0",
       "hashPath": "microsoft.extensions.telemetry.abstractions.10.1.0.nupkg.sha512"
     },
+    "Microsoft.Extensions.VectorData.Abstractions/9.7.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Vth/omSCX2vR0JabzSRU/hdPhr0CvUVZlaS2lJPWHrEwvak8ntrQLDtLMtMiWKSvviGBe/WmjUW8gA3qqn9tjw==",
+      "path": "microsoft.extensions.vectordata.abstractions/9.7.0",
+      "hashPath": "microsoft.extensions.vectordata.abstractions.9.7.0.nupkg.sha512"
+    },
+    "Microsoft.ML.Tokenizers/2.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-+b8lT4cLLO/sBR2hjvE/qG6qrZG15h7/PBvnIrzTh4xDaAxdHUY6449rC+1pHzQUsBiCHZVbj+VMn+xS0sL7TA==",
+      "path": "microsoft.ml.tokenizers/2.0.0",
+      "hashPath": "microsoft.ml.tokenizers.2.0.0.nupkg.sha512"
+    },
     "Microsoft.NET.Test.Sdk/17.14.1": {
       "type": "package",
       "serviceable": true,
@@ -4050,6 +4293,27 @@
       "sha512": "sha512-d78LPzGKkJwsJXAQwsbJJ7LE7D1wB+rAyhHHAaODF+RDSQ0NgMjDFkSA1Djw18VrxO76GlKAjRUhl+H8NL8Z+Q==",
       "path": "microsoft.testplatform.testhost/17.14.1",
       "hashPath": "microsoft.testplatform.testhost.17.14.1.nupkg.sha512"
+    },
+    "ModelContextProtocol/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-dr7MeQocnOD9exXF2TIZc/80xp/wNVw3WpJZlz0X+ezMcOCXXkAwdMbpM5hohvnXw+KF29iaaYPJwUFbni+NCQ==",
+      "path": "modelcontextprotocol/1.1.0",
+      "hashPath": "modelcontextprotocol.1.1.0.nupkg.sha512"
+    },
+    "ModelContextProtocol.AspNetCore/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-I6jXZq7tTYzP9oWpZSnyUqveHWXOLykmPv9mrTyyYqwb0ZUgqVajp96Iu2opSeL/bjBfKV4Lwc2hZUXWCnAUnA==",
+      "path": "modelcontextprotocol.aspnetcore/1.1.0",
+      "hashPath": "modelcontextprotocol.aspnetcore.1.1.0.nupkg.sha512"
+    },
+    "ModelContextProtocol.Core/1.1.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-3E/qGSPxAnuenD8uBT2NsHCP91ztn4WC9SfV7miKjpzDYQgVvGwbxnPhhZ8PAvltYWJ/P4wWbRmJ+2M5rZkrDQ==",
+      "path": "modelcontextprotocol.core/1.1.0",
+      "hashPath": "modelcontextprotocol.core.1.1.0.nupkg.sha512"
     },
     "Moq/4.20.72": {
       "type": "package",
@@ -4176,6 +4440,13 @@
       "sha512": "sha512-wugvy+pBVzjQEnRs9wMTWwoaeNFX3hsaHeVHFDIvJSWXp7wfmNWu3mxAwBIE6pyW+g6+rHa1Of5fTzb0QVqUTA==",
       "path": "system.diagnostics.eventlog/10.0.5",
       "hashPath": "system.diagnostics.eventlog.10.0.5.nupkg.sha512"
+    },
+    "System.Numerics.Tensors/10.0.3": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-calKQ5nqV98lVRSCV7KFrlmw7nE7z6qIBWnMP+f7xAzY9H1cO15zJmkuZYM9RxYXDzQyI60/+dXd65UUY4HZFQ==",
+      "path": "system.numerics.tensors/10.0.3",
+      "hashPath": "system.numerics.tensors.10.0.3.nupkg.sha512"
     },
     "xunit/2.9.3": {
       "type": "package",

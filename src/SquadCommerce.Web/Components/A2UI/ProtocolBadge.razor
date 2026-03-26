@@ -1,0 +1,51 @@
+@* Protocol types: MCP, A2A, AGUI, A2UI, HITL *@
+
+<span class="protocol-badge @GetBadgeClass()" role="status" aria-label="@GetAriaLabel()">
+    <span class="badge-icon">@GetIcon()</span>
+    <span class="badge-text">@GetLabel()</span>
+</span>
+
+@code {
+    [Parameter]
+    public string Protocol { get; set; } = "";
+
+    private string GetBadgeClass() => Protocol?.ToUpperInvariant() switch
+    {
+        "MCP" => "badge-mcp badge-enter",
+        "A2A" => "badge-a2a badge-enter",
+        "AGUI" => "badge-agui badge-enter",
+        "A2UI" => "badge-a2ui badge-enter badge-flash",
+        "HITL" => "badge-hitl badge-enter badge-pulse",
+        _ => "badge-enter"
+    };
+
+    private string GetIcon() => Protocol?.ToUpperInvariant() switch
+    {
+        "MCP" => "🔧",
+        "A2A" => "🤝",
+        "AGUI" => "📡",
+        "A2UI" => "✨",
+        "HITL" => "⚠️",
+        _ => "⚙️"
+    };
+
+    private string GetLabel() => Protocol?.ToUpperInvariant() switch
+    {
+        "MCP" => "MCP",
+        "A2A" => "A2A",
+        "AGUI" => "AG-UI",
+        "A2UI" => "Generative UI",
+        "HITL" => "Action Required",
+        _ => Protocol ?? ""
+    };
+
+    private string GetAriaLabel() => Protocol?.ToUpperInvariant() switch
+    {
+        "MCP" => "Model Context Protocol",
+        "A2A" => "Agent-to-Agent Protocol",
+        "AGUI" => "Agent-UI Streaming Protocol",
+        "A2UI" => "Agent-to-UI Generative Rendering",
+        "HITL" => "Human-in-the-Loop approval required",
+        _ => $"Protocol: {Protocol}"
+    };
+}

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SquadCommerce.Api")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4274ebcb6a5a8480d31d12f4d16daa55ddc05c5e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+b2d077441ae4eec474495dd89f22411b51749962")]
 [assembly: System.Reflection.AssemblyProductAttribute("SquadCommerce.Api")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SquadCommerce.Api")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

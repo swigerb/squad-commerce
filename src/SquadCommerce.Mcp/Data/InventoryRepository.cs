@@ -30,7 +30,14 @@ public sealed class InMemoryInventoryRepository : IInventoryRepository
         ["PDX-002"] = "Suburban Mall",
         ["SFO-003"] = "Airport Terminal",
         ["LAX-004"] = "University District",
-        ["DEN-005"] = "Waterfront Plaza"
+        ["DEN-005"] = "Waterfront Plaza",
+        ["NYC-006"] = "Times Square Flagship",
+        ["BOS-007"] = "Back Bay Mall",
+        ["PHI-008"] = "Center City Plaza",
+        ["MIA-009"] = "Miami Flagship",
+        ["TPA-010"] = "Tampa Gateway",
+        ["ORL-011"] = "Orlando Resort District",
+        ["ATL-012"] = "Peachtree Center"
     };
 
     private static readonly Dictionary<string, string> ProductNames = new()
@@ -42,7 +49,15 @@ public sealed class InMemoryInventoryRepository : IInventoryRepository
         ["SKU-1005"] = "Mechanical Keyboard",
         ["SKU-1006"] = "Noise-Cancelling Headphones",
         ["SKU-1007"] = "External SSD 1TB",
-        ["SKU-1008"] = "Monitor 27-inch"
+        ["SKU-1008"] = "Monitor 27-inch",
+        ["SKU-2001"] = "Organic Fair Trade Coffee",
+        ["SKU-2002"] = "Dark Chocolate Bar 72% Cocoa",
+        ["SKU-2003"] = "Cocoa Powder Premium",
+        ["SKU-2004"] = "Hot Chocolate Mix",
+        ["SKU-3001"] = "Classic Straight Denim",
+        ["SKU-3002"] = "Classic Boot-Cut Denim",
+        ["SKU-3003"] = "Denim Jacket Classic",
+        ["SKU-3004"] = "Canvas Belt"
     };
 
     public InMemoryInventoryRepository()

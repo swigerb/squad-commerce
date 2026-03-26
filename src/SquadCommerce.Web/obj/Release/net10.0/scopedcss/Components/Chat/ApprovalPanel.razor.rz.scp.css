@@ -1,0 +1,129 @@
+.approval-panel[b-k3sfkk80bh] {
+    transition: all 0.3s ease;
+}
+
+.approval-panel.hidden[b-k3sfkk80bh] {
+    display: none;
+}
+
+[b-k3sfkk80bh] .approval-card {
+    padding: 1.25rem !important;
+}
+
+.approval-header[b-k3sfkk80bh] {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+}
+
+[b-k3sfkk80bh] .approval-summary-card {
+    background: rgba(255, 255, 255, 0.03) !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+}
+
+[b-k3sfkk80bh] .approval-edit-card {
+    background: rgba(102, 126, 234, 0.06) !important;
+    border: 1px solid rgba(102, 126, 234, 0.15) !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem;
+    border-radius: 8px;
+}
+
+.approval-actions[b-k3sfkk80bh] {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+[b-k3sfkk80bh] .approval-btn-fluent {
+    flex: 1;
+    min-width: 100px;
+}
+
+[b-k3sfkk80bh] .reject-btn {
+    --accent-fill-rest: rgba(248, 81, 73, 0.1);
+    color: #f85149 !important;
+    border-color: rgba(248, 81, 73, 0.4) !important;
+}
+
+[b-k3sfkk80bh] .reject-btn:hover {
+    background: rgba(248, 81, 73, 0.15) !important;
+    border-color: rgba(248, 81, 73, 0.6) !important;
+}
+
+.risk-badge[b-k3sfkk80bh] {
+    font-size: 0.7rem !important;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem !important;
+    border-radius: 10px;
+}
+
+.risk-low[b-k3sfkk80bh] {
+    background: rgba(63, 185, 80, 0.15) !important;
+    color: #3fb950 !important;
+    border: 1px solid rgba(63, 185, 80, 0.3);
+}
+
+.risk-medium[b-k3sfkk80bh] {
+    background: rgba(210, 153, 34, 0.15) !important;
+    color: #d29922 !important;
+    border: 1px solid rgba(210, 153, 34, 0.3);
+}
+
+.risk-high[b-k3sfkk80bh] {
+    background: rgba(248, 81, 73, 0.15) !important;
+    color: #f85149 !important;
+    border: 1px solid rgba(248, 81, 73, 0.3);
+}
+
+[b-k3sfkk80bh] .approval-result {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem !important;
+    border-radius: 8px;
+}
+
+[b-k3sfkk80bh] .approval-result.alert-success {
+    background: rgba(63, 185, 80, 0.1) !important;
+    border: 1px solid rgba(63, 185, 80, 0.2) !important;
+    color: #3fb950;
+}
+
+[b-k3sfkk80bh] .approval-result.alert-danger {
+    background: rgba(248, 81, 73, 0.1) !important;
+    border: 1px solid rgba(248, 81, 73, 0.2) !important;
+    color: #f85149;
+}
+
+[b-k3sfkk80bh] .approval-result.alert-info {
+    background: rgba(88, 166, 255, 0.1) !important;
+    border: 1px solid rgba(88, 166, 255, 0.2) !important;
+    color: #58a6ff;
+}
+
+.approval-confirm-dialog[b-k3sfkk80bh] {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.confirm-dialog-overlay[b-k3sfkk80bh] {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+[b-k3sfkk80bh] .confirm-dialog-card {
+    position: relative;
+    z-index: 1;
+    max-width: 440px;
+    width: 90%;
+}

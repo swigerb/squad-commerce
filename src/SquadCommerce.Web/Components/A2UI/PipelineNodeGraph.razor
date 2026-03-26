@@ -583,6 +583,34 @@
     }
 
     /* ============================================
+       A2A Handshake Active Edge — purple pulse/glow
+       ============================================ */
+
+    .edge-a2a-active .edge-line {
+        stroke: #bc8cff;
+        stroke-width: 3;
+        stroke-dasharray: 12, 6;
+        animation: edgeFlowDash 0.8s linear infinite, edgeA2APulse 1.5s ease-in-out infinite;
+    }
+
+    .edge-a2a-active .edge-line-flow {
+        stroke: rgba(188, 140, 255, 0.35);
+        stroke-width: 7;
+        stroke-dasharray: 4, 16;
+        animation: edgeFlowDash 1.2s linear infinite reverse;
+    }
+
+    .edge-a2a-active .edge-line-bg {
+        stroke: rgba(188, 140, 255, 0.12);
+        stroke-width: 8;
+    }
+
+    @@keyframes edgeA2APulse {
+        0%, 100% { stroke-opacity: 1; filter: none; }
+        50% { stroke-opacity: 0.6; filter: drop-shadow(0 0 6px rgba(188, 140, 255, 0.6)); }
+    }
+
+    /* ============================================
        Responsive
        ============================================ */
 

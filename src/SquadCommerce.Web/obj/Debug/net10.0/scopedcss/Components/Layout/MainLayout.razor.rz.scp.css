@@ -77,10 +77,10 @@ main[b-t5fouessen] {
 }
 
 #blazor-error-ui[b-t5fouessen] {
-    color-scheme: light only;
-    background: lightyellow;
+    color-scheme: dark only;
+    background: #21262d;
     bottom: 0;
-    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 -1px 2px rgba(0, 0, 0, 0.4);
     box-sizing: border-box;
     display: none;
     left: 0;
@@ -88,6 +88,7 @@ main[b-t5fouessen] {
     position: fixed;
     width: 100%;
     z-index: 1000;
+    color: #e6edf3;
 }
 
     #blazor-error-ui .dismiss[b-t5fouessen] {
@@ -96,3 +97,205 @@ main[b-t5fouessen] {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+/* ── HITL Notification Banner ─────────── */
+.hitl-banner[b-t5fouessen] {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.6rem 1.25rem;
+    margin: 0.75rem;
+    border-radius: 10px;
+    background: linear-gradient(135deg, rgba(248, 81, 73, 0.08), rgba(210, 153, 34, 0.06));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(248, 81, 73, 0.35);
+    box-shadow: 0 0 20px rgba(248, 81, 73, 0.2), 0 0 40px rgba(210, 153, 34, 0.1);
+    color: #e6edf3;
+    font-size: 0.85rem;
+    font-weight: 500;
+    animation: hitlBannerPulse-b-t5fouessen 2.5s ease-in-out infinite;
+}
+
+@keyframes hitlBannerPulse-b-t5fouessen {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(248, 81, 73, 0.2), 0 0 40px rgba(210, 153, 34, 0.1);
+    }
+    50% {
+        box-shadow: 0 0 28px rgba(248, 81, 73, 0.35), 0 0 56px rgba(210, 153, 34, 0.18);
+    }
+}
+
+/* ── Fleet Toggle Button ──────────────── */
+.fleet-toggle-btn[b-t5fouessen] {
+    display: none; /* shown via media query on small screens */
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.1rem;
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    line-height: 1;
+}
+
+.fleet-toggle-btn:hover[b-t5fouessen] {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.fleet-toggle-btn:active[b-t5fouessen] {
+    transform: scale(0.95);
+}
+
+/* ── Audio Mute Toggle Button ─────────── */
+.audio-mute-btn[b-t5fouessen] {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    padding: 0.35rem 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, color 0.15s;
+    line-height: 1;
+}
+
+.audio-mute-btn:hover[b-t5fouessen] {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.audio-mute-btn:active[b-t5fouessen] {
+    transform: scale(0.93);
+}
+
+/* ── Settings Button ─────────────────── */
+.settings-btn[b-t5fouessen] {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    padding: 0.35rem 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, color 0.15s;
+    line-height: 1;
+}
+
+.settings-btn:hover[b-t5fouessen] {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.settings-btn:active[b-t5fouessen] {
+    transform: scale(0.93);
+}
+
+/* ── Fleet Hidden (toggled off) ────────── */
+.fleet-hidden[b-t5fouessen] {
+    display: none !important;
+}
+
+/* ===== Responsive / Mobile Layout ===== */
+
+/* ── Below 1200px: stack sidebar + main vertically ── */
+@media (max-width: 1200px) {
+    [b-t5fouessen] .layout-body {
+        flex-direction: column !important;
+    }
+
+    .sidebar-left[b-t5fouessen] {
+        width: 100% !important;
+        max-height: 45vh;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .main-content[b-t5fouessen] {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .sidebar-right[b-t5fouessen] {
+        width: 100% !important;
+        max-height: 35vh;
+        border-left: none !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+}
+
+/* ── Below 768px: hide fleet panel, show toggle, touch-friendly ── */
+@media (max-width: 768px) {
+    .fleet-toggle-btn[b-t5fouessen] {
+        display: inline-flex;
+    }
+
+    .sidebar-right[b-t5fouessen] {
+        display: none;
+    }
+
+    .sidebar-right:not(.fleet-hidden)[b-t5fouessen] {
+        /* When toggled visible on mobile, show as overlay */
+    }
+
+    .sidebar-left[b-t5fouessen] {
+        max-height: 50vh;
+    }
+
+    /* Touch-friendly: increase hit targets */
+    button[b-t5fouessen], .btn[b-t5fouessen], .protocol-badge[b-t5fouessen], .fleet-toggle-btn[b-t5fouessen] {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .app-header[b-t5fouessen] {
+        padding: 0.5rem 1rem !important;
+    }
+
+    .content-header[b-t5fouessen] {
+        padding: 0.75rem 1rem !important;
+    }
+
+    .content-body[b-t5fouessen] {
+        padding: 1rem !important;
+    }
+
+    .sidebar-header[b-t5fouessen] {
+        padding: 0.75rem 1rem !important;
+    }
+
+    /* Chat input stays accessible at bottom */
+    [b-t5fouessen] .chat-input-container {
+        position: sticky;
+        bottom: 0;
+        z-index: 50;
+        background: #161b22;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    [b-t5fouessen] .chat-input {
+        font-size: 16px; /* prevent iOS zoom */
+        min-height: 44px;
+    }
+
+    [b-t5fouessen] .send-button {
+        min-height: 44px;
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* ── Below 480px: extra compact ── */
+@media (max-width: 480px) {
+    .header-icon[b-t5fouessen] {
+        font-size: 1.25rem !important;
+    }
+
+    .sidebar-left[b-t5fouessen] {
+        max-height: 55vh;
+    }
+
+    .content-body[b-t5fouessen] {
+        padding: 0.75rem !important;
+    }
+}

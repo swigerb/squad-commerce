@@ -11,21 +11,19 @@ using System;
 using System.Reflection;
 
 [assembly: Microsoft.Extensions.Configuration.UserSecrets.UserSecretsIdAttribute("4c00d20d-9db1-4f1f-966f-5b79beb73105")]
-[assembly: System.Reflection.AssemblyMetadata("dcpclipath", ("C:\\Users\\brswig\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\13.1.0\\tools" +
+[assembly: System.Reflection.AssemblyMetadata("dcpclipath", ("C:\\Users\\brswig\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\13.2.0\\tools" +
     "\\dcp.exe"))]
-[assembly: System.Reflection.AssemblyMetadata("dcpextensionpaths", ("C:\\Users\\brswig\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\13.1.0\\tools" +
+[assembly: System.Reflection.AssemblyMetadata("dcpextensionpaths", ("C:\\Users\\brswig\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\13.2.0\\tools" +
     "\\ext\\"))]
-[assembly: System.Reflection.AssemblyMetadata("dcpbinpath", ("C:\\Users\\brswig\\.nuget\\packages\\aspire.hosting.orchestration.win-x64\\13.1.0\\tools" +
-    "\\ext\\bin\\"))]
 [assembly: System.Reflection.AssemblyMetadata("apphostprojectpath", "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.AppHost")]
 [assembly: System.Reflection.AssemblyMetadata("apphostprojectname", "SquadCommerce.AppHost.csproj")]
-[assembly: System.Reflection.AssemblyMetadata("aspiredashboardpath", ("C:\\Users\\brswig\\.nuget\\packages\\aspire.dashboard.sdk.win-x64\\13.1.0\\tools\\Aspire." +
+[assembly: System.Reflection.AssemblyMetadata("aspiredashboardpath", ("C:\\Users\\brswig\\.nuget\\packages\\aspire.dashboard.sdk.win-x64\\13.2.0\\tools\\Aspire." +
     "Dashboard.exe"))]
 [assembly: System.Reflection.AssemblyMetadataAttribute("apphostprojectbaseintermediateoutputpath", "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.AppHost\\obj\\")]
 [assembly: System.Reflection.AssemblyCompanyAttribute("SquadCommerce.AppHost")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+4274ebcb6a5a8480d31d12f4d16daa55ddc05c5e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9963c74057f03d5cbb39a14031b8dee1a96a91eb")]
 [assembly: System.Reflection.AssemblyProductAttribute("SquadCommerce.AppHost")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SquadCommerce.AppHost")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

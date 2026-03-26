@@ -1,10 +1,13 @@
 {
   "version": 2,
-  "dgSpecHash": "jMc7p9i526g=",
+  "dgSpecHash": "8Bv3SqhU9h8=",
   "success": true,
   "projectFilePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Api\\SquadCommerce.Api.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.aspnetcore.signalr\\1.2.9\\microsoft.aspnetcore.signalr.1.2.9.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\google.protobuf\\3.30.2\\google.protobuf.3.30.2.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.agents.ai\\1.0.0-rc4\\microsoft.agents.ai.1.0.0-rc4.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.agents.ai.abstractions\\1.0.0-rc4\\microsoft.agents.ai.abstractions.1.0.0-rc4.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.agents.ai.workflows\\1.0.0-rc4\\microsoft.agents.ai.workflows.1.0.0-rc4.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.data.sqlite.core\\10.0.5\\microsoft.data.sqlite.core.10.0.5.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore\\10.0.5\\microsoft.entityframeworkcore.10.0.5.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\10.0.5\\microsoft.entityframeworkcore.abstractions.10.0.5.nupkg.sha512",
@@ -12,6 +15,8 @@
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore.relational\\10.0.5\\microsoft.entityframeworkcore.relational.10.0.5.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore.sqlite\\10.0.5\\microsoft.entityframeworkcore.sqlite.10.0.5.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.entityframeworkcore.sqlite.core\\10.0.5\\microsoft.entityframeworkcore.sqlite.core.10.0.5.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.ai\\10.3.0\\microsoft.extensions.ai.10.3.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.ai.abstractions\\10.3.0\\microsoft.extensions.ai.abstractions.10.3.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.ambientmetadata.application\\10.1.0\\microsoft.extensions.ambientmetadata.application.10.1.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.compliance.abstractions\\10.1.0\\microsoft.extensions.compliance.abstractions.10.1.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.dependencyinjection.autoactivation\\10.1.0\\microsoft.extensions.dependencyinjection.autoactivation.10.1.0.nupkg.sha512",
@@ -24,6 +29,11 @@
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.servicediscovery.abstractions\\10.1.0\\microsoft.extensions.servicediscovery.abstractions.10.1.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.telemetry\\10.1.0\\microsoft.extensions.telemetry.10.1.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.telemetry.abstractions\\10.1.0\\microsoft.extensions.telemetry.abstractions.10.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.extensions.vectordata.abstractions\\9.7.0\\microsoft.extensions.vectordata.abstractions.9.7.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.ml.tokenizers\\2.0.0\\microsoft.ml.tokenizers.2.0.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\modelcontextprotocol\\1.1.0\\modelcontextprotocol.1.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\modelcontextprotocol.aspnetcore\\1.1.0\\modelcontextprotocol.aspnetcore.1.1.0.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\modelcontextprotocol.core\\1.1.0\\modelcontextprotocol.core.1.1.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry\\1.14.0\\opentelemetry.1.14.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry.api\\1.14.0\\opentelemetry.api.1.14.0.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\opentelemetry.api.providerbuilderextensions\\1.14.0\\opentelemetry.api.providerbuilderextensions.1.14.0.nupkg.sha512",
@@ -38,20 +48,8 @@
     "C:\\Users\\brswig\\.nuget\\packages\\sqlitepclraw.bundle_e_sqlite3\\2.1.11\\sqlitepclraw.bundle_e_sqlite3.2.1.11.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\sqlitepclraw.core\\2.1.11\\sqlitepclraw.core.2.1.11.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\sqlitepclraw.lib.e_sqlite3\\2.1.11\\sqlitepclraw.lib.e_sqlite3.2.1.11.nupkg.sha512",
-    "C:\\Users\\brswig\\.nuget\\packages\\sqlitepclraw.provider.e_sqlite3\\2.1.11\\sqlitepclraw.provider.e_sqlite3.2.1.11.nupkg.sha512"
+    "C:\\Users\\brswig\\.nuget\\packages\\sqlitepclraw.provider.e_sqlite3\\2.1.11\\sqlitepclraw.provider.e_sqlite3.2.1.11.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\system.numerics.tensors\\10.0.3\\system.numerics.tensors.10.0.3.nupkg.sha512"
   ],
-  "logs": [
-    {
-      "code": "NU1510",
-      "level": "Warning",
-      "message": "PackageReference Microsoft.AspNetCore.SignalR will not be pruned. Consider removing this package from your dependencies, as it is likely unnecessary.",
-      "projectPath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Api\\SquadCommerce.Api.csproj",
-      "warningLevel": 1,
-      "filePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Api\\SquadCommerce.Api.csproj",
-      "libraryId": "Microsoft.AspNetCore.SignalR",
-      "targetGraphs": [
-        "net10.0"
-      ]
-    }
-  ]
+  "logs": []
 }

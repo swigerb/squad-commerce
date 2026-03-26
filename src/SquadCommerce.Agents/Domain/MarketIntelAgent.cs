@@ -334,6 +334,14 @@ public sealed class MarketIntelAgent : IDomainAgent
         "SKU-1006" => "Noise-Cancelling Headphones",
         "SKU-1007" => "External SSD 1TB",
         "SKU-1008" => "Monitor 27-inch",
+        "SKU-2001" => "Organic Fair Trade Coffee",
+        "SKU-2002" => "Dark Chocolate Bar 72% Cocoa",
+        "SKU-2003" => "Cocoa Powder Premium",
+        "SKU-2004" => "Hot Chocolate Mix",
+        "SKU-3001" => "Classic Straight Denim",
+        "SKU-3002" => "Classic Boot-Cut Denim",
+        "SKU-3003" => "Denim Jacket Classic",
+        "SKU-3004" => "Canvas Belt",
         _ => sku
     };
 }
