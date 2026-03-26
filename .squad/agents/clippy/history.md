@@ -631,3 +631,21 @@ In .NET 10 Blazor with per-page/component render modes, ANY interactive componen
 - Uses same JS interop module pattern as CommandPalette (ES module import, DisposeAsync cleanup)
 
 **Build status:** ✅ Successful compilation (0 warnings, 0 errors)
+
+### 2026-03-25: Header Dark Theme Fix + Price Regex + Stream Timing
+
+**What was done:**
+- **Replaced FluentHeader with plain <header>** in MainLayout.razor — the Fluent UI <fluent-header> web component was injecting its own light blue background via shadow DOM, overriding our dark theme CSS
+- **Restructured header into 3-column flex layout:** brand (left) | agent personas via AgentStatusBar (center) | mute/fleet controls (right) — all on one line, no wrapping
+- **Added proper flex styles** to AgentStatusBar: lex-wrap: nowrap, white-space: nowrap, lex-shrink: 0 on each section to prevent overflow
+- **Hidden pipeline progress bar** from header display (too wide for header row; belongs in a panel)
+- **Fixed price regex** in Program.cs chat bridge — old \$?([\d]+\.?\d*)` matched "100" from "SKU-100". New regex uses lookbehind (?<![A-Za-z][-]) to skip SKU-embedded numbers, only matching $-prefixed or standalone decimal prices
+- **Increased AG-UI stream delay** from 500ms to 1500ms in AgUiStreamService.cs — gives the background Task.Run orchestration time to write its first event before the GET subscriber connects
+
+**Key patterns:**
+- Fluent UI web components have shadow DOM that overrides external CSS — prefer plain HTML elements when full style control is needed
+- Header background color: #1a1a2e (dark navy) — matches the command center theme
+- Price regex: (?<![A-Za-z][-])\$([\d]+\.?\d*)|(?<![A-Za-z\d][-])\b([\d]+\.\d{2})\b` — uses two alternations: dollar-sign prices and standalone decimals
+- Removed dead CSS: old .header-brand h1 and duplicate .header-subtitle rules
+
+**Build status:** ✅ Both Web and API projects compile with 0 warnings, 0 errors

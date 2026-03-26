@@ -135,10 +135,14 @@ app.MapPost("/api/agui/chat", async (ChatRequest chatRequest, IAgUiStreamWriter 
 
     // Extract intent from free-text using simple pattern matching
     var skuMatch = Regex.Match(message, @"SKU-\d+", RegexOptions.IgnoreCase);
-    var priceMatch = Regex.Match(message, @"\$?([\d]+\.?\d*)");
+    // Match prices: "$24.99", "$25", or standalone decimal "24.99" — but never numbers inside identifiers like "SKU-100"
+    var priceMatch = Regex.Match(message, @"(?<![A-Za-z][-])\$([\d]+\.?\d*)|(?<![A-Za-z\d][-])\b([\d]+\.\d{2})\b");
 
     var sku = skuMatch.Success ? skuMatch.Value.ToUpper() : "SKU-100";
-    var competitorPrice = priceMatch.Success && decimal.TryParse(priceMatch.Groups[1].Value, out var price) ? price : 24.99m;
+    var priceStr = priceMatch.Success
+        ? (priceMatch.Groups[1].Success ? priceMatch.Groups[1].Value : priceMatch.Groups[2].Value)
+        : null;
+    var competitorPrice = priceStr != null && decimal.TryParse(priceStr, out var price) ? price : 24.99m;
     var competitorName = "MegaMart";
 
     var competitors = new[] { "walmart", "amazon", "target", "bestbuy", "costco", "megamart" };
@@ -154,7 +158,10 @@ app.MapPost("/api/agui/chat", async (ChatRequest chatRequest, IAgUiStreamWriter 
     logger.LogInformation("Chat bridge: SessionId={SessionId}, Message={Message}, Extracted: Sku={Sku}, Competitor={Competitor}, Price={Price}",
         sessionId, message, sku, competitorName, competitorPrice);
 
-    // Launch orchestration in background (reuse existing TriggerAnalysis pattern)
+    // Launch orchestration in background with its own cancellation token.
+    // The HTTP request token gets cancelled when the 202 response completes,
+    // so we must NOT pass it into Task.Run — use an independent timeout instead.
+    var bgCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
     _ = Task.Run(async () =>
     {
         var stopwatch = Stopwatch.StartNew();
@@ -164,14 +171,14 @@ app.MapPost("/api/agui/chat", async (ChatRequest chatRequest, IAgUiStreamWriter 
             using var scope = serviceProvider.CreateScope();
             var orchestrator = scope.ServiceProvider.GetRequiredService<ChiefSoftwareArchitectAgent>();
 
-            await streamWriter.WriteStatusUpdateAsync(sessionId, $"Analyzing: {sku} vs {competitorName} at ${competitorPrice:F2}...", cancellationToken);
+            await streamWriter.WriteStatusUpdateAsync(sessionId, $"Analyzing: {sku} vs {competitorName} at ${competitorPrice:F2}...", bgCts.Token);
 
-            var result = await orchestrator.ProcessCompetitorPriceDropAsync(sku, competitorPrice, cancellationToken);
+            var result = await orchestrator.ProcessCompetitorPriceDropAsync(sku, competitorPrice, bgCts.Token);
 
             if (!result.Success)
             {
-                await streamWriter.WriteTextDeltaAsync(sessionId, $"Analysis failed: {result.ErrorMessage}", cancellationToken);
-                await streamWriter.WriteDoneAsync(sessionId, cancellationToken);
+                await streamWriter.WriteTextDeltaAsync(sessionId, $"Analysis failed: {result.ErrorMessage}", bgCts.Token);
+                await streamWriter.WriteDoneAsync(sessionId, bgCts.Token);
 
                 stopwatch.Stop();
                 metrics.RecordAgentInvocation("ChiefSoftwareArchitect", stopwatch.Elapsed.TotalMilliseconds, false);
@@ -181,11 +188,11 @@ app.MapPost("/api/agui/chat", async (ChatRequest chatRequest, IAgUiStreamWriter 
             foreach (var agentResult in result.AgentResults)
             {
                 if (agentResult.A2UIPayload != null)
-                    await streamWriter.WriteA2UIPayloadAsync(sessionId, agentResult.A2UIPayload, cancellationToken);
+                    await streamWriter.WriteA2UIPayloadAsync(sessionId, agentResult.A2UIPayload, bgCts.Token);
             }
 
-            await streamWriter.WriteTextDeltaAsync(sessionId, result.ExecutiveSummary, cancellationToken);
-            await streamWriter.WriteDoneAsync(sessionId, cancellationToken);
+            await streamWriter.WriteTextDeltaAsync(sessionId, result.ExecutiveSummary, bgCts.Token);
+            await streamWriter.WriteDoneAsync(sessionId, bgCts.Token);
 
             stopwatch.Stop();
             logger.LogInformation("Chat bridge analysis completed: SessionId={SessionId}, Duration={DurationMs}ms",
@@ -197,15 +204,19 @@ app.MapPost("/api/agui/chat", async (ChatRequest chatRequest, IAgUiStreamWriter 
             logger.LogError(ex, "Chat bridge error for session {SessionId}", sessionId);
             try
             {
-                await streamWriter.WriteTextDeltaAsync(sessionId, $"Error: {ex.Message}", cancellationToken);
-                await streamWriter.WriteDoneAsync(sessionId, cancellationToken);
+                await streamWriter.WriteTextDeltaAsync(sessionId, $"Error: {ex.Message}", bgCts.Token);
+                await streamWriter.WriteDoneAsync(sessionId, bgCts.Token);
             }
             catch { }
 
             stopwatch.Stop();
             metrics.RecordAgentInvocation("ChiefSoftwareArchitect", stopwatch.Elapsed.TotalMilliseconds, false);
         }
-    }, cancellationToken);
+        finally
+        {
+            bgCts.Dispose();
+        }
+    }, bgCts.Token);
 
     return Results.Accepted($"/api/agui?sessionId={sessionId}", new { sessionId, streamUrl = $"/api/agui?sessionId={sessionId}" });
 })

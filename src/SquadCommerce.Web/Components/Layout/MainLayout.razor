@@ -3,24 +3,26 @@
 @inject IJSRuntime JS
 
 <FluentStack Orientation="Orientation.Vertical" Style="height: 100vh; overflow: hidden; gap: 0;">
-    <FluentHeader Class="app-header" Style="min-height: auto; height: auto;">
-        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 0.75rem;">
+    <header class="app-header" role="banner">
+        <div class="header-brand">
             <span class="header-icon">🛒</span>
-            <FluentStack Orientation="Orientation.Vertical" Style="gap: 0;">
-                <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.35rem; color: white; line-height: 1.2;">Squad Commerce</FluentLabel>
-                <FluentLabel Style="font-size: 0.8rem; opacity: 0.85; color: rgba(255,255,255,0.85); line-height: 1;">AI-Powered Retail Management</FluentLabel>
-            </FluentStack>
-        </FluentStack>
-        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 0.5rem;">
+            <div class="header-titles">
+                <span class="header-title">Squad Commerce</span>
+                <span class="header-subtitle">AI-Powered Retail Management</span>
+            </div>
+        </div>
+        <div class="header-center">
+            <AgentStatusBar />
+        </div>
+        <div class="header-controls">
             <button class="audio-mute-btn" @onclick="ToggleAudioMute" aria-label="@(_audioMuted ? "Enable audio cues" : "Mute audio cues")" title="@(_audioMuted ? "Enable audio cues" : "Mute audio cues")">
                 @(_audioMuted ? "🔇" : "🔊")
             </button>
             <button class="fleet-toggle-btn" @onclick="ToggleFleetPanel" aria-label="Toggle Agent Fleet panel" title="Toggle Fleet Panel">
                 🚀
             </button>
-            <AgentStatusBar />
-        </FluentStack>
-    </FluentHeader>
+        </div>
+    </header>
 
     <FluentStack Orientation="Orientation.Horizontal" Class="layout-body" Style="flex: 1; overflow: hidden; gap: 0;">
         <aside class="sidebar-left" tabindex="-1" aria-label="Chat panel">

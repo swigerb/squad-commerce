@@ -46,7 +46,7 @@ public class AgUiStreamService
 
         // Step 2: GET the SSE stream with the sessionId
         // Brief delay lets the background orchestration write its first event
-        await Task.Delay(500, cancellationToken);
+        await Task.Delay(1500, cancellationToken);
 
         var streamRequest = new HttpRequestMessage(HttpMethod.Get, $"/api/agui?sessionId={sessionId}");
         HttpResponseMessage? streamResponse = null;
@@ -95,26 +95,34 @@ public class AgUiStreamService
                         {
                             var type = typeProperty.GetString();
 
+                            // Server wraps SSE events as {"type":"...","data":{...}}
+                            // Read content properties from nested "data", fallback to root for backward compat
+                            JsonElement dataElement;
+                            if (root.TryGetProperty("data", out var dataEl))
+                                dataElement = dataEl;
+                            else
+                                dataElement = root;
+
                             switch (type)
                             {
                                 case "a2ui":
-                                    if (root.TryGetProperty("payload", out var payloadProperty))
-                                    {
-                                        var payload = JsonSerializer.Deserialize<A2UIPayload>(
-                                            payloadProperty.GetRawText(),
-                                            new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+                                case "a2ui_payload":
+                                    // a2ui_payload: data IS the payload directly
+                                    var payloadJson = dataElement.GetRawText();
+                                    var payload = JsonSerializer.Deserialize<A2UIPayload>(
+                                        payloadJson,
+                                        new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
 
-                                        if (payload != null)
-                                        {
-                                            _logger.LogInformation("Received A2UI payload: {RenderAs}", payload.RenderAs);
-                                            chunk = new StreamChunk(IsA2UI: true, Payload: payload);
-                                        }
+                                    if (payload != null)
+                                    {
+                                        _logger.LogInformation("Received A2UI payload: {RenderAs}", payload.RenderAs);
+                                        chunk = new StreamChunk(IsA2UI: true, Payload: payload);
                                     }
                                     break;
 
                                 case "text_delta":
                                 case "text":
-                                    if (root.TryGetProperty("text", out var textProperty))
+                                    if (dataElement.TryGetProperty("text", out var textProperty))
                                     {
                                         var text = textProperty.GetString() ?? string.Empty;
                                         chunk = new StreamChunk(Text: text);
@@ -123,7 +131,7 @@ public class AgUiStreamService
 
                                 case "status_update":
                                 case "status":
-                                    if (root.TryGetProperty("status", out var statusProperty))
+                                    if (dataElement.TryGetProperty("status", out var statusProperty))
                                     {
                                         var status = statusProperty.GetString() ?? string.Empty;
                                         _logger.LogInformation("Status update: {Status}", status);
