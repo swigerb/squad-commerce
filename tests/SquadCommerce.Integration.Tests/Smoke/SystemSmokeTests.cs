@@ -59,6 +59,15 @@ public class SystemSmokeTests
         services.AddScoped<InventoryAgent>();
         services.AddScoped<PricingAgent>();
         services.AddScoped<MarketIntelAgent>();
+        services.AddScoped<MarketingAgent>();
+        services.AddScoped<LogisticsAgent>();
+        services.AddScoped<RedistributionAgent>();
+        services.AddScoped<TrafficAnalystAgent>();
+        services.AddScoped<MerchandisingAgent>();
+        services.AddScoped<ManagerAgent>();
+        services.AddScoped<ComplianceAgent>();
+        services.AddScoped<ResearchAgent>();
+        services.AddScoped<ProcurementAgent>();
         
         // Register orchestrator
         services.AddScoped<ChiefSoftwareArchitectAgent>();

@@ -1,0 +1,187 @@
+@using SquadCommerce.Contracts.A2UI
+@using System.Text.Json
+@using System.Globalization
+
+<div class="supplier-wrapper" role="region" aria-label="Supplier Compliance Matrix for @(_data?.CertificationRequired ?? "certification")">
+    @if (_data != null)
+    {
+        <div class="supplier-title-bar">
+            <div class="title-left">
+                <h3 class="supplier-title">🌿 Supplier Compliance — <span class="cert-accent">@_data.CertificationRequired</span></h3>
+                <ProtocolBadge Protocol="A2A" />
+            </div>
+            <span class="supplier-ts">@_data.Timestamp.ToString("g")</span>
+        </div>
+
+        @* Summary cards row *@
+        <div class="summary-cards">
+            <div class="status-card status-compliant" style="animation-delay: 0s">
+                <span class="status-icon">✅</span>
+                <div class="status-info">
+                    <span class="status-count">@_data.TotalCompliant</span>
+                    <span class="status-label">Compliant</span>
+                </div>
+            </div>
+            <div class="status-card status-atrisk" style="animation-delay: 0.1s">
+                <span class="status-icon">⚠️</span>
+                <div class="status-info">
+                    <span class="status-count">@_data.TotalAtRisk</span>
+                    <span class="status-label">At Risk</span>
+                </div>
+            </div>
+            <div class="status-card status-noncompliant" style="animation-delay: 0.2s">
+                <span class="status-icon">❌</span>
+                <div class="status-info">
+                    <span class="status-count">@_data.TotalNonCompliant</span>
+                    <span class="status-label">Non-Compliant</span>
+                </div>
+            </div>
+        </div>
+
+        @* Deadline countdown *@
+        <div class="deadline-bar @GetDeadlineUrgencyClass()">
+            <span class="deadline-icon">🗓️</span>
+            <span class="deadline-text">
+                Compliance deadline: <strong>@_data.Deadline.ToString("MMM dd, yyyy")</strong>
+                — <em>@GetDaysRemaining() days remaining</em>
+            </span>
+        </div>
+
+        @* Supplier cards *@
+        <div class="supplier-list">
+            @{ var sIdx = 0; }
+            @foreach (var supplier in _data.Suppliers)
+            {
+                <div class="supplier-card supplier-card-enter"
+                     style="animation-delay: @((sIdx * 0.08).ToString(CultureInfo.InvariantCulture))s"
+                     role="article" aria-label="Supplier: @supplier.SupplierName">
+                    <div class="risk-bar risk-@(supplier.RiskLevel.ToLowerInvariant())"></div>
+                    <div class="supplier-content">
+                        <div class="supplier-header">
+                            <span class="supplier-name">@GetCountryFlag(supplier.Country) @supplier.SupplierName</span>
+                            <span class="supplier-country">@supplier.Country</span>
+                        </div>
+
+                        <div class="cert-row">
+                            <span class="cert-badge @GetCertBadgeClass(supplier)">@GetCertBadgeText(supplier)</span>
+                            @if (supplier.CertificationExpiry.HasValue)
+                            {
+                                <span class="cert-expiry">Expires: @supplier.CertificationExpiry.Value.ToString("MMM dd, yyyy")</span>
+                            }
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(supplier.WatchlistNotes))
+                        {
+                            <div class="watchlist-note">
+                                <span class="watchlist-icon">👁️</span>
+                                <span class="watchlist-text">@supplier.WatchlistNotes</span>
+                            </div>
+                        }
+
+                        @if (supplier.AlternativeSuppliers != null && supplier.AlternativeSuppliers.Any())
+                        {
+                            <div class="alternatives-row">
+                                <span class="alt-label">Alternatives:</span>
+                                @foreach (var alt in supplier.AlternativeSuppliers)
+                                {
+                                    <span class="alt-pill">@alt</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                </div>
+                sIdx++;
+            }
+        </div>
+
+        @* Footer *@
+        <div class="supplier-footer">
+            <span class="footer-summary">
+                <strong>@_data.Suppliers.Count</strong> suppliers evaluated for
+                <strong>@_data.CertificationRequired</strong> in
+                <strong>@_data.ProductCategory</strong>
+            </span>
+        </div>
+    }
+    else
+    {
+        <div class="no-data">Loading compliance data…</div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Payload { get; set; }
+
+    private SupplierRiskMatrixData? _data;
+
+    protected override void OnParametersSet()
+    {
+        if (Payload?.Data != null)
+        {
+            if (Payload.Data is JsonElement jsonElement)
+            {
+                _data = JsonSerializer.Deserialize<SupplierRiskMatrixData>(
+                    jsonElement.GetRawText(),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            else if (Payload.Data is SupplierRiskMatrixData typedData)
+            {
+                _data = typedData;
+            }
+        }
+    }
+
+    private int GetDaysRemaining()
+    {
+        if (_data == null) return 0;
+        return Math.Max(0, (int)(_data.Deadline - DateTimeOffset.UtcNow).TotalDays);
+    }
+
+    private string GetDeadlineUrgencyClass()
+    {
+        var days = GetDaysRemaining();
+        if (days < 3) return "deadline-critical";
+        if (days <= 7) return "deadline-warning";
+        return "deadline-safe";
+    }
+
+    private string GetCertBadgeClass(SupplierRiskEntry s) => s.RiskLevel.ToLowerInvariant() switch
+    {
+        "compliant" => "cert-ok",
+        "atrisk" => "cert-warning",
+        _ => "cert-none"
+    };
+
+    private string GetCertBadgeText(SupplierRiskEntry s) => s.RiskLevel.ToLowerInvariant() switch
+    {
+        "compliant" => $"✅ {s.Certification}",
+        "atrisk" => $"⚠️ {s.Certification} — Expiring",
+        _ => "❌ None"
+    };
+
+    private string GetCountryFlag(string country) => country.ToUpperInvariant() switch
+    {
+        "INDIA" => "🇮🇳",
+        "CHINA" => "🇨🇳",
+        "VIETNAM" => "🇻🇳",
+        "BANGLADESH" => "🇧🇩",
+        "TURKEY" or "TÜRKIYE" => "🇹🇷",
+        "BRAZIL" => "🇧🇷",
+        "MEXICO" => "🇲🇽",
+        "INDONESIA" => "🇮🇩",
+        "THAILAND" => "🇹🇭",
+        "PAKISTAN" => "🇵🇰",
+        "USA" or "UNITED STATES" => "🇺🇸",
+        "GERMANY" => "🇩🇪",
+        "ITALY" => "🇮🇹",
+        "JAPAN" => "🇯🇵",
+        "SOUTH KOREA" or "KOREA" => "🇰🇷",
+        "ETHIOPIA" => "🇪🇹",
+        "COLOMBIA" => "🇨🇴",
+        "PERU" => "🇵🇪",
+        "KENYA" => "🇰🇪",
+        "GUATEMALA" => "🇬🇹",
+        _ => "🌐"
+    };
+}

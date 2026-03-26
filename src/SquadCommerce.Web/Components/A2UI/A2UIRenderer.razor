@@ -42,11 +42,16 @@
                 <CampaignPreview Payload="Payload" />
                 break;
             case "ReroutingMap":
+                <ProtocolBadge Protocol="A2A" />
+                <ReroutingMap Payload="Payload" />
+                break;
             case "SupplierRiskMatrix":
+                <ProtocolBadge Protocol="A2A" />
+                <SupplierRiskMatrix Payload="Payload" />
+                break;
             case "InteractiveFloorplan":
-                <div class="a2ui-placeholder">
-                    <span>🚧 @Payload.RenderAs — Coming in next phase</span>
-                </div>
+                <ProtocolBadge Protocol="HITL" />
+                <InteractiveFloorplan Payload="Payload" />
                 break;
             default:
                 <div class="alert alert-warning" role="alert">

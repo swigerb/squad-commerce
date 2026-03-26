@@ -1,0 +1,263 @@
+@using SquadCommerce.Contracts.A2UI
+@using System.Text.Json
+@using System.Globalization
+
+<div class="floorplan-wrapper" role="region" aria-label="Store Floorplan for @(_data?.StoreName ?? "store")">
+    @if (_data != null)
+    {
+        <div class="floorplan-title-bar">
+            <div class="title-left">
+                <h3 class="floorplan-title">🏬 Store Layout — <span class="store-accent">@_data.StoreName</span></h3>
+                <ProtocolBadge Protocol="HITL" />
+            </div>
+            <span class="floorplan-ts">@_data.Timestamp.ToString("g")</span>
+        </div>
+
+        @* Store metrics summary *@
+        <div class="store-metrics">
+            <div class="metric-pill" style="animation-delay: 0s">
+                <span class="pill-value">@GetTotalSqft().ToString("N0")</span>
+                <span class="pill-label">Total Sq Ft</span>
+            </div>
+            <div class="metric-pill" style="animation-delay: 0.1s">
+                <span class="pill-value">@GetAvgTraffic().ToString("0.0")</span>
+                <span class="pill-label">Avg Hourly Traffic</span>
+            </div>
+            <div class="metric-pill" style="animation-delay: 0.2s">
+                <span class="pill-value @(GetSectionsNeedingAdjustment() > 0 ? "needs-attention" : "all-good")">@GetSectionsNeedingAdjustment()</span>
+                <span class="pill-label">Needs Adjustment</span>
+            </div>
+            <div class="metric-pill" style="animation-delay: 0.3s">
+                <span class="pill-value">@_data.OpeningDate.ToString("MMM dd")</span>
+                <span class="pill-label">Opening Date</span>
+            </div>
+        </div>
+
+        @* SVG floorplan heatmap *@
+        <div class="floorplan-layout">
+            <div class="floorplan-svg-area">
+                <h4 class="section-heading">Traffic Heatmap</h4>
+                <div class="svg-container">
+                    <svg class="floorplan-svg" viewBox="0 0 720 480" preserveAspectRatio="xMidYMid meet"
+                         role="img" aria-label="Store floorplan heatmap showing traffic intensity">
+                        @{ var cols = GetGridCols(); var sectionIdx = 0; }
+                        @foreach (var sec in _data.Sections)
+                        {
+                            var row = sectionIdx / cols;
+                            var col = sectionIdx % cols;
+                            var x = 20 + col * (680 / cols);
+                            var y = 20 + row * 140;
+                            var w = (680 / cols) - 12;
+                            var h = 125;
+                            var isFocus = sec.SectionName == _data.FocusSection;
+
+                            <g class="section-group @(isFocus ? "focus-section" : "")"
+                               style="animation-delay: @((sectionIdx * 0.1).ToString(CultureInfo.InvariantCulture))s">
+
+                                <rect x="@x.ToString(CultureInfo.InvariantCulture)"
+                                      y="@y.ToString(CultureInfo.InvariantCulture)"
+                                      width="@w.ToString(CultureInfo.InvariantCulture)"
+                                      height="@h.ToString(CultureInfo.InvariantCulture)"
+                                      rx="8"
+                                      class="section-rect @GetHeatClass(sec.TrafficIntensity) @GetBorderClass(sec.OptimizationStatus)"
+                                      fill="@GetHeatFill(sec.TrafficIntensity)"
+                                      fill-opacity="0.3" />
+
+                                @if (isFocus)
+                                {
+                                    <rect x="@x.ToString(CultureInfo.InvariantCulture)"
+                                          y="@y.ToString(CultureInfo.InvariantCulture)"
+                                          width="@w.ToString(CultureInfo.InvariantCulture)"
+                                          height="@h.ToString(CultureInfo.InvariantCulture)"
+                                          rx="8"
+                                          class="focus-glow" />
+                                }
+
+                                @SvgLabel(x + w / 2, y + 35, "section-name-text", TruncateName(sec.SectionName, 14))
+                                @SvgLabel(x + w / 2, y + 55, "section-detail-text", $"{sec.ShelfCount} shelves")
+
+                                <rect x="@((x + 16).ToString(CultureInfo.InvariantCulture))"
+                                      y="@((y + 70).ToString(CultureInfo.InvariantCulture))"
+                                      width="@((w - 32).ToString(CultureInfo.InvariantCulture))"
+                                      height="4" rx="2"
+                                      fill="rgba(255,255,255,0.08)" />
+                                <rect x="@((x + 16).ToString(CultureInfo.InvariantCulture))"
+                                      y="@((y + 70).ToString(CultureInfo.InvariantCulture))"
+                                      width="@(((w - 32) * Math.Clamp(sec.TrafficIntensity, 0, 1)).ToString(CultureInfo.InvariantCulture))"
+                                      height="4" rx="2"
+                                      fill="@GetHeatFill(sec.TrafficIntensity)" />
+
+                                @SvgLabel(x + w / 2, y + 95, "traffic-pct-text", $"{(sec.TrafficIntensity * 100):0}% traffic", GetHeatFill(sec.TrafficIntensity))
+                                @SvgLabel(x + w / 2, y + 115, "status-indicator-text", GetStatusIcon(sec.OptimizationStatus))
+                            </g>
+                            sectionIdx++;
+                        }
+
+                        <g class="legend-group" transform="translate(20, 450)">
+                            <rect x="0" y="0" width="14" height="14" rx="3" fill="rgba(88, 166, 255, 0.3)" />
+                            @SvgLabel(20, 11, "legend-text", "Low", null, "start")
+                            <rect x="70" y="0" width="14" height="14" rx="3" fill="rgba(63, 185, 80, 0.3)" />
+                            @SvgLabel(90, 11, "legend-text", "Med", null, "start")
+                            <rect x="140" y="0" width="14" height="14" rx="3" fill="rgba(210, 153, 34, 0.3)" />
+                            @SvgLabel(160, 11, "legend-text", "High", null, "start")
+                            <rect x="210" y="0" width="14" height="14" rx="3" fill="rgba(248, 81, 73, 0.3)" />
+                            @SvgLabel(230, 11, "legend-text", "Very High", null, "start")
+                        </g>
+                    </svg>
+                </div>
+            </div>
+
+            @* Optimization panel *@
+            <div class="optimization-panel">
+                <h4 class="section-heading">Optimization Recommendations</h4>
+                <div class="opt-cards">
+                    @{ var optIdx = 0; }
+                    @foreach (var sec in _data.Sections)
+                    {
+                        <div class="opt-card @(sec.SectionName == _data.FocusSection ? "opt-focus" : "") opt-card-enter"
+                             style="animation-delay: @((optIdx * 0.06).ToString(CultureInfo.InvariantCulture))s">
+                            <div class="opt-header">
+                                <span class="opt-section-name">@sec.SectionName</span>
+                                <span class="opt-status-badge opt-@(sec.OptimizationStatus.ToLowerInvariant())">
+                                    @GetStatusIcon(sec.OptimizationStatus) @sec.OptimizationStatus
+                                </span>
+                            </div>
+
+                            <div class="placement-change">
+                                <span class="placement-current">@sec.CurrentPlacement</span>
+                                <span class="placement-arrow">→</span>
+                                <span class="placement-suggested">@sec.SuggestedPlacement</span>
+                            </div>
+
+                            <div class="opt-metrics-row">
+                                <span class="opt-metric">
+                                    <span class="opt-metric-label">Traffic</span>
+                                    <span class="opt-metric-val">@((sec.TrafficIntensity * 100).ToString("0"))%</span>
+                                </span>
+                                <span class="opt-metric">
+                                    <span class="opt-metric-label">Sq Ft</span>
+                                    <span class="opt-metric-val">@sec.SquareFootage.ToString("N0")</span>
+                                </span>
+                            </div>
+
+                            @if (sec.OptimizationStatus != "Optimal")
+                            {
+                                <button class="approve-btn" aria-label="Approve change for @sec.SectionName"
+                                        @onclick="() => ApproveSection(sec)">
+                                    ✅ Approve Change
+                                </button>
+                            }
+                        </div>
+                        optIdx++;
+                    }
+                </div>
+            </div>
+        </div>
+
+        @* Footer *@
+        <div class="floorplan-footer">
+            <span class="footer-summary">
+                Store <strong>@_data.StoreName</strong> •
+                <strong>@_data.Sections.Count</strong> sections •
+                Focus: <strong>@_data.FocusSection</strong>
+            </span>
+        </div>
+    }
+    else
+    {
+        <div class="no-data">Loading floorplan data…</div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Payload { get; set; }
+
+    [Parameter]
+    public EventCallback<FloorplanSection> OnSectionApproved { get; set; }
+
+    private InteractiveFloorplanData? _data;
+    private readonly HashSet<string> _approvedSections = new();
+
+    protected override void OnParametersSet()
+    {
+        if (Payload?.Data != null)
+        {
+            if (Payload.Data is JsonElement jsonElement)
+            {
+                _data = JsonSerializer.Deserialize<InteractiveFloorplanData>(
+                    jsonElement.GetRawText(),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            else if (Payload.Data is InteractiveFloorplanData typedData)
+            {
+                _data = typedData;
+            }
+        }
+    }
+
+    private int GetTotalSqft() => _data?.Sections.Sum(s => s.SquareFootage) ?? 0;
+
+    private double GetAvgTraffic() => _data?.Sections.Any() == true
+        ? _data.Sections.Average(s => s.AvgHourlyTraffic)
+        : 0;
+
+    private int GetSectionsNeedingAdjustment() => _data?.Sections.Count(s => s.OptimizationStatus != "Optimal") ?? 0;
+
+    private int GetGridCols() => _data?.Sections.Count switch
+    {
+        <= 3 => _data.Sections.Count,
+        <= 6 => 3,
+        <= 8 => 4,
+        _ => 4
+    };
+
+    private string GetHeatFill(double intensity) => intensity switch
+    {
+        >= 0.8 => "#f85149",
+        >= 0.6 => "#d29922",
+        >= 0.3 => "#3fb950",
+        _ => "#58a6ff"
+    };
+
+    private string GetHeatClass(double intensity) => intensity switch
+    {
+        >= 0.8 => "heat-veryhigh",
+        >= 0.6 => "heat-high",
+        >= 0.3 => "heat-medium",
+        _ => "heat-low"
+    };
+
+    private string GetBorderClass(string status) => status switch
+    {
+        "Optimal" => "border-optimal",
+        "NeedsAdjustment" => "border-adjust",
+        "Critical" => "border-critical",
+        _ => "border-optimal"
+    };
+
+    private string GetStatusIcon(string status) => status switch
+    {
+        "Optimal" => "✅",
+        "NeedsAdjustment" => "⚠️",
+        "Critical" => "🔴",
+        _ => "⚙️"
+    };
+
+    private string TruncateName(string name, int maxLen)
+        => name.Length <= maxLen ? name : name[..(maxLen - 1)] + "…";
+
+    private MarkupString SvgLabel(double x, double y, string cssClass, string content, string? fill = null, string anchor = "middle")
+    {
+        var fillAttr = fill != null ? $" fill=\"{System.Net.WebUtility.HtmlEncode(fill)}\"" : "";
+        return new MarkupString(
+            $"<text x=\"{x.ToString(CultureInfo.InvariantCulture)}\" y=\"{y.ToString(CultureInfo.InvariantCulture)}\" class=\"{cssClass}\" text-anchor=\"{anchor}\"{fillAttr}>{System.Net.WebUtility.HtmlEncode(content)}</text>");
+    }
+
+    private async Task ApproveSection(FloorplanSection sec)
+    {
+        _approvedSections.Add(sec.SectionName);
+        if (OnSectionApproved.HasDelegate)
+            await OnSectionApproved.InvokeAsync(sec);
+    }
+}

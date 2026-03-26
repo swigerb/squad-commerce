@@ -208,6 +208,55 @@ app.MapPost("/api/agui/chat", async (ChatRequest chatRequest, IAgUiStreamWriter 
                 await streamWriter.WriteStatusUpdateAsync(sessionId, $"Analyzing viral spike: {sku} — {demandMultiplier}x demand in {viralRegion} via {viralSource}...", bgCts.Token);
                 result = await orchestrator.ProcessViralSpikeAsync(sku, demandMultiplier, viralRegion, viralSource, bgCts.Token);
             }
+            else if (scenarioType == "StoreReadiness")
+            {
+                // Extract store ID from message (default "SEA-001")
+                var storeIdPattern = Regex.Match(message, @"\b([A-Z]{3}-\d{3})\b", RegexOptions.IgnoreCase);
+                var storeId = storeIdPattern.Success ? storeIdPattern.Value.ToUpper() : "SEA-001";
+
+                // Extract section from message (default "Electronics")
+                var sectionPattern = Regex.Match(message, @"\b(Electronics|Grocery|Apparel|Home)\b", RegexOptions.IgnoreCase);
+                var storeSection = sectionPattern.Success ? sectionPattern.Value : "Electronics";
+
+                // Extract opening date (default 30 days from now)
+                var openingDate = DateTimeOffset.UtcNow.AddDays(30);
+
+                await streamWriter.WriteStatusUpdateAsync(sessionId, $"Analyzing store readiness: {storeId} section {storeSection}...", bgCts.Token);
+                result = await orchestrator.ProcessStoreReadinessAsync(storeId, storeSection, openingDate, bgCts.Token);
+            }
+            else if (scenarioType == "ESGAudit")
+            {
+                // Extract category from message (default "Cocoa")
+                var categoryPattern = Regex.Match(message, @"\b(Cocoa|Coffee|Apparel)\b", RegexOptions.IgnoreCase);
+                var esgCategory = categoryPattern.Success ? categoryPattern.Value : "Cocoa";
+
+                // Extract certification from message (default "FairTrade")
+                var certPattern = Regex.Match(message, @"\b(FairTrade|Fair\s*Trade|Organic|RainforestAlliance|Rainforest\s*Alliance)\b", RegexOptions.IgnoreCase);
+                var certRequired = certPattern.Success ? certPattern.Value.Replace(" ", "") : "FairTrade";
+
+                // Default deadline 90 days from now
+                var deadline = DateTimeOffset.UtcNow.AddDays(90);
+
+                await streamWriter.WriteStatusUpdateAsync(sessionId, $"Running ESG audit: {esgCategory} suppliers, {certRequired} certification...", bgCts.Token);
+                result = await orchestrator.ProcessESGAuditAsync(esgCategory, certRequired, deadline, bgCts.Token);
+            }
+            else if (scenarioType == "SupplyChainShock")
+            {
+                // Extract delay days from message (default 3 days)
+                var delayMatch = Regex.Match(message, @"(\d+)\s*day", RegexOptions.IgnoreCase);
+                var scDelayDays = delayMatch.Success && int.TryParse(delayMatch.Groups[1].Value, out var dd) ? dd : 3;
+
+                // Extract delay reason from message
+                var reasonPattern = Regex.Match(message, @"\b(storm|hurricane|typhoon|flood|earthquake|customs|port\s*closure|strike)\b", RegexOptions.IgnoreCase);
+                var scReason = reasonPattern.Success ? reasonPattern.Value : "supply chain disruption";
+
+                // Extract affected regions (default Southeast for storm scenarios)
+                var scRegionPattern = Regex.Match(message, @"\b(Northeast|Southeast|Midwest|Southwest|Northwest|West\s*Coast|East\s*Coast)\b", RegexOptions.IgnoreCase);
+                var scRegions = scRegionPattern.Success ? new[] { scRegionPattern.Value } : new[] { "Southeast" };
+
+                await streamWriter.WriteStatusUpdateAsync(sessionId, $"Analyzing supply chain shock: {sku} — {scDelayDays}-day delay due to {scReason}...", bgCts.Token);
+                result = await orchestrator.ProcessSupplyChainShockAsync(sku, scDelayDays, scReason, scRegions, bgCts.Token);
+            }
             else
             {
                 result = await orchestrator.ProcessCompetitorPriceDropAsync(sku, competitorPrice, bgCts.Token);

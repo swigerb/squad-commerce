@@ -29,6 +29,14 @@ public sealed class ChiefSoftwareArchitectAgent
     private readonly PricingAgent _pricingAgent;
     private readonly MarketIntelAgent _marketIntelAgent;
     private readonly MarketingAgent _marketingAgent;
+    private readonly LogisticsAgent _logisticsAgent;
+    private readonly RedistributionAgent _redistributionAgent;
+    private readonly TrafficAnalystAgent _trafficAnalystAgent;
+    private readonly MerchandisingAgent _merchandisingAgent;
+    private readonly ManagerAgent _managerAgent;
+    private readonly ComplianceAgent _complianceAgent;
+    private readonly ResearchAgent _researchAgent;
+    private readonly ProcurementAgent _procurementAgent;
     private readonly AuditRepository _auditRepository;
     private readonly IThinkingStateNotifier _thinkingNotifier;
     private readonly IReasoningTraceEmitter _reasoningTraceEmitter;
@@ -39,6 +47,14 @@ public sealed class ChiefSoftwareArchitectAgent
         PricingAgent pricingAgent,
         MarketIntelAgent marketIntelAgent,
         MarketingAgent marketingAgent,
+        LogisticsAgent logisticsAgent,
+        RedistributionAgent redistributionAgent,
+        TrafficAnalystAgent trafficAnalystAgent,
+        MerchandisingAgent merchandisingAgent,
+        ManagerAgent managerAgent,
+        ComplianceAgent complianceAgent,
+        ResearchAgent researchAgent,
+        ProcurementAgent procurementAgent,
         AuditRepository auditRepository,
         IThinkingStateNotifier thinkingNotifier,
         IReasoningTraceEmitter reasoningTraceEmitter,
@@ -48,6 +64,14 @@ public sealed class ChiefSoftwareArchitectAgent
         _pricingAgent = pricingAgent ?? throw new ArgumentNullException(nameof(pricingAgent));
         _marketIntelAgent = marketIntelAgent ?? throw new ArgumentNullException(nameof(marketIntelAgent));
         _marketingAgent = marketingAgent ?? throw new ArgumentNullException(nameof(marketingAgent));
+        _logisticsAgent = logisticsAgent ?? throw new ArgumentNullException(nameof(logisticsAgent));
+        _redistributionAgent = redistributionAgent ?? throw new ArgumentNullException(nameof(redistributionAgent));
+        _trafficAnalystAgent = trafficAnalystAgent ?? throw new ArgumentNullException(nameof(trafficAnalystAgent));
+        _merchandisingAgent = merchandisingAgent ?? throw new ArgumentNullException(nameof(merchandisingAgent));
+        _managerAgent = managerAgent ?? throw new ArgumentNullException(nameof(managerAgent));
+        _complianceAgent = complianceAgent ?? throw new ArgumentNullException(nameof(complianceAgent));
+        _researchAgent = researchAgent ?? throw new ArgumentNullException(nameof(researchAgent));
+        _procurementAgent = procurementAgent ?? throw new ArgumentNullException(nameof(procurementAgent));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _thinkingNotifier = thinkingNotifier ?? throw new ArgumentNullException(nameof(thinkingNotifier));
         _reasoningTraceEmitter = reasoningTraceEmitter ?? throw new ArgumentNullException(nameof(reasoningTraceEmitter));
@@ -885,6 +909,287 @@ public sealed class ChiefSoftwareArchitectAgent
         }
     }
 
+    /// <summary>
+    /// Orchestrates a supply chain shock response workflow.
+    /// Analyzes delayed shipments, assesses inventory impact, and builds redistribution plans.
+    /// </summary>
+    /// <param name="sku">Product SKU affected by supply chain disruption</param>
+    /// <param name="delayDays">Number of days the shipment is delayed</param>
+    /// <param name="reason">Reason for the supply chain disruption</param>
+    /// <param name="affectedRegions">Regions/stores affected by the disruption</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Orchestrated result with all A2UI payloads and executive summary</returns>
+    public async Task<OrchestratorResult> ProcessSupplyChainShockAsync(
+        string sku,
+        int delayDays,
+        string reason,
+        string[] affectedRegions,
+        CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+        var sessionId = $"session-{Guid.NewGuid():N}";
+
+        using var activity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "OrchestrateSupplyChainShock");
+        activity?.SetTag("agent.name", "ChiefSoftwareArchitect");
+        activity?.SetTag("agent.protocol", "AGUI");
+        activity?.SetTag("agent.sku", sku);
+        activity?.SetTag("agent.delay_days", delayDays);
+        activity?.SetTag("agent.reason", reason);
+        activity?.SetTag("agent.affected_regions", string.Join(",", affectedRegions));
+        activity?.SetTag("agent.session_id", sessionId);
+
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+        _logger.LogInformation(
+            "Orchestrator starting supply chain shock workflow: SKU {Sku}, DelayDays {DelayDays}, Reason {Reason}, Regions {Regions}, SessionId {SessionId}",
+            sku, delayDays, reason, string.Join(", ", affectedRegions), sessionId);
+
+        var results = new List<AgentResult>();
+        var pipelineStages = new List<PipelineStage>();
+
+        var rootStepId = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+            $"Analyzing supply chain shock for {sku}: {delayDays}-day delay due to {reason}, affecting {string.Join(", ", affectedRegions)}",
+            cancellationToken: cancellationToken);
+
+        await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Initiated supply chain shock response workflow",
+            "AGUI", startTime, TimeSpan.Zero, "Success",
+            $"Supply chain shock for SKU {sku}: {delayDays}-day delay due to {reason}",
+            activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
+
+        try
+        {
+            // Step 1: Analyze shipment delays (LogisticsAgent)
+            _logger.LogInformation("Step 1: Delegating to LogisticsAgent for shipment delay analysis");
+
+            var step1Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to LogisticsAgent for shipment delay analysis", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "LogisticsAgent", ReasoningStepType.ToolCall,
+                $"Querying shipment status for {sku}", step1Id, cancellationToken: cancellationToken);
+
+            var stage1Start = DateTimeOffset.UtcNow;
+            var step1Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 1,
+                AgentName = "LogisticsAgent",
+                StageName = "Shipment Delay Analysis",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage1Start,
+                ToolsUsed = new[] { "GetShipmentStatus" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "LogisticsAgent", true, cancellationToken);
+            var logisticsResult = await _logisticsAgent.ExecuteAsync(sku, delayDays, reason, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "LogisticsAgent", false, cancellationToken);
+            step1Sw.Stop();
+            results.Add(logisticsResult);
+
+            await EmitTraceAsync(sessionId, "LogisticsAgent", ReasoningStepType.Observation,
+                $"Received {(logisticsResult.Success ? "shipment delay analysis" : "analysis failure")} from LogisticsAgent",
+                step1Id, step1Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
+            await RecordAuditEntryAsync(sessionId, "LogisticsAgent", "Analyzed shipment delays",
+                "MCP", stage1Start, stage1Duration, logisticsResult.Success ? "Success" : "Failed",
+                logisticsResult.TextSummary, activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
+
+            pipelineStages[0] = pipelineStages[0] with
+            {
+                Status = logisticsResult.Success ? "Completed" : "Failed",
+                Duration = stage1Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = logisticsResult.A2UIPayload != null ? new[] { "ReroutingMap" } : null,
+                ErrorMessage = logisticsResult.ErrorMessage
+            };
+
+            if (!logisticsResult.Success)
+            {
+                _logger.LogWarning("LogisticsAgent failed - aborting workflow");
+                return await BuildSupplyChainFailureResultAsync(sessionId, results, pipelineStages,
+                    "Failed to analyze shipment delays", startTime, cancellationToken);
+            }
+
+            // Step 2: Get inventory snapshot (InventoryAgent - reused)
+            _logger.LogInformation("Step 2: Delegating to InventoryAgent for inventory snapshot");
+
+            var step2Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to InventoryAgent for current stock levels", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "InventoryAgent", ReasoningStepType.ToolCall,
+                $"Calling GetInventoryLevels with SKU={sku}", step2Id, cancellationToken: cancellationToken);
+
+            var stage2Start = DateTimeOffset.UtcNow;
+            var step2Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 2,
+                AgentName = "InventoryAgent",
+                StageName = "Inventory Assessment",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage2Start,
+                ToolsUsed = new[] { "GetInventoryLevels" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", true, cancellationToken);
+            var inventoryResult = await _inventoryAgent.ExecuteAsync(sku, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", false, cancellationToken);
+            step2Sw.Stop();
+            results.Add(inventoryResult);
+
+            await EmitTraceAsync(sessionId, "InventoryAgent", ReasoningStepType.Observation,
+                $"Received inventory snapshot from InventoryAgent",
+                step2Id, step2Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage2Duration = DateTimeOffset.UtcNow - stage2Start;
+            await RecordAuditEntryAsync(sessionId, "InventoryAgent", "Retrieved inventory snapshot for supply chain impact",
+                "MCP", stage2Start, stage2Duration, inventoryResult.Success ? "Success" : "Warning",
+                inventoryResult.TextSummary, activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
+
+            pipelineStages[1] = pipelineStages[1] with
+            {
+                Status = inventoryResult.Success ? "Completed" : "Failed",
+                Duration = stage2Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = inventoryResult.A2UIPayload != null ? new[] { "RetailStockHeatmap" } : null,
+                ErrorMessage = inventoryResult.ErrorMessage
+            };
+
+            if (!inventoryResult.Success)
+            {
+                _logger.LogWarning("InventoryAgent failed - continuing with limited data");
+            }
+
+            // Step 3: Calculate redistribution plan (RedistributionAgent)
+            _logger.LogInformation("Step 3: Delegating to RedistributionAgent for redistribution plan");
+
+            var step3Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to RedistributionAgent for optimal stock redistribution", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "RedistributionAgent", ReasoningStepType.ToolCall,
+                $"Computing redistribution routes for {sku} across {affectedRegions.Length} region(s)", step3Id, cancellationToken: cancellationToken);
+
+            var stage3Start = DateTimeOffset.UtcNow;
+            var step3Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 3,
+                AgentName = "RedistributionAgent",
+                StageName = "Stock Redistribution",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage3Start,
+                ToolsUsed = new[] { "GetDeliveryRoutes" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "RedistributionAgent", true, cancellationToken);
+            var redistributionResult = await _redistributionAgent.ExecuteAsync(sku, affectedRegions, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "RedistributionAgent", false, cancellationToken);
+            step3Sw.Stop();
+            results.Add(redistributionResult);
+
+            await EmitTraceAsync(sessionId, "RedistributionAgent", ReasoningStepType.Observation,
+                $"Received {(redistributionResult.Success ? "redistribution plan" : "planning failure")} from RedistributionAgent",
+                step3Id, step3Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage3Duration = DateTimeOffset.UtcNow - stage3Start;
+            await RecordAuditEntryAsync(sessionId, "RedistributionAgent", "Calculated stock redistribution plan",
+                "MCP", stage3Start, stage3Duration, redistributionResult.Success ? "Success" : "Failed",
+                redistributionResult.TextSummary, activity?.TraceId.ToString(), new[] { sku },
+                affectedRegions, null, cancellationToken);
+
+            pipelineStages[2] = pipelineStages[2] with
+            {
+                Status = redistributionResult.Success ? "Completed" : "Failed",
+                Duration = stage3Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = redistributionResult.A2UIPayload != null ? new[] { "ReroutingMap" } : null,
+                ErrorMessage = redistributionResult.ErrorMessage
+            };
+
+            if (!redistributionResult.Success)
+            {
+                _logger.LogWarning("RedistributionAgent failed - aborting workflow");
+                return await BuildSupplyChainFailureResultAsync(sessionId, results, pipelineStages,
+                    "Failed to calculate redistribution plan", startTime, cancellationToken);
+            }
+
+            // Step 4: Synthesize final response
+            _logger.LogInformation("Step 4: Synthesizing supply chain shock orchestrator response");
+
+            using var synthesizeActivity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "Synthesize");
+            synthesizeActivity?.SetTag("agent.result_count", results.Count);
+
+            var synthesizeStart = DateTimeOffset.UtcNow;
+            var executiveSummary = BuildSupplyChainExecutiveSummary(sku, delayDays, reason, affectedRegions, results);
+            var synthesizeDuration = DateTimeOffset.UtcNow - synthesizeStart;
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Decision,
+                $"Recommending redistribution of stock from surplus stores to mitigate {reason} delay for {sku}",
+                rootStepId, (long)(DateTimeOffset.UtcNow - startTime).TotalMilliseconds, cancellationToken: cancellationToken);
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Synthesized supply chain shock response",
+                "AGUI", synthesizeStart, synthesizeDuration, "Success",
+                $"Generated executive summary with {results.Count} A2UI payloads",
+                activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            var duration = DateTimeOffset.UtcNow - startTime;
+
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration.TotalMilliseconds,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+            _logger.LogInformation(
+                "Orchestrator supply chain shock workflow completed successfully in {Duration}ms",
+                duration.TotalMilliseconds);
+
+            var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+            var pipelineData = new AgentPipelineData
+            {
+                SessionId = sessionId,
+                WorkflowName = "SupplyChainShockWorkflow",
+                Stages = pipelineStages,
+                OverallStatus = "Completed",
+                TotalDuration = duration,
+                StartedAt = startTime,
+                CompletedAt = DateTimeOffset.UtcNow
+            };
+
+            return new OrchestratorResult
+            {
+                Success = true,
+                ExecutiveSummary = executiveSummary,
+                AgentResults = results,
+                AuditTrailData = auditTrailData,
+                PipelineData = pipelineData,
+                InsightCards = BuildSupplyChainInsightCards(sku, delayDays, reason, affectedRegions, results),
+                Timestamp = DateTimeOffset.UtcNow,
+                WorkflowDuration = duration
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Orchestrator supply chain shock workflow failed");
+
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Error,
+                $"Supply chain shock workflow failed: {ex.Message}", rootStepId, cancellationToken: cancellationToken);
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Supply chain shock workflow execution failed",
+                "AGUI", DateTimeOffset.UtcNow, TimeSpan.Zero, "Failed",
+                ex.Message, activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+            return await BuildSupplyChainFailureResultAsync(sessionId, results, pipelineStages,
+                $"Supply chain shock orchestration error: {ex.Message}", startTime, cancellationToken);
+        }
+    }
+
     private static string BuildExecutiveSummary(string sku, decimal competitorPrice, List<AgentResult> results)
     {
         var summary = $"## Competitor Price Response Analysis for {sku}\n\n";
@@ -1238,6 +1543,844 @@ public sealed class ChiefSoftwareArchitectAgent
         {
             Success = false,
             ExecutiveSummary = $"Viral spike workflow failed: {errorMessage}",
+            AgentResults = results,
+            AuditTrailData = auditTrailData,
+            PipelineData = pipelineData,
+            ErrorMessage = errorMessage,
+            Timestamp = DateTimeOffset.UtcNow,
+            WorkflowDuration = duration
+        };
+    }
+
+    private static string BuildSupplyChainExecutiveSummary(
+        string sku, int delayDays, string reason, string[] affectedRegions, List<AgentResult> results)
+    {
+        var summary = $"## Supply Chain Shock Response for {sku}\n\n";
+        summary += $"**Disruption:** {reason}\n";
+        summary += $"**Delay:** {delayDays} day(s)\n";
+        summary += $"**Affected Regions:** {string.Join(", ", affectedRegions)}\n\n";
+
+        foreach (var result in results)
+        {
+            summary += $"{result.TextSummary}\n\n";
+        }
+
+        summary += $"**Recommendation:** Execute the redistribution plan to move surplus stock from unaffected stores " +
+                   $"to the {affectedRegions.Length} affected region(s). Monitor shipment recovery and adjust transfers " +
+                   $"as the {reason} situation evolves.";
+
+        return summary;
+    }
+
+    private static IReadOnlyList<InsightCardData> BuildSupplyChainInsightCards(
+        string sku, int delayDays, string reason, string[] affectedRegions, List<AgentResult> results)
+    {
+        try
+        {
+            var cards = new List<InsightCardData>();
+
+            // Card 1: Supply Disruption Severity
+            var severity = delayDays >= 5 ? "critical" : delayDays >= 3 ? "warning" : "info";
+            cards.Add(new InsightCardData
+            {
+                Title = "Supply Disruption",
+                KeyMetric = $"{delayDays} days",
+                MetricLabel = $"shipment delay from {reason}",
+                TrendDirection = "down",
+                Summary = $"SKU {sku} shipment delayed {delayDays} day(s) due to {reason}. " +
+                          $"{affectedRegions.Length} region(s) affected: {string.Join(", ", affectedRegions)}.",
+                Severity = severity
+            });
+
+            // Card 2: Redistribution Impact
+            var redistResult = results.LastOrDefault(r => r.TextSummary.Contains("redistribution", StringComparison.OrdinalIgnoreCase)
+                                                        || r.TextSummary.Contains("transfer", StringComparison.OrdinalIgnoreCase));
+            var routeCountMatch = redistResult != null
+                ? System.Text.RegularExpressions.Regex.Match(redistResult.TextSummary, @"(\d+)\s*transfer\s*route")
+                : System.Text.RegularExpressions.Regex.Match("", @".");
+            var routeCount = routeCountMatch.Success && int.TryParse(routeCountMatch.Groups[1].Value, out var rc) ? rc : 0;
+
+            cards.Add(new InsightCardData
+            {
+                Title = "Redistribution Plan",
+                KeyMetric = $"{routeCount} routes",
+                MetricLabel = "inter-store transfers identified",
+                TrendDirection = routeCount > 0 ? "up" : "neutral",
+                Summary = $"Redistribution plan identifies {routeCount} transfer route(s) from surplus stores to at-risk locations. " +
+                          $"Prioritized by stock criticality and geographic proximity.",
+                Severity = routeCount > 0 ? "success" : "warning"
+            });
+
+            // Card 3: Overall Readiness
+            var allSucceeded = results.All(r => r.Success);
+            cards.Add(new InsightCardData
+            {
+                Title = "Response Readiness",
+                KeyMetric = allSucceeded ? "Ready" : "Partial",
+                MetricLabel = "mitigation plan status",
+                TrendDirection = "up",
+                Summary = $"Supply chain shock response completed with {(allSucceeded ? "full" : "partial")} analysis from {results.Count} agents. " +
+                          $"Redistribution and inventory assessment data ready for execution.",
+                ActionLabel = "Execute Transfers",
+                Severity = allSucceeded ? "success" : "warning"
+            });
+
+            return cards;
+        }
+        catch
+        {
+            return Array.Empty<InsightCardData>();
+        }
+    }
+
+    private async Task<OrchestratorResult> BuildSupplyChainFailureResultAsync(
+        string sessionId,
+        List<AgentResult> results,
+        List<PipelineStage> stages,
+        string errorMessage,
+        DateTimeOffset startTime,
+        CancellationToken cancellationToken)
+    {
+        var duration = DateTimeOffset.UtcNow - startTime;
+        var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+        var pipelineData = new AgentPipelineData
+        {
+            SessionId = sessionId,
+            WorkflowName = "SupplyChainShockWorkflow",
+            Stages = stages,
+            OverallStatus = "Failed",
+            TotalDuration = duration,
+            StartedAt = startTime,
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+
+        return new OrchestratorResult
+        {
+            Success = false,
+            ExecutiveSummary = $"Supply chain shock workflow failed: {errorMessage}",
+            AgentResults = results,
+            AuditTrailData = auditTrailData,
+            PipelineData = pipelineData,
+            ErrorMessage = errorMessage,
+            Timestamp = DateTimeOffset.UtcNow,
+            WorkflowDuration = duration
+        };
+    }
+
+    /// <summary>
+    /// Orchestrates a store readiness workflow: Traffic → Merchandising → ManagerHITL → Synthesis.
+    /// </summary>
+    public async Task<OrchestratorResult> ProcessStoreReadinessAsync(
+        string storeId,
+        string section,
+        DateTimeOffset openingDate,
+        CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+        var sessionId = $"session-{Guid.NewGuid():N}";
+
+        using var activity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "OrchestrateStoreReadiness");
+        activity?.SetTag("agent.name", "ChiefSoftwareArchitect");
+        activity?.SetTag("agent.protocol", "AGUI");
+        activity?.SetTag("agent.store_id", storeId);
+        activity?.SetTag("agent.section", section);
+        activity?.SetTag("agent.session_id", sessionId);
+
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+        _logger.LogInformation(
+            "Orchestrator starting store readiness workflow: StoreId {StoreId}, Section {Section}, Opening {Opening}, SessionId {SessionId}",
+            storeId, section, openingDate, sessionId);
+
+        var results = new List<AgentResult>();
+        var pipelineStages = new List<PipelineStage>();
+
+        var rootStepId = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+            $"Analyzing store readiness for {storeId} section {section}, opening {openingDate:yyyy-MM-dd}",
+            cancellationToken: cancellationToken);
+
+        await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Initiated store readiness workflow",
+            "AGUI", startTime, TimeSpan.Zero, "Success",
+            $"Store readiness for {storeId} section {section}",
+            activity?.TraceId.ToString(), null, new[] { storeId }, null, cancellationToken);
+
+        try
+        {
+            // Step 1: Traffic Analysis (TrafficAnalystAgent)
+            _logger.LogInformation("Step 1: Delegating to TrafficAnalystAgent for traffic analysis");
+
+            var step1Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to TrafficAnalystAgent for foot traffic analysis", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "TrafficAnalystAgent", ReasoningStepType.ToolCall,
+                $"Querying foot traffic data for {storeId} section {section}", step1Id, cancellationToken: cancellationToken);
+
+            var stage1Start = DateTimeOffset.UtcNow;
+            var step1Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 1,
+                AgentName = "TrafficAnalystAgent",
+                StageName = "Traffic Analysis",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage1Start,
+                ToolsUsed = new[] { "GetFootTrafficData" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "TrafficAnalystAgent", true, cancellationToken);
+            var trafficResult = await _trafficAnalystAgent.ExecuteAsync(storeId, section, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "TrafficAnalystAgent", false, cancellationToken);
+            step1Sw.Stop();
+            results.Add(trafficResult);
+
+            await EmitTraceAsync(sessionId, "TrafficAnalystAgent", ReasoningStepType.Observation,
+                $"Received {(trafficResult.Success ? "traffic analysis" : "analysis failure")} from TrafficAnalystAgent",
+                step1Id, step1Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
+            await RecordAuditEntryAsync(sessionId, "TrafficAnalystAgent", "Analyzed foot traffic data",
+                "MCP", stage1Start, stage1Duration, trafficResult.Success ? "Success" : "Failed",
+                trafficResult.TextSummary, activity?.TraceId.ToString(), null, new[] { storeId }, null, cancellationToken);
+
+            pipelineStages[0] = pipelineStages[0] with
+            {
+                Status = trafficResult.Success ? "Completed" : "Failed",
+                Duration = stage1Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = trafficResult.A2UIPayload != null ? new[] { "InteractiveFloorplan" } : null,
+                ErrorMessage = trafficResult.ErrorMessage
+            };
+
+            if (!trafficResult.Success)
+            {
+                _logger.LogWarning("TrafficAnalystAgent failed - aborting workflow");
+                return await BuildStoreReadinessFailureResultAsync(sessionId, results, pipelineStages,
+                    "Failed to analyze foot traffic", startTime, cancellationToken);
+            }
+
+            // Step 2: Merchandising Optimization (MerchandisingAgent)
+            _logger.LogInformation("Step 2: Delegating to MerchandisingAgent for planogram optimization");
+
+            var step2Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to MerchandisingAgent for planogram optimization", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "MerchandisingAgent", ReasoningStepType.ToolCall,
+                $"Analyzing planogram for {storeId} section {section}", step2Id, cancellationToken: cancellationToken);
+
+            var stage2Start = DateTimeOffset.UtcNow;
+            var step2Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 2,
+                AgentName = "MerchandisingAgent",
+                StageName = "Merchandising Optimization",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage2Start,
+                ToolsUsed = new[] { "GetPlanogramData" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MerchandisingAgent", true, cancellationToken);
+            var merchandisingResult = await _merchandisingAgent.ExecuteAsync(storeId, section, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MerchandisingAgent", false, cancellationToken);
+            step2Sw.Stop();
+            results.Add(merchandisingResult);
+
+            await EmitTraceAsync(sessionId, "MerchandisingAgent", ReasoningStepType.Observation,
+                $"Received {(merchandisingResult.Success ? "merchandising analysis" : "analysis failure")} from MerchandisingAgent",
+                step2Id, step2Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage2Duration = DateTimeOffset.UtcNow - stage2Start;
+            await RecordAuditEntryAsync(sessionId, "MerchandisingAgent", "Analyzed planogram optimization",
+                "MCP", stage2Start, stage2Duration, merchandisingResult.Success ? "Success" : "Failed",
+                merchandisingResult.TextSummary, activity?.TraceId.ToString(), null, new[] { storeId }, null, cancellationToken);
+
+            pipelineStages[1] = pipelineStages[1] with
+            {
+                Status = merchandisingResult.Success ? "Completed" : "Failed",
+                Duration = stage2Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = merchandisingResult.A2UIPayload != null ? new[] { "InteractiveFloorplan" } : null,
+                ErrorMessage = merchandisingResult.ErrorMessage
+            };
+
+            // Step 3: Manager HITL Approval (ManagerAgent)
+            _logger.LogInformation("Step 3: Delegating to ManagerAgent for HITL approval");
+
+            var step3Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to ManagerAgent for human-in-the-loop approval", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "ManagerAgent", ReasoningStepType.ToolCall,
+                $"Manager reviewing planogram changes for {storeId} section {section}", step3Id, cancellationToken: cancellationToken);
+
+            var stage3Start = DateTimeOffset.UtcNow;
+            var step3Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 3,
+                AgentName = "ManagerAgent",
+                StageName = "Manager Approval (HITL)",
+                Status = "Running",
+                Protocol = "Internal",
+                StartedAt = stage3Start
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "ManagerAgent", true, cancellationToken);
+            var managerResult = await _managerAgent.ExecuteAsync(storeId, section, merchandisingResult, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "ManagerAgent", false, cancellationToken);
+            step3Sw.Stop();
+            results.Add(managerResult);
+
+            await EmitTraceAsync(sessionId, "ManagerAgent", ReasoningStepType.Observation,
+                $"Manager {(managerResult.Success ? "approved" : "deferred")} merchandising changes",
+                step3Id, step3Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage3Duration = DateTimeOffset.UtcNow - stage3Start;
+            await RecordAuditEntryAsync(sessionId, "ManagerAgent", managerResult.Success ? "Approved planogram changes" : "Deferred planogram changes",
+                "Internal", stage3Start, stage3Duration, managerResult.Success ? "Success" : "Warning",
+                managerResult.TextSummary, activity?.TraceId.ToString(), null, new[] { storeId }, null, cancellationToken);
+
+            pipelineStages[2] = pipelineStages[2] with
+            {
+                Status = managerResult.Success ? "Completed" : "Failed",
+                Duration = stage3Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                ErrorMessage = managerResult.ErrorMessage
+            };
+
+            // Step 4: Synthesize final response
+            _logger.LogInformation("Step 4: Synthesizing store readiness response");
+
+            using var synthesizeActivity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "Synthesize");
+            synthesizeActivity?.SetTag("agent.result_count", results.Count);
+
+            var synthesizeStart = DateTimeOffset.UtcNow;
+            var executiveSummary = BuildStoreReadinessExecutiveSummary(storeId, section, openingDate, results);
+            var synthesizeDuration = DateTimeOffset.UtcNow - synthesizeStart;
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Decision,
+                $"Store readiness assessment complete for {storeId} section {section}",
+                rootStepId, (long)(DateTimeOffset.UtcNow - startTime).TotalMilliseconds, cancellationToken: cancellationToken);
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Synthesized store readiness response",
+                "AGUI", synthesizeStart, synthesizeDuration, "Success",
+                $"Generated executive summary with {results.Count} A2UI payloads",
+                activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            var duration = DateTimeOffset.UtcNow - startTime;
+
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration.TotalMilliseconds,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+            _logger.LogInformation("Store readiness workflow completed in {Duration}ms", duration.TotalMilliseconds);
+
+            var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+            var pipelineData = new AgentPipelineData
+            {
+                SessionId = sessionId,
+                WorkflowName = "StoreReadinessWorkflow",
+                Stages = pipelineStages,
+                OverallStatus = "Completed",
+                TotalDuration = duration,
+                StartedAt = startTime,
+                CompletedAt = DateTimeOffset.UtcNow
+            };
+
+            return new OrchestratorResult
+            {
+                Success = true,
+                ExecutiveSummary = executiveSummary,
+                AgentResults = results,
+                AuditTrailData = auditTrailData,
+                PipelineData = pipelineData,
+                InsightCards = BuildStoreReadinessInsightCards(storeId, section, openingDate, results),
+                Timestamp = DateTimeOffset.UtcNow,
+                WorkflowDuration = duration
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Store readiness workflow failed");
+
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Error,
+                $"Store readiness workflow failed: {ex.Message}", rootStepId, cancellationToken: cancellationToken);
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Store readiness workflow failed",
+                "AGUI", DateTimeOffset.UtcNow, TimeSpan.Zero, "Failed",
+                ex.Message, activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+            return await BuildStoreReadinessFailureResultAsync(sessionId, results, pipelineStages,
+                $"Store readiness orchestration error: {ex.Message}", startTime, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Orchestrates an ESG audit workflow: Compliance → Research → Procurement → Synthesis.
+    /// </summary>
+    public async Task<OrchestratorResult> ProcessESGAuditAsync(
+        string category,
+        string certRequired,
+        DateTimeOffset deadline,
+        CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+        var sessionId = $"session-{Guid.NewGuid():N}";
+
+        using var activity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "OrchestrateESGAudit");
+        activity?.SetTag("agent.name", "ChiefSoftwareArchitect");
+        activity?.SetTag("agent.protocol", "AGUI");
+        activity?.SetTag("agent.category", category);
+        activity?.SetTag("agent.certification", certRequired);
+        activity?.SetTag("agent.session_id", sessionId);
+
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+        _logger.LogInformation(
+            "Orchestrator starting ESG audit workflow: Category {Category}, Cert {Cert}, Deadline {Deadline}, SessionId {SessionId}",
+            category, certRequired, deadline, sessionId);
+
+        var results = new List<AgentResult>();
+        var pipelineStages = new List<PipelineStage>();
+
+        var rootStepId = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+            $"Auditing ESG compliance for {category} suppliers, {certRequired} certification required by {deadline:yyyy-MM-dd}",
+            cancellationToken: cancellationToken);
+
+        await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Initiated ESG audit workflow",
+            "AGUI", startTime, TimeSpan.Zero, "Success",
+            $"ESG audit for {category} ({certRequired}) deadline {deadline:yyyy-MM-dd}",
+            activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+        try
+        {
+            // Step 1: Compliance Analysis (ComplianceAgent)
+            _logger.LogInformation("Step 1: Delegating to ComplianceAgent for supplier certification analysis");
+
+            var step1Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to ComplianceAgent for supplier certification analysis", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "ComplianceAgent", ReasoningStepType.ToolCall,
+                $"Querying supplier certifications for {category}", step1Id, cancellationToken: cancellationToken);
+
+            var stage1Start = DateTimeOffset.UtcNow;
+            var step1Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 1,
+                AgentName = "ComplianceAgent",
+                StageName = "Compliance Analysis",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage1Start,
+                ToolsUsed = new[] { "GetSupplierCertifications" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "ComplianceAgent", true, cancellationToken);
+            var complianceResult = await _complianceAgent.ExecuteAsync(category, certRequired, deadline, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "ComplianceAgent", false, cancellationToken);
+            step1Sw.Stop();
+            results.Add(complianceResult);
+
+            await EmitTraceAsync(sessionId, "ComplianceAgent", ReasoningStepType.Observation,
+                $"Received {(complianceResult.Success ? "compliance analysis" : "analysis failure")} from ComplianceAgent",
+                step1Id, step1Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
+            await RecordAuditEntryAsync(sessionId, "ComplianceAgent", "Analyzed supplier certifications",
+                "MCP", stage1Start, stage1Duration, complianceResult.Success ? "Success" : "Failed",
+                complianceResult.TextSummary, activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            pipelineStages[0] = pipelineStages[0] with
+            {
+                Status = complianceResult.Success ? "Completed" : "Failed",
+                Duration = stage1Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = complianceResult.A2UIPayload != null ? new[] { "SupplierRiskMatrix" } : null,
+                ErrorMessage = complianceResult.ErrorMessage
+            };
+
+            if (!complianceResult.Success)
+            {
+                _logger.LogWarning("ComplianceAgent failed - aborting workflow");
+                return await BuildESGAuditFailureResultAsync(sessionId, results, pipelineStages,
+                    "Failed to analyze supplier compliance", startTime, cancellationToken);
+            }
+
+            // Step 2: Sustainability Research (ResearchAgent)
+            _logger.LogInformation("Step 2: Delegating to ResearchAgent for sustainability watchlist cross-reference");
+
+            var step2Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to ResearchAgent for sustainability watchlist research", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "ResearchAgent", ReasoningStepType.ToolCall,
+                $"Cross-referencing {category} suppliers against watchlists", step2Id, cancellationToken: cancellationToken);
+
+            var stage2Start = DateTimeOffset.UtcNow;
+            var step2Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 2,
+                AgentName = "ResearchAgent",
+                StageName = "Sustainability Research",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage2Start,
+                ToolsUsed = new[] { "GetSustainabilityWatchlist" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "ResearchAgent", true, cancellationToken);
+            var researchResult = await _researchAgent.ExecuteAsync(category, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "ResearchAgent", false, cancellationToken);
+            step2Sw.Stop();
+            results.Add(researchResult);
+
+            await EmitTraceAsync(sessionId, "ResearchAgent", ReasoningStepType.Observation,
+                $"Received {(researchResult.Success ? "watchlist findings" : "research failure")} from ResearchAgent",
+                step2Id, step2Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage2Duration = DateTimeOffset.UtcNow - stage2Start;
+            await RecordAuditEntryAsync(sessionId, "ResearchAgent", "Cross-referenced sustainability watchlists",
+                "MCP", stage2Start, stage2Duration, researchResult.Success ? "Success" : "Failed",
+                researchResult.TextSummary, activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            pipelineStages[1] = pipelineStages[1] with
+            {
+                Status = researchResult.Success ? "Completed" : "Failed",
+                Duration = stage2Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                ErrorMessage = researchResult.ErrorMessage
+            };
+
+            if (!researchResult.Success)
+            {
+                _logger.LogWarning("ResearchAgent failed - continuing with partial data");
+            }
+
+            // Step 3: Procurement Alternatives (ProcurementAgent)
+            _logger.LogInformation("Step 3: Delegating to ProcurementAgent for alternative supplier identification");
+
+            var step3Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to ProcurementAgent for alternative supplier identification", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "ProcurementAgent", ReasoningStepType.ToolCall,
+                $"Finding alternative {certRequired}-certified {category} suppliers", step3Id, cancellationToken: cancellationToken);
+
+            var stage3Start = DateTimeOffset.UtcNow;
+            var step3Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 3,
+                AgentName = "ProcurementAgent",
+                StageName = "Procurement Alternatives",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage3Start,
+                ToolsUsed = new[] { "GetAlternativeSuppliers" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "ProcurementAgent", true, cancellationToken);
+            var procurementResult = await _procurementAgent.ExecuteAsync(category, certRequired, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "ProcurementAgent", false, cancellationToken);
+            step3Sw.Stop();
+            results.Add(procurementResult);
+
+            await EmitTraceAsync(sessionId, "ProcurementAgent", ReasoningStepType.Observation,
+                $"Received {(procurementResult.Success ? "procurement alternatives" : "procurement failure")} from ProcurementAgent",
+                step3Id, step3Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage3Duration = DateTimeOffset.UtcNow - stage3Start;
+            await RecordAuditEntryAsync(sessionId, "ProcurementAgent", "Identified alternative suppliers",
+                "MCP", stage3Start, stage3Duration, procurementResult.Success ? "Success" : "Failed",
+                procurementResult.TextSummary, activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            pipelineStages[2] = pipelineStages[2] with
+            {
+                Status = procurementResult.Success ? "Completed" : "Failed",
+                Duration = stage3Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                ErrorMessage = procurementResult.ErrorMessage
+            };
+
+            // Step 4: Synthesize final response
+            _logger.LogInformation("Step 4: Synthesizing ESG audit response");
+
+            using var synthesizeActivity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "Synthesize");
+            synthesizeActivity?.SetTag("agent.result_count", results.Count);
+
+            var synthesizeStart = DateTimeOffset.UtcNow;
+            var executiveSummary = BuildESGAuditExecutiveSummary(category, certRequired, deadline, results);
+            var synthesizeDuration = DateTimeOffset.UtcNow - synthesizeStart;
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Decision,
+                $"ESG audit complete for {category} ({certRequired}). Recommending supplier remediation actions.",
+                rootStepId, (long)(DateTimeOffset.UtcNow - startTime).TotalMilliseconds, cancellationToken: cancellationToken);
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Synthesized ESG audit response",
+                "AGUI", synthesizeStart, synthesizeDuration, "Success",
+                $"Generated executive summary with {results.Count} A2UI payloads",
+                activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            var duration = DateTimeOffset.UtcNow - startTime;
+
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration.TotalMilliseconds,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+            _logger.LogInformation("ESG audit workflow completed in {Duration}ms", duration.TotalMilliseconds);
+
+            var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+            var pipelineData = new AgentPipelineData
+            {
+                SessionId = sessionId,
+                WorkflowName = "ESGAuditWorkflow",
+                Stages = pipelineStages,
+                OverallStatus = "Completed",
+                TotalDuration = duration,
+                StartedAt = startTime,
+                CompletedAt = DateTimeOffset.UtcNow
+            };
+
+            return new OrchestratorResult
+            {
+                Success = true,
+                ExecutiveSummary = executiveSummary,
+                AgentResults = results,
+                AuditTrailData = auditTrailData,
+                PipelineData = pipelineData,
+                InsightCards = BuildESGAuditInsightCards(category, certRequired, deadline, results),
+                Timestamp = DateTimeOffset.UtcNow,
+                WorkflowDuration = duration
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "ESG audit workflow failed");
+
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Error,
+                $"ESG audit workflow failed: {ex.Message}", rootStepId, cancellationToken: cancellationToken);
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "ESG audit workflow failed",
+                "AGUI", DateTimeOffset.UtcNow, TimeSpan.Zero, "Failed",
+                ex.Message, activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+            return await BuildESGAuditFailureResultAsync(sessionId, results, pipelineStages,
+                $"ESG audit orchestration error: {ex.Message}", startTime, cancellationToken);
+        }
+    }
+
+    private static string BuildStoreReadinessExecutiveSummary(
+        string storeId, string section, DateTimeOffset openingDate, List<AgentResult> results)
+    {
+        var summary = $"## Store Readiness Assessment for {storeId}\n\n";
+        summary += $"**Section:** {section}\n";
+        summary += $"**Opening Date:** {openingDate:yyyy-MM-dd}\n\n";
+
+        foreach (var result in results)
+        {
+            summary += $"{result.TextSummary}\n\n";
+        }
+
+        summary += $"**Recommendation:** Review traffic analysis and merchandising optimizations above. " +
+                   $"Manager approval has been obtained. Proceed with planogram implementation before {openingDate:yyyy-MM-dd}.";
+
+        return summary;
+    }
+
+    private static IReadOnlyList<InsightCardData> BuildStoreReadinessInsightCards(
+        string storeId, string section, DateTimeOffset openingDate, List<AgentResult> results)
+    {
+        try
+        {
+            var cards = new List<InsightCardData>();
+            var daysUntilOpening = (int)(openingDate - DateTimeOffset.UtcNow).TotalDays;
+
+            cards.Add(new InsightCardData
+            {
+                Title = "Opening Countdown",
+                KeyMetric = $"{daysUntilOpening} days",
+                MetricLabel = "until store opening",
+                TrendDirection = daysUntilOpening < 14 ? "down" : "neutral",
+                Summary = $"Store {storeId} section {section} opening in {daysUntilOpening} days. Traffic analysis and planogram optimization complete.",
+                Severity = daysUntilOpening < 7 ? "critical" : daysUntilOpening < 14 ? "warning" : "info"
+            });
+
+            var managerResult = results.LastOrDefault(r => r.TextSummary.Contains("Approved", StringComparison.OrdinalIgnoreCase)
+                                                        || r.TextSummary.Contains("Deferred", StringComparison.OrdinalIgnoreCase));
+            var approved = managerResult?.Success ?? false;
+            cards.Add(new InsightCardData
+            {
+                Title = "Manager Approval",
+                KeyMetric = approved ? "Approved" : "Pending",
+                MetricLabel = "planogram changes status",
+                TrendDirection = approved ? "up" : "down",
+                Summary = managerResult?.TextSummary ?? "Manager review pending for planogram changes.",
+                Severity = approved ? "success" : "warning"
+            });
+
+            var allSucceeded = results.All(r => r.Success);
+            cards.Add(new InsightCardData
+            {
+                Title = "Readiness Score",
+                KeyMetric = allSucceeded ? "95%" : "72%",
+                MetricLabel = "store readiness",
+                TrendDirection = "up",
+                Summary = $"Store readiness assessment complete with {(allSucceeded ? "full" : "partial")} data from {results.Count} agents. Section {section} is {(allSucceeded ? "ready" : "needs attention")}.",
+                ActionLabel = "View Floorplan",
+                Severity = allSucceeded ? "success" : "warning"
+            });
+
+            return cards;
+        }
+        catch
+        {
+            return Array.Empty<InsightCardData>();
+        }
+    }
+
+    private async Task<OrchestratorResult> BuildStoreReadinessFailureResultAsync(
+        string sessionId,
+        List<AgentResult> results,
+        List<PipelineStage> stages,
+        string errorMessage,
+        DateTimeOffset startTime,
+        CancellationToken cancellationToken)
+    {
+        var duration = DateTimeOffset.UtcNow - startTime;
+        var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+        var pipelineData = new AgentPipelineData
+        {
+            SessionId = sessionId,
+            WorkflowName = "StoreReadinessWorkflow",
+            Stages = stages,
+            OverallStatus = "Failed",
+            TotalDuration = duration,
+            StartedAt = startTime,
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+
+        return new OrchestratorResult
+        {
+            Success = false,
+            ExecutiveSummary = $"Store readiness workflow failed: {errorMessage}",
+            AgentResults = results,
+            AuditTrailData = auditTrailData,
+            PipelineData = pipelineData,
+            ErrorMessage = errorMessage,
+            Timestamp = DateTimeOffset.UtcNow,
+            WorkflowDuration = duration
+        };
+    }
+
+    private static string BuildESGAuditExecutiveSummary(
+        string category, string certRequired, DateTimeOffset deadline, List<AgentResult> results)
+    {
+        var summary = $"## ESG Audit Report for {category}\n\n";
+        summary += $"**Certification Required:** {certRequired}\n";
+        summary += $"**Compliance Deadline:** {deadline:yyyy-MM-dd}\n\n";
+
+        foreach (var result in results)
+        {
+            summary += $"{result.TextSummary}\n\n";
+        }
+
+        summary += $"**Recommendation:** Address non-compliant and at-risk suppliers before {deadline:yyyy-MM-dd}. " +
+                   $"Engage alternative suppliers identified by the procurement team for seamless transition.";
+
+        return summary;
+    }
+
+    private static IReadOnlyList<InsightCardData> BuildESGAuditInsightCards(
+        string category, string certRequired, DateTimeOffset deadline, List<AgentResult> results)
+    {
+        try
+        {
+            var cards = new List<InsightCardData>();
+            var daysUntilDeadline = (int)(deadline - DateTimeOffset.UtcNow).TotalDays;
+
+            var complianceResult = results.FirstOrDefault(r => r.TextSummary.Contains("non-compliant", StringComparison.OrdinalIgnoreCase)
+                                                            || r.TextSummary.Contains("compliant", StringComparison.OrdinalIgnoreCase));
+            var nonCompliantMatch = complianceResult != null
+                ? System.Text.RegularExpressions.Regex.Match(complianceResult.TextSummary, @"(\d+) non-compliant")
+                : System.Text.RegularExpressions.Regex.Match("", @".");
+            var nonCompliantCount = nonCompliantMatch.Success ? int.Parse(nonCompliantMatch.Groups[1].Value) : 0;
+
+            cards.Add(new InsightCardData
+            {
+                Title = "Compliance Status",
+                KeyMetric = nonCompliantCount > 0 ? $"{nonCompliantCount} violations" : "Compliant",
+                MetricLabel = $"{category} supplier compliance",
+                TrendDirection = nonCompliantCount > 0 ? "down" : "up",
+                Summary = complianceResult?.TextSummary ?? $"Compliance analysis for {category} ({certRequired}) in progress.",
+                Severity = nonCompliantCount > 2 ? "critical" : nonCompliantCount > 0 ? "warning" : "success"
+            });
+
+            cards.Add(new InsightCardData
+            {
+                Title = "Deadline Pressure",
+                KeyMetric = $"{daysUntilDeadline} days",
+                MetricLabel = "until compliance deadline",
+                TrendDirection = daysUntilDeadline < 30 ? "down" : "neutral",
+                Summary = $"{certRequired} certification deadline is {deadline:yyyy-MM-dd}. {(daysUntilDeadline < 30 ? "Urgent action required." : "Adequate time for remediation.")}",
+                Severity = daysUntilDeadline < 14 ? "critical" : daysUntilDeadline < 30 ? "warning" : "info"
+            });
+
+            var allSucceeded = results.All(r => r.Success);
+            cards.Add(new InsightCardData
+            {
+                Title = "Remediation Plan",
+                KeyMetric = allSucceeded ? "Ready" : "Partial",
+                MetricLabel = "action plan status",
+                TrendDirection = "up",
+                Summary = $"ESG audit complete with {(allSucceeded ? "full" : "partial")} data from {results.Count} agents. Alternative suppliers identified for non-compliant sources.",
+                ActionLabel = "View Risk Matrix",
+                Severity = allSucceeded ? "success" : "warning"
+            });
+
+            return cards;
+        }
+        catch
+        {
+            return Array.Empty<InsightCardData>();
+        }
+    }
+
+    private async Task<OrchestratorResult> BuildESGAuditFailureResultAsync(
+        string sessionId,
+        List<AgentResult> results,
+        List<PipelineStage> stages,
+        string errorMessage,
+        DateTimeOffset startTime,
+        CancellationToken cancellationToken)
+    {
+        var duration = DateTimeOffset.UtcNow - startTime;
+        var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+        var pipelineData = new AgentPipelineData
+        {
+            SessionId = sessionId,
+            WorkflowName = "ESGAuditWorkflow",
+            Stages = stages,
+            OverallStatus = "Failed",
+            TotalDuration = duration,
+            StartedAt = startTime,
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+
+        return new OrchestratorResult
+        {
+            Success = false,
+            ExecutiveSummary = $"ESG audit workflow failed: {errorMessage}",
             AgentResults = results,
             AuditTrailData = auditTrailData,
             PipelineData = pipelineData,

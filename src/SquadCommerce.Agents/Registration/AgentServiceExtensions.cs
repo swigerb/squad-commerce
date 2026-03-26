@@ -47,9 +47,44 @@ public static class AgentServiceExtensions
         services.AddScoped<ViralSpikeMarketingExecutor>();
         services.AddScoped<ViralSpikeSynthesisExecutor>();
 
+        // Register domain agents (Supply Chain Shock)
+        services.AddScoped<LogisticsAgent>();
+        services.AddScoped<RedistributionAgent>();
+
+        // Register domain agents (Store Readiness)
+        services.AddScoped<TrafficAnalystAgent>();
+        services.AddScoped<MerchandisingAgent>();
+        services.AddScoped<ManagerAgent>();
+
+        // Register domain agents (ESG Audit)
+        services.AddScoped<ComplianceAgent>();
+        services.AddScoped<ResearchAgent>();
+        services.AddScoped<ProcurementAgent>();
+
+        // Register MAF executor wrappers (Supply Chain Shock workflow)
+        services.AddScoped<LogisticsExecutor>();
+        services.AddScoped<SupplyChainInventoryExecutor>();
+        services.AddScoped<RedistributionExecutor>();
+        services.AddScoped<SupplyChainSynthesisExecutor>();
+
+        // Register MAF executor wrappers (Store Readiness workflow)
+        services.AddScoped<TrafficExecutor>();
+        services.AddScoped<MerchandisingExecutor>();
+        services.AddScoped<ManagerHitlExecutor>();
+        services.AddScoped<StoreReadinessSynthesisExecutor>();
+
+        // Register MAF executor wrappers (ESG Audit workflow)
+        services.AddScoped<ComplianceExecutor>();
+        services.AddScoped<ResearchExecutor>();
+        services.AddScoped<ProcurementExecutor>();
+        services.AddScoped<ESGSynthesisExecutor>();
+
         // Register MAF workflows (depend on executors)
         services.AddScoped<RetailWorkflow>();
         services.AddScoped<ViralSpikeWorkflow>();
+        services.AddScoped<SupplyChainWorkflow>();
+        services.AddScoped<StoreReadinessWorkflow>();
+        services.AddScoped<ESGAuditWorkflow>();
 
         return services;
     }

@@ -1,0 +1,309 @@
+@using SquadCommerce.Contracts.A2UI
+@using System.Text.Json
+@using System.Globalization
+
+<div class="rerouting-wrapper" role="region" aria-label="Supply Chain Rerouting Map for @(_data?.Sku ?? "product")">
+    @if (_data != null)
+    {
+        <div class="rerouting-title-bar">
+            <div class="title-left">
+                <h3 class="rerouting-title">🚚 Supply Chain Rerouting — <span class="sku-accent">@_data.Sku</span></h3>
+                <ProtocolBadge Protocol="A2A" />
+            </div>
+            <span class="rerouting-ts">@_data.Timestamp.ToString("g")</span>
+        </div>
+
+        @* Hero alert banner *@
+        <div class="alert-banner @GetAlertClass()">
+            <span class="alert-icon">⚠️</span>
+            <span class="alert-text">
+                <strong>@_data.DelayDays-day delay</strong> due to <em>@_data.DelayReason</em>
+            </span>
+        </div>
+
+        @* Risk score gauge + route summary top row *@
+        <div class="top-metrics">
+            <div class="gauge-card" style="animation-delay: 0s">
+                <span class="gauge-label">OVERALL RISK</span>
+                <div class="risk-gauge-container">
+                    <svg class="risk-gauge-svg" viewBox="0 0 120 120" aria-hidden="true">
+                        <circle class="gauge-track-ring" cx="60" cy="60" r="50" />
+                        <circle class="gauge-fill-ring @GetRiskColorClass()"
+                                cx="60" cy="60" r="50"
+                                style="stroke-dasharray: @GaugeCircumference.ToString(CultureInfo.InvariantCulture);
+                                       stroke-dashoffset: @GetGaugeOffset().ToString(CultureInfo.InvariantCulture)" />
+                    </svg>
+                    <div class="gauge-center-text">
+                        <span class="gauge-percent @GetRiskColorClass()">@((_data.OverallRiskScore * 100).ToString("0"))%</span>
+                        <span class="gauge-sub">risk</span>
+                    </div>
+                </div>
+            </div>
+            <div class="metric-summary-card" style="animation-delay: 0.1s">
+                <div class="summary-stat">
+                    <span class="stat-value">@GetTotalUnits().ToString("N0")</span>
+                    <span class="stat-label">Units Rerouting</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-value">@_data.Routes.Count</span>
+                    <span class="stat-label">Active Routes</span>
+                </div>
+                <div class="summary-stat">
+                    <span class="stat-value">@_data.DelayDays</span>
+                    <span class="stat-label">Delay Days</span>
+                </div>
+            </div>
+        </div>
+
+        @* SVG store network map *@
+        <div class="network-section">
+            <h4 class="section-heading">Store Network</h4>
+            <div class="svg-container">
+                <svg class="network-svg" viewBox="0 0 800 400" preserveAspectRatio="xMidYMid meet"
+                     role="img" aria-label="Store network rerouting diagram">
+                    <defs>
+                        <filter id="rm-glow-red">
+                            <feGaussianBlur stdDeviation="4" result="blur" />
+                            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                        </filter>
+                        <filter id="rm-glow-amber">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                        </filter>
+                        <filter id="rm-glow-blue">
+                            <feGaussianBlur stdDeviation="2" result="blur" />
+                            <feMerge><feMergeNode in="blur" /><feMergeNode in="SourceGraphic" /></feMerge>
+                        </filter>
+                        @foreach (var route in _data.Routes)
+                        {
+                            var arrowId = $"arrow-{route.SourceStoreId}-{route.DestStoreId}";
+                            <marker id="@arrowId" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+                                <polygon points="0 0, 8 3, 0 6" fill="@GetPriorityColor(route.Priority)" />
+                            </marker>
+                        }
+                    </defs>
+
+                    @* Draw route arrows *@
+                    @{ var routeIdx = 0; }
+                    @foreach (var route in _data.Routes)
+                    {
+                        var src = GetStorePosition(route.SourceStoreId, true);
+                        var dst = GetStorePosition(route.DestStoreId, false);
+                        var arrowId = $"arrow-{route.SourceStoreId}-{route.DestStoreId}";
+                        var thickness = Math.Clamp(route.UnitsToTransfer / 50.0, 1.5, 6.0);
+                        var midX = (src.x + dst.x) / 2;
+                        var midY = (src.y + dst.y) / 2 - 20 - (routeIdx * 8 % 30);
+
+                        <path class="route-arrow route-arrow-@(route.Priority.ToLowerInvariant())"
+                              d="M @src.x.ToString(CultureInfo.InvariantCulture) @src.y.ToString(CultureInfo.InvariantCulture) Q @midX.ToString(CultureInfo.InvariantCulture) @midY.ToString(CultureInfo.InvariantCulture) @dst.x.ToString(CultureInfo.InvariantCulture) @dst.y.ToString(CultureInfo.InvariantCulture)"
+                              stroke="@GetPriorityColor(route.Priority)"
+                              stroke-width="@thickness.ToString(CultureInfo.InvariantCulture)"
+                              fill="none"
+                              marker-end="url(#@arrowId)"
+                              style="animation-delay: @((routeIdx * 0.3).ToString(CultureInfo.InvariantCulture))s" />
+
+                        @SvgLabel(midX, midY - 6, "route-label", $"{route.UnitsToTransfer} units, ~{route.EstimatedHours}h")
+                        routeIdx++;
+                    }
+
+                    @* Draw store nodes *@
+                    @foreach (var store in GetUniqueStores())
+                    {
+                        var pos = GetStoreNodePosition(store.Id, store.IsSource);
+                        <g class="store-node" style="animation-delay: @((store.Index * 0.1).ToString(CultureInfo.InvariantCulture))s">
+                            <circle cx="@pos.x.ToString(CultureInfo.InvariantCulture)"
+                                    cy="@pos.y.ToString(CultureInfo.InvariantCulture)"
+                                    r="28"
+                                    class="store-circle @(store.IsSource ? "store-source" : "store-dest")" />
+                            @SvgLabel(pos.x, pos.y - 4, "store-label-text", TruncateName(store.Name, 10))
+                            @SvgLabel(pos.x, pos.y + 12, "store-id-text", store.Id)
+                        </g>
+                    }
+                </svg>
+            </div>
+        </div>
+
+        @* Route summary table *@
+        <div class="route-table-section">
+            <h4 class="section-heading">Route Details</h4>
+            <div class="table-scroll">
+                <table class="route-table" role="grid" aria-label="Rerouting routes">
+                    <thead>
+                        <tr>
+                            <th>Source</th>
+                            <th>Destination</th>
+                            <th>Units</th>
+                            <th>Priority</th>
+                            <th>Distance</th>
+                            <th>ETA</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @{ var rIdx = 0; }
+                        @foreach (var route in _data.Routes)
+                        {
+                            <tr style="animation-delay: @((rIdx * 0.08).ToString(CultureInfo.InvariantCulture))s" class="table-row-enter">
+                                <td class="store-cell">@route.SourceStoreName</td>
+                                <td class="store-cell">@route.DestStoreName</td>
+                                <td class="units-cell">@route.UnitsToTransfer.ToString("N0")</td>
+                                <td>
+                                    <span class="priority-pill priority-@(route.Priority.ToLowerInvariant())">@route.Priority</span>
+                                </td>
+                                <td class="dist-cell">@route.DistanceMiles.ToString("0.0") mi</td>
+                                <td class="eta-cell">~@(route.EstimatedHours)h</td>
+                            </tr>
+                            rIdx++;
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        @* Summary footer *@
+        <div class="rerouting-footer">
+            <span class="footer-summary">
+                Total <strong>@GetTotalUnits().ToString("N0")</strong> units being rerouted across
+                <strong>@_data.Routes.Count</strong> routes • Product: <strong>@_data.ProductName</strong>
+            </span>
+        </div>
+    }
+    else
+    {
+        <div class="no-data">Loading rerouting data…</div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Payload { get; set; }
+
+    private ReroutingMapData? _data;
+    private const double GaugeCircumference = 2 * Math.PI * 50; // ~314.16
+
+    protected override void OnParametersSet()
+    {
+        if (Payload?.Data != null)
+        {
+            if (Payload.Data is JsonElement jsonElement)
+            {
+                _data = JsonSerializer.Deserialize<ReroutingMapData>(
+                    jsonElement.GetRawText(),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            else if (Payload.Data is ReroutingMapData typedData)
+            {
+                _data = typedData;
+            }
+        }
+    }
+
+    private int GetTotalUnits() => _data?.Routes.Sum(r => r.UnitsToTransfer) ?? 0;
+
+    private string GetAlertClass() => _data?.DelayDays switch
+    {
+        >= 5 => "alert-critical",
+        >= 3 => "alert-high",
+        _ => "alert-moderate"
+    };
+
+    private string GetRiskColorClass()
+    {
+        if (_data == null) return "risk-low";
+        return _data.OverallRiskScore switch
+        {
+            > 0.7 => "risk-high",
+            > 0.3 => "risk-medium",
+            _ => "risk-low"
+        };
+    }
+
+    private double GetGaugeOffset()
+    {
+        if (_data == null) return GaugeCircumference;
+        var filled = GaugeCircumference * Math.Clamp(_data.OverallRiskScore, 0, 1);
+        return GaugeCircumference - filled;
+    }
+
+    private string GetPriorityColor(string priority) => priority.ToLowerInvariant() switch
+    {
+        "critical" => "#f85149",
+        "high" => "#d29922",
+        "medium" => "#58a6ff",
+        "low" => "#8b949e",
+        _ => "#58a6ff"
+    };
+
+    // Position source stores on the left, destination stores on the right
+    private readonly Dictionary<string, (double x, double y)> _storePositionCache = new();
+
+    private (double x, double y) GetStorePosition(string storeId, bool isSource)
+    {
+        var key = $"{storeId}-{isSource}";
+        if (_storePositionCache.TryGetValue(key, out var cached))
+            return cached;
+
+        var stores = GetUniqueStores();
+        var store = stores.FirstOrDefault(s => s.Id == storeId && s.IsSource == isSource);
+        if (store == null)
+            store = stores.FirstOrDefault(s => s.Id == storeId);
+
+        var pos = store != null ? GetStoreNodePosition(store.Id, store.IsSource) : (x: 400.0, y: 200.0);
+        _storePositionCache[key] = pos;
+        return pos;
+    }
+
+    private (double x, double y) GetStoreNodePosition(string storeId, bool isSource)
+    {
+        var stores = GetUniqueStores();
+        var group = stores.Where(s => s.IsSource == isSource).ToList();
+        var idx = group.FindIndex(s => s.Id == storeId);
+        if (idx < 0) idx = 0;
+
+        var count = Math.Max(group.Count, 1);
+        var baseX = isSource ? 120.0 : 680.0;
+        var spacing = 300.0 / Math.Max(count, 1);
+        var baseY = 80.0 + idx * spacing;
+
+        return (baseX, Math.Min(baseY, 360));
+    }
+
+    private record StoreInfo(string Id, string Name, bool IsSource, int Index);
+    private List<StoreInfo>? _uniqueStoresCache;
+
+    private List<StoreInfo> GetUniqueStores()
+    {
+        if (_uniqueStoresCache != null) return _uniqueStoresCache;
+        var stores = new List<StoreInfo>();
+        var seen = new HashSet<string>();
+        int idx = 0;
+
+        if (_data?.Routes != null)
+        {
+            foreach (var r in _data.Routes)
+            {
+                var srcKey = $"{r.SourceStoreId}-src";
+                if (seen.Add(srcKey))
+                    stores.Add(new StoreInfo(r.SourceStoreId, r.SourceStoreName, true, idx++));
+            }
+            foreach (var r in _data.Routes)
+            {
+                var dstKey = $"{r.DestStoreId}-dst";
+                if (seen.Add(dstKey))
+                    stores.Add(new StoreInfo(r.DestStoreId, r.DestStoreName, false, idx++));
+            }
+        }
+
+        _uniqueStoresCache = stores;
+        return stores;
+    }
+
+    private string TruncateName(string name, int maxLen)
+        => name.Length <= maxLen ? name : name[..(maxLen - 1)] + "…";
+
+    private MarkupString SvgLabel(double x, double y, string cssClass, string content, string? fill = null, string anchor = "middle")
+    {
+        var fillAttr = fill != null ? $" fill=\"{System.Net.WebUtility.HtmlEncode(fill)}\"" : "";
+        return new MarkupString(
+            $"<text x=\"{x.ToString(CultureInfo.InvariantCulture)}\" y=\"{y.ToString(CultureInfo.InvariantCulture)}\" class=\"{cssClass}\" text-anchor=\"{anchor}\"{fillAttr}>{System.Net.WebUtility.HtmlEncode(content)}</text>");
+    }
+}
