@@ -46,3 +46,14 @@ Lead architect for squad-commerce. This project is a Microsoft showcase of excel
 - **OTLP exporter:** Both use OpenTelemetry; squad-commerce auto-detects (gracefully no-ops if endpoint missing), reference uses explicit URI. Functionally equivalent for local dev.
 - **Decision:** No changes needed. Current architecture is optimal. Developers run `dotnet run --project src/SquadCommerce.AppHost` and get Dashboard at `http://localhost:15902` automatically.
 - **Decision doc:** `.squad/decisions/inbox/bill-gates-aspire-local.md` — approved and ready for team consensus
+
+### 2026-03-26: Agentic Command Center UI Plan — Decomposed
+- **Decision doc:** `.squad/decisions/inbox/bill-gates-ui-command-center-plan.md` — 26 work items across 3 phases
+- **5 pillars decomposed:** Fleet Pulse, Chain of Thought, A2UI Retail, Command Center Aesthetic, Pipeline View
+- **Phase 1 (8 items, demo-ready in 1 session):** Fluent UI install + dark theme, MainLayout conversion, glassmorphism card system, agent persona avatars, A2UI polish, pipeline animation, SignalR thinking-state events, thinking-state UI integration
+- **Phase 2 (10 items, core experience):** Agent Fleet Panel, CoT data model + panel + timeline, CMD+K palette, HITL Fluent upgrade, telemetry dashboard, orchestrator ReasoningTrace instrumentation, A2A status tracking, E2E tests
+- **Phase 3 (8 items, wow factor):** Interactive node-graph pipeline (XL), A2A handshake animations, live charts, keyboard shortcuts, generative insight cards, audio cues, responsive layout, perf testing
+- **Critical path insight:** Item 2.2 (ReasoningTrace data model) is the highest-leverage backend work — CoT, pipeline viz, and insight cards all depend on it
+- **Key decision:** Fluent UI Blazor over custom design system; no heavy JS charting until Phase 3; SignalR for push state, SSE for streaming text
+- **Existing assets leveraged:** 5 A2UI components, AgentStatusBar, ApprovalPanel, 8 OpenTelemetry metrics, SignalR hub — all reused, not replaced
+- **Owner split:** Clippy (18 items — all UI), Anders (3 items — backend/SignalR), Satya (2 items — agent integration), Steve (2 items — testing)

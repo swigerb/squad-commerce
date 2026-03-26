@@ -307,3 +307,59 @@ In .NET 10 Blazor, without an explicit render mode, components render as **stati
 In .NET 10 Blazor with per-page/component render modes, ANY interactive component that lives in a layout MUST have the render mode set at or above the Routes level. Setting it only on individual pages does NOT propagate to layout components. This is the single most common "dead button" bug in Blazor apps.
 
 **Build status:** ✅ Clean build (0 warnings, 0 errors). All 13 Web unit tests pass.
+
+### 2026-03-26: Phase 1 Items 1.1 + 1.3 + 1.4 — Agentic Command Center Visual Overhaul
+
+**What was done:**
+
+- **Item 1.1 — Fluent UI Blazor + Dark Theme:**
+  - Added `Microsoft.FluentUI.AspNetCore.Components` v4.14.0 NuGet package
+  - Registered `AddFluentUIComponents()` in Program.cs with proper using directive
+  - Added Fluent UI reboot CSS in App.razor `<head>`
+  - Added `@using Microsoft.FluentUI.AspNetCore.Components` to `_Imports.razor`
+  - Wrapped `<Routes>` in `<FluentDesignSystemProvider BaseLayerLuminance="0.1f">` for dark mode
+  - Added Fluent UI web components JS script in App.razor
+  - Applied `dark-theme` CSS class to `<body>` with `#0d1117` background
+  - Converted sidebar, content areas, header from light (#f8f9fa/white) to dark theme colors (#161b22, #1c2128, #0d1117)
+  - Updated header gradient from solid to subtle translucent overlay
+
+- **Item 1.3 — Glassmorphism Card System:**
+  - Created `Components/Layout/CommandCard.razor` shared component with `Title`, `CssClass`, and `ChildContent` parameters
+  - Created `CommandCard.razor.css` scoped CSS with glassmorphism effect: `backdrop-filter: blur(20px)`, semi-transparent background, subtle border glow on hover
+  - Updated `Home.razor` to wrap action cards section, features section, and tech stack in CommandCard components
+  - All inner cards (action-card, feature-item, tech-badge) restyled for dark theme with translucent backgrounds
+
+- **Item 1.4 — Agent Persona Avatars + Thinking Animation:**
+  - Added 4 agent personas to AgentStatusBar: 🏗️ Orchestrator, 📦 Inventory, 💰 Pricing, 📊 Market Intel
+  - Added `IsAgentActive()` method that maps status message keywords to active agents
+  - Active agents get highlighted with indigo border glow and elevated brightness
+  - Added CSS-animated thinking dots (3 bouncing dots with staggered animation-delay) that appear on active agents
+  - Personas shown as pill-shaped badges in the header bar
+
+**Key patterns:**
+- `FluentDesignSystemProvider` with `BaseLayerLuminance="0.1f"` sets Fluent UI to dark mode
+- Glassmorphism uses `rgba(255,255,255,0.05)` background + `backdrop-filter: blur(20px)` + translucent borders
+- Agent activity detection uses keyword matching on status messages (e.g., "inventory" → InventoryAgent active)
+- `@@keyframes` (double @) required in Blazor `<style>` blocks for CSS animations
+- Scoped CSS on CommandCard means the glassmorphism styles are automatically isolated
+
+**Dark theme color palette:**
+- Background: `#0d1117` (GitHub dark)
+- Surface: `#161b22` (sidebar), `#1c2128` (headers)
+- Text: `#e6edf3` (primary), `rgba(255,255,255,0.5)` (secondary)
+- Accent: `#667eea` (indigo), `#764ba2` (purple)
+- Borders: `rgba(255,255,255,0.08)` (subtle), `rgba(102,126,234,0.3)` (accent)
+
+**Build status:** ✅ Clean build, 0 errors. All 67 unit tests pass (13 Web + 30 MCP + 24 A2A). Playwright tests are pre-existing failures (require browser environment).
+
+**Files changed:**
+- `src/SquadCommerce.Web/SquadCommerce.Web.csproj` — Added Fluent UI NuGet package
+- `src/SquadCommerce.Web/Program.cs` — Added `using` + `AddFluentUIComponents()`
+- `src/SquadCommerce.Web/Components/App.razor` — Fluent UI CSS, FluentDesignSystemProvider, dark body class, JS script
+- `src/SquadCommerce.Web/Components/_Imports.razor` — Added Fluent UI using
+- `src/SquadCommerce.Web/Components/Layout/CommandCard.razor` — NEW glassmorphism card component
+- `src/SquadCommerce.Web/Components/Layout/CommandCard.razor.css` — NEW scoped CSS
+- `src/SquadCommerce.Web/Components/Layout/MainLayout.razor.css` — Dark error UI
+- `src/SquadCommerce.Web/Components/Chat/AgentStatusBar.razor` — Agent personas + thinking dots
+- `src/SquadCommerce.Web/Components/Pages/Home.razor` — CommandCard wrappers + dark theme restyling
+- `src/SquadCommerce.Web/wwwroot/app.css` — Dark theme base colors, removed broken squad-commerce.css import

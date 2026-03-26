@@ -7,6 +7,7 @@
     <base href="/" />
     <ResourcePreloader />
     <link rel="stylesheet" href="@Assets["lib/bootstrap/dist/css/bootstrap.min.css"]" />
+    <link rel="stylesheet" href="@Assets["_content/Microsoft.FluentUI.AspNetCore.Components/css/reboot.css"]" />
     <link rel="stylesheet" href="@Assets["app.css"]" />
     <link rel="stylesheet" href="@Assets["SquadCommerce.Web.styles.css"]" />
     <ImportMap />
@@ -14,10 +15,13 @@
     <HeadOutlet />
 </head>
 
-<body>
-    <Routes @rendermode="InteractiveServer" />
-    <ReconnectModal />
+<body class="dark-theme">
+    <FluentDesignSystemProvider BaseLayerLuminance="0.1f">
+        <Routes @rendermode="InteractiveServer" />
+        <ReconnectModal />
+    </FluentDesignSystemProvider>
     <script src="@Assets["_framework/blazor.web.js"]"></script>
+    <script src="_content/Microsoft.FluentUI.AspNetCore.Components/js/web-components-v2.5.16.min.js" type="module" async></script>
 </body>
 
 </html>

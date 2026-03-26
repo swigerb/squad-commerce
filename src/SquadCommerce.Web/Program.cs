@@ -1,5 +1,6 @@
 using SquadCommerce.Web.Components;
 using SquadCommerce.Web.Services;
+using Microsoft.FluentUI.AspNetCore.Components;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,6 +9,9 @@ builder.AddServiceDefaults();
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Register Fluent UI Blazor components
+builder.Services.AddFluentUIComponents();
 
 // Register HTTP client for AG-UI streaming
 builder.Services.AddHttpClient<AgUiStreamService>(client =>

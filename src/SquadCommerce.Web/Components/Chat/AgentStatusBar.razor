@@ -2,6 +2,25 @@
 @implements IDisposable
 
 <div class="agent-status-bar" role="status" aria-live="polite" aria-atomic="true">
+    <div class="agent-personas-section">
+        @foreach (var agent in _agentPersonas)
+        {
+            <div class="agent-persona @(IsAgentActive(agent.Key) ? "active" : "")" 
+                 title="@agent.Value.Name">
+                <span class="persona-avatar">@agent.Value.Icon</span>
+                <span class="persona-label">@agent.Value.Label</span>
+                @if (IsAgentActive(agent.Key))
+                {
+                    <span class="thinking-dots" aria-label="@agent.Value.Name is thinking">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                }
+            </div>
+        }
+    </div>
+
     <div class="status-section">
         @if (!string.IsNullOrEmpty(_currentStatus))
         {
@@ -71,6 +90,72 @@
     }
 </div>
 
+<style>
+    .agent-personas-section {
+        display: flex;
+        gap: 0.75rem;
+        align-items: center;
+    }
+
+    .agent-persona {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.5);
+        transition: all 0.3s ease;
+    }
+
+    .agent-persona.active {
+        background: rgba(102, 126, 234, 0.15);
+        border-color: rgba(102, 126, 234, 0.4);
+        color: rgba(255, 255, 255, 0.95);
+        box-shadow: 0 0 12px rgba(102, 126, 234, 0.2);
+    }
+
+    .persona-avatar {
+        font-size: 1.1rem;
+    }
+
+    .persona-label {
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .thinking-dots {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 0.25rem;
+    }
+
+    .thinking-dots span {
+        display: inline-block;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #667eea;
+        margin: 0 2px;
+        animation: thinking-bounce 1.4s infinite ease-in-out both;
+    }
+
+    .thinking-dots span:nth-child(1) {
+        animation-delay: -0.32s;
+    }
+
+    .thinking-dots span:nth-child(2) {
+        animation-delay: -0.16s;
+    }
+
+    @@keyframes thinking-bounce {
+        0%, 80%, 100% { transform: scale(0); }
+        40% { transform: scale(1); }
+    }
+</style>
+
 @code {
     private string _currentStatus = string.Empty;
     private string _statusLevel = "info";
@@ -87,6 +172,30 @@
     );
 
     private record PipelineStep(string Name, string Status);
+
+    private record AgentPersona(string Icon, string Name, string Label);
+
+    private readonly Dictionary<string, AgentPersona> _agentPersonas = new()
+    {
+        ["ChiefSoftwareArchitect"] = new("🏗️", "Chief Software Architect", "Orchestrator"),
+        ["InventoryAgent"] = new("📦", "Inventory Agent", "Inventory"),
+        ["PricingAgent"] = new("💰", "Pricing Agent", "Pricing"),
+        ["MarketIntelAgent"] = new("📊", "Market Intel Agent", "Market Intel")
+    };
+
+    private bool IsAgentActive(string agentKey)
+    {
+        if (string.IsNullOrEmpty(_currentStatus)) return false;
+        var lower = _currentStatus.ToLowerInvariant();
+        return agentKey switch
+        {
+            "ChiefSoftwareArchitect" => lower.Contains("orchestrat") || lower.Contains("routing") || lower.Contains("delegat"),
+            "InventoryAgent" => lower.Contains("inventory") || lower.Contains("stock") || lower.Contains("warehouse"),
+            "PricingAgent" => lower.Contains("pricing") || lower.Contains("margin") || lower.Contains("price"),
+            "MarketIntelAgent" => lower.Contains("market") || lower.Contains("competitor") || lower.Contains("intel"),
+            _ => false
+        };
+    }
 
     protected override async Task OnInitializedAsync()
     {

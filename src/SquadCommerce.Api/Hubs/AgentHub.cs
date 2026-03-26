@@ -68,4 +68,13 @@ public sealed class AgentHub : Hub
         await Clients.Group(sessionId).SendAsync("Notification", message);
         _logger.LogDebug("Notification sent: Message={Message}, Session={SessionId}", message, sessionId);
     }
+
+    /// <summary>
+    /// Broadcasts agent thinking/active state to all clients in a session.
+    /// </summary>
+    public async Task SendThinkingState(string sessionId, string agentName, bool isThinking)
+    {
+        await Clients.Group(sessionId).SendAsync("ThinkingState", sessionId, agentName, isThinking);
+        _logger.LogDebug("ThinkingState sent: Agent={AgentName}, IsThinking={IsThinking}, Session={SessionId}", agentName, isThinking, sessionId);
+    }
 }

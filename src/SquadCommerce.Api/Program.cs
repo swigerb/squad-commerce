@@ -4,6 +4,7 @@ using SquadCommerce.Api.Middleware;
 using SquadCommerce.Api.Services;
 using SquadCommerce.Agents.Orchestrator;
 using SquadCommerce.Agents.Registration;
+using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Mcp;
 using SquadCommerce.A2A;
 using SquadCommerce.Observability;
@@ -36,6 +37,9 @@ builder.Services.AddSingleton<IAgUiStreamWriter, AgUiStreamWriter>();
 
 // SignalR for background state updates
 builder.Services.AddSignalR();
+
+// Thinking-state notifier (broadcasts agent activity over SignalR)
+builder.Services.AddSingleton<IThinkingStateNotifier, SignalRThinkingStateNotifier>();
 
 // CORS for Blazor frontend
 builder.Services.AddCors(options =>

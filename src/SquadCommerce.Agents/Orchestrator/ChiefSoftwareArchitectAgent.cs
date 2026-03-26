@@ -2,6 +2,7 @@ using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.Agents.Domain;
 using SquadCommerce.Contracts.A2UI;
+using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Mcp.Data;
 using SquadCommerce.Observability;
 
@@ -27,6 +28,7 @@ public sealed class ChiefSoftwareArchitectAgent
     private readonly PricingAgent _pricingAgent;
     private readonly MarketIntelAgent _marketIntelAgent;
     private readonly AuditRepository _auditRepository;
+    private readonly IThinkingStateNotifier _thinkingNotifier;
     private readonly ILogger<ChiefSoftwareArchitectAgent> _logger;
 
     public ChiefSoftwareArchitectAgent(
@@ -34,12 +36,14 @@ public sealed class ChiefSoftwareArchitectAgent
         PricingAgent pricingAgent,
         MarketIntelAgent marketIntelAgent,
         AuditRepository auditRepository,
+        IThinkingStateNotifier thinkingNotifier,
         ILogger<ChiefSoftwareArchitectAgent> logger)
     {
         _inventoryAgent = inventoryAgent ?? throw new ArgumentNullException(nameof(inventoryAgent));
         _pricingAgent = pricingAgent ?? throw new ArgumentNullException(nameof(pricingAgent));
         _marketIntelAgent = marketIntelAgent ?? throw new ArgumentNullException(nameof(marketIntelAgent));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
+        _thinkingNotifier = thinkingNotifier ?? throw new ArgumentNullException(nameof(thinkingNotifier));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -100,7 +104,9 @@ public sealed class ChiefSoftwareArchitectAgent
                 StartedAt = stage1Start
             });
 
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketIntelAgent", true, cancellationToken);
             var marketIntelResult = await _marketIntelAgent.ExecuteAsync(sku, competitorPrice, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketIntelAgent", false, cancellationToken);
             results.Add(marketIntelResult);
 
             var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
@@ -138,7 +144,9 @@ public sealed class ChiefSoftwareArchitectAgent
                 ToolsUsed = new[] { "GetInventoryLevels" }
             });
 
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", true, cancellationToken);
             var inventoryResult = await _inventoryAgent.ExecuteAsync(sku, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", false, cancellationToken);
             results.Add(inventoryResult);
 
             var stage2Duration = DateTimeOffset.UtcNow - stage2Start;
@@ -176,7 +184,9 @@ public sealed class ChiefSoftwareArchitectAgent
                 ToolsUsed = new[] { "GetInventoryLevels" }
             });
 
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "PricingAgent", true, cancellationToken);
             var pricingResult = await _pricingAgent.ExecuteAsync(sku, competitorPrice, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "PricingAgent", false, cancellationToken);
             results.Add(pricingResult);
 
             var stage3Duration = DateTimeOffset.UtcNow - stage3Start;
@@ -325,7 +335,9 @@ public sealed class ChiefSoftwareArchitectAgent
             });
 
             var marketIntelItems = items.Select(i => (i.Sku, i.CompetitorPrice)).ToList();
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketIntelAgent", true, cancellationToken);
             var marketIntelResult = await _marketIntelAgent.ExecuteBulkAsync(marketIntelItems, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketIntelAgent", false, cancellationToken);
             results.Add(marketIntelResult);
 
             var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
@@ -363,7 +375,9 @@ public sealed class ChiefSoftwareArchitectAgent
                 ToolsUsed = new[] { "GetInventoryLevels" }
             });
 
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", true, cancellationToken);
             var inventoryResult = await _inventoryAgent.ExecuteBulkAsync(skuList, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", false, cancellationToken);
             results.Add(inventoryResult);
 
             var stage2Duration = DateTimeOffset.UtcNow - stage2Start;
@@ -401,7 +415,9 @@ public sealed class ChiefSoftwareArchitectAgent
                 ToolsUsed = new[] { "GetInventoryLevels" }
             });
 
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "PricingAgent", true, cancellationToken);
             var pricingResult = await _pricingAgent.ExecuteBulkAsync(items, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "PricingAgent", false, cancellationToken);
             results.Add(pricingResult);
 
             var stage3Duration = DateTimeOffset.UtcNow - stage3Start;

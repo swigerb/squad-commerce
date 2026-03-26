@@ -610,3 +610,17 @@ Backend developer for squad-commerce. Responsible for ASP.NET Core infrastructur
 **Build Status:** ✅ Web project builds successfully (0 errors)
 
 **Key Learning:** When using Aspire with `ASPIRE_ALLOW_UNSECURED_TRANSPORT=true`, `UseHttpsRedirection()` must be disabled in Development. It blocks HTTP-based OTLP export and health check probes, preventing the service from appearing in the Aspire Dashboard even though ServiceDefaults is correctly wired. Always gate `UseHttpsRedirection()` the same way you gate `UseHsts()`.
+
+### 2026-03-25: Phase 1 Item 1.7 — SignalR Thinking-State Events
+
+**Changes Made:**
+- Added `SendThinkingState` method to `AgentHub.cs` — broadcasts `ThinkingState` event (sessionId, agentName, isThinking) to the session SignalR group
+- Created `IThinkingStateNotifier` interface in `Contracts/Interfaces/` — avoids circular dependency between Agents and Api projects
+- Created `SignalRThinkingStateNotifier` in `Api/Services/` — implements `IThinkingStateNotifier` using `IHubContext<AgentHub>`
+- Registered `IThinkingStateNotifier` as singleton in `Program.cs` (`AddSignalR()` auto-registers `IHubContext<AgentHub>`)
+- Injected `IThinkingStateNotifier` into `ChiefSoftwareArchitectAgent` constructor
+- Wrapped all 6 agent delegations (3 in single workflow, 3 in bulk workflow) with `isThinking: true/false` emissions
+
+**Architecture Decision:** Used interface-in-Contracts pattern instead of direct `IHubContext<AgentHub>` injection. The Agents project cannot reference Api (would be circular). This matches the existing `IA2AClient`, `IInventoryRepository`, `IPricingRepository` pattern.
+
+**Build Status:** ✅ Both `SquadCommerce.Agents` and `SquadCommerce.Api` build with 0 errors, 0 warnings

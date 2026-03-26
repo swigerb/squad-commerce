@@ -12,8 +12,7 @@
         </p>
     </div>
 
-    <div class="quick-actions">
-        <h2>🚀 Try These Commands</h2>
+    <CommandCard Title="🚀 Try These Commands" CssClass="quick-actions-card">
         <div class="action-cards">
             <div class="action-card" @onclick='() => CommandService.SendCommand("Show me inventory levels for SKU-100 across all stores")' role="button" tabindex="0">
                 <div class="action-icon">📦</div>
@@ -34,10 +33,9 @@
                 <span class="action-badge">Market Intel Agent</span>
             </div>
         </div>
-    </div>
+    </CommandCard>
 
-    <div class="features-section">
-        <h2>✨ What You Can Do</h2>
+    <CommandCard Title="✨ What You Can Do" CssClass="features-card">
         <div class="feature-grid">
             <div class="feature-item">
                 <div class="feature-icon">🔄</div>
@@ -82,9 +80,9 @@
                 </div>
             </div>
         </div>
-    </div>
+    </CommandCard>
 
-    <div class="tech-stack">
+    <CommandCard CssClass="tech-stack-card">
         <h2>🛠️ Technology Stack</h2>
         <div class="tech-badges">
             <span class="tech-badge">Microsoft Agent Framework</span>
@@ -96,18 +94,20 @@
             <span class="tech-badge">A2A Handshake</span>
             <span class="tech-badge">OpenTelemetry</span>
         </div>
-    </div>
+    </CommandCard>
 </div>
 
 <style>
     .dashboard-welcome {
         max-width: 1200px;
         margin: 0 auto;
+        display: flex;
+        flex-direction: column;
+        gap: 2rem;
     }
 
     .welcome-header {
         text-align: center;
-        margin-bottom: 3rem;
         padding: 2rem;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         color: white;
@@ -126,14 +126,6 @@
         margin: 0 auto;
     }
 
-    .quick-actions {
-        margin-bottom: 3rem;
-    }
-
-    .quick-actions h2 {
-        margin-bottom: 1.5rem;
-    }
-
     .action-cards {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -141,17 +133,19 @@
     }
 
     .action-card {
-        background: white;
+        background: rgba(255, 255, 255, 0.04);
         padding: 1.5rem;
         border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         transition: all 0.2s;
         cursor: pointer;
     }
 
     .action-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        background: rgba(102, 126, 234, 0.1);
+        border-color: rgba(102, 126, 234, 0.3);
+        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
     }
 
     .action-icon {
@@ -162,10 +156,11 @@
     .action-card h3 {
         margin: 0 0 0.5rem 0;
         font-size: 1.25rem;
+        color: rgba(255, 255, 255, 0.9);
     }
 
     .action-card p {
-        color: #6c757d;
+        color: rgba(255, 255, 255, 0.5);
         font-style: italic;
         margin-bottom: 1rem;
         font-size: 0.875rem;
@@ -174,19 +169,12 @@
     .action-badge {
         display: inline-block;
         padding: 0.25rem 0.75rem;
-        background: #e9ecef;
+        background: rgba(102, 126, 234, 0.15);
+        border: 1px solid rgba(102, 126, 234, 0.3);
         border-radius: 12px;
         font-size: 0.75rem;
         font-weight: 600;
-        color: #495057;
-    }
-
-    .features-section {
-        margin-bottom: 3rem;
-    }
-
-    .features-section h2 {
-        margin-bottom: 1.5rem;
+        color: #667eea;
     }
 
     .feature-grid {
@@ -200,9 +188,15 @@
         align-items: start;
         gap: 1rem;
         padding: 1rem;
-        background: white;
+        background: rgba(255, 255, 255, 0.03);
         border-radius: 8px;
-        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        transition: all 0.2s;
+    }
+
+    .feature-item:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.12);
     }
 
     .feature-icon {
@@ -213,23 +207,22 @@
     .feature-text h4 {
         margin: 0 0 0.5rem 0;
         font-size: 1rem;
+        color: rgba(255, 255, 255, 0.9);
     }
 
     .feature-text p {
         margin: 0;
         font-size: 0.875rem;
-        color: #6c757d;
+        color: rgba(255, 255, 255, 0.5);
     }
 
-    .tech-stack {
+    .tech-stack-card {
         text-align: center;
-        padding: 2rem;
-        background: #f8f9fa;
-        border-radius: 12px;
     }
 
-    .tech-stack h2 {
-        margin-bottom: 1.5rem;
+    .tech-stack-card h2 {
+        margin: 0 0 1.5rem 0;
+        color: rgba(255, 255, 255, 0.9);
     }
 
     .tech-badges {
@@ -241,11 +234,17 @@
 
     .tech-badge {
         padding: 0.5rem 1rem;
-        background: white;
-        border: 2px solid #667eea;
+        background: rgba(102, 126, 234, 0.08);
+        border: 1px solid rgba(102, 126, 234, 0.3);
         color: #667eea;
         border-radius: 20px;
         font-size: 0.875rem;
         font-weight: 600;
+        transition: all 0.2s;
+    }
+
+    .tech-badge:hover {
+        background: rgba(102, 126, 234, 0.15);
+        border-color: rgba(102, 126, 234, 0.5);
     }
 </style>

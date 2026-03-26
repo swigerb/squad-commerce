@@ -1,0 +1,18 @@
+@* CommandCard.razor — Glassmorphism wrapper for command center panels *@
+<div class="command-card @CssClass">
+    @if (!string.IsNullOrEmpty(Title))
+    {
+        <div class="command-card-header">
+            <h3>@Title</h3>
+        </div>
+    }
+    <div class="command-card-body">
+        @ChildContent
+    </div>
+</div>
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public string? Title { get; set; }
+    [Parameter] public string? CssClass { get; set; }
+}
