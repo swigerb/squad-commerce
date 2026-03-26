@@ -135,6 +135,7 @@ public class OpenTelemetryTraceIntegrationTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Create parent activity and execute workflow

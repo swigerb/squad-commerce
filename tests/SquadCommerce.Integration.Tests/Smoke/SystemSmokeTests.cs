@@ -53,6 +53,7 @@ public class SystemSmokeTests
         services.AddHttpClient<IA2AClient, SquadCommerce.A2A.A2AClient>();
         services.AddSingleton<SquadCommerce.A2A.Validation.ExternalDataValidator>();
         services.AddSingleton<IThinkingStateNotifier>(Mock.Of<IThinkingStateNotifier>());
+        services.AddSingleton<IReasoningTraceEmitter>(Mock.Of<IReasoningTraceEmitter>());
         
         // Register domain agents
         services.AddScoped<InventoryAgent>();

@@ -39,9 +39,10 @@ public class BulkCompetitorScenarioTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
-        // Act - Trigger bulk workflow: TechMart drops prices on 3 products
+        // Act - Trigger bulk workflow: TechMart drops priceson 3 products
         var items = new List<(string Sku, decimal CompetitorPrice)>
         {
             ("SKU-1001", 26.99m), // Wireless Mouse - 10% drop
@@ -104,6 +105,7 @@ public class BulkCompetitorScenarioTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act
@@ -251,6 +253,7 @@ public class BulkCompetitorScenarioTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act
@@ -263,7 +266,7 @@ public class BulkCompetitorScenarioTests
 
         var result = await orchestrator.ProcessBulkCompetitorPriceDropAsync("TechMart", items, CancellationToken.None);
 
-        // Assert - Audit trail should track all SKUs
+        // Assert - Audit trail should trackall SKUs
         result.Success.Should().BeTrue();
         
         // The orchestrator should have created pipeline stages for tracking
@@ -292,6 +295,7 @@ public class BulkCompetitorScenarioTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Large bulk analysis

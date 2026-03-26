@@ -556,3 +556,26 @@ Lead developer for squad-commerce. Responsible for MAF agent orchestration, A2A 
 **Architecture Decision:** Followed Bill Gates' Option A design — chat bridge as pure adapter, no changes to existing endpoints. Simple pattern matching for MVP; can swap for LLM-based intent extraction later without API changes.
 
 **Why:** The Blazor chat UI's Send button was non-functional — CORS blocked XHR calls, and there was no POST endpoint to accept free-text chat input. This closes both gaps.
+
+### Phase 2, Item 2.8: Emit ReasoningTrace from Orchestrator
+
+**What:** Instrumented `ChiefSoftwareArchitectAgent` to emit `ReasoningStep` events at every decision point via `IReasoningTraceEmitter`, powering the Chain of Thought UI panel.
+
+**Changes:**
+1. **`SignalRReasoningTraceEmitter.cs`** — Modified to accept caller-supplied StepId via metadata, enabling parent-child hierarchy tracking
+2. **`ChiefSoftwareArchitectAgent.cs`** — Injected `IReasoningTraceEmitter`, added `EmitTraceAsync` helper (try/catch wrapped, never breaks workflow), instrumented both `ProcessCompetitorPriceDropAsync` and `ProcessBulkCompetitorPriceDropAsync`:
+   - Root `Thinking` step at workflow start
+   - `Thinking` step before each agent delegation (child of root)
+   - `A2AHandshake` step for MarketIntelAgent, `ToolCall` step for Inventory/PricingAgent (child of delegation)
+   - `Observation` step after each agent returns with `DurationMs` from `Stopwatch`
+   - `Decision` step at synthesis with total workflow duration
+   - `Error` step in catch block
+3. **15 test constructor calls updated** across 7 test files — added `Mock.Of<IReasoningTraceEmitter>()` parameter
+4. **`SystemSmokeTests.cs`** — Added DI registration for `IReasoningTraceEmitter`
+
+**Build & Test:** ✅ 0 errors, 0 warnings, 191 tests pass (83 Agents + 24 A2A + 30 Mcp + 41 Integration + 13 Web)
+
+**Key Design Decisions:**
+- Helper method generates StepId, passes via metadata, and returns it — keeps hierarchy consistent without modifying the interface contract
+- All trace emissions wrapped in try/catch — observability never disrupts business logic
+- `Stopwatch` used for measurable durations; root/decision steps use aggregate timing

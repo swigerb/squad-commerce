@@ -130,6 +130,7 @@ public class ErrorHandlingScenarioTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Orchestrator should continue even when InventoryAgent fails

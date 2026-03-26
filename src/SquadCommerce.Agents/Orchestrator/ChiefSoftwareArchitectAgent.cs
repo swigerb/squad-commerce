@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.Agents.Domain;
+using SquadCommerce.Contracts;
 using SquadCommerce.Contracts.A2UI;
 using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Mcp.Data;
@@ -29,6 +30,7 @@ public sealed class ChiefSoftwareArchitectAgent
     private readonly MarketIntelAgent _marketIntelAgent;
     private readonly AuditRepository _auditRepository;
     private readonly IThinkingStateNotifier _thinkingNotifier;
+    private readonly IReasoningTraceEmitter _reasoningTraceEmitter;
     private readonly ILogger<ChiefSoftwareArchitectAgent> _logger;
 
     public ChiefSoftwareArchitectAgent(
@@ -37,6 +39,7 @@ public sealed class ChiefSoftwareArchitectAgent
         MarketIntelAgent marketIntelAgent,
         AuditRepository auditRepository,
         IThinkingStateNotifier thinkingNotifier,
+        IReasoningTraceEmitter reasoningTraceEmitter,
         ILogger<ChiefSoftwareArchitectAgent> logger)
     {
         _inventoryAgent = inventoryAgent ?? throw new ArgumentNullException(nameof(inventoryAgent));
@@ -44,6 +47,7 @@ public sealed class ChiefSoftwareArchitectAgent
         _marketIntelAgent = marketIntelAgent ?? throw new ArgumentNullException(nameof(marketIntelAgent));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _thinkingNotifier = thinkingNotifier ?? throw new ArgumentNullException(nameof(thinkingNotifier));
+        _reasoningTraceEmitter = reasoningTraceEmitter ?? throw new ArgumentNullException(nameof(reasoningTraceEmitter));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -83,6 +87,10 @@ public sealed class ChiefSoftwareArchitectAgent
         var results = new List<AgentResult>();
         var pipelineStages = new List<PipelineStage>();
 
+        // Emit root reasoning step
+        var rootStepId = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+            $"Analyzing competitor price drop for {sku} at ${competitorPrice:F2}", cancellationToken: cancellationToken);
+
         // Record workflow initiation
         await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Initiated competitor price response workflow", 
             "AGUI", startTime, TimeSpan.Zero, "Success", $"User request for SKU {sku} at ${competitorPrice:F2}", 
@@ -93,7 +101,13 @@ public sealed class ChiefSoftwareArchitectAgent
             // Step 1: Validate competitor claim via A2A (MarketIntelAgent)
             _logger.LogInformation("Step 1: Delegating to MarketIntelAgent for competitor validation");
             
+            var step1Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to MarketIntelAgent for competitor validation", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "MarketIntelAgent", ReasoningStepType.A2AHandshake,
+                $"Querying competitor data for {sku}", step1Id, cancellationToken: cancellationToken);
+
             var stage1Start = DateTimeOffset.UtcNow;
+            var step1Sw = Stopwatch.StartNew();
             pipelineStages.Add(new PipelineStage
             {
                 Order = 1,
@@ -107,7 +121,12 @@ public sealed class ChiefSoftwareArchitectAgent
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketIntelAgent", true, cancellationToken);
             var marketIntelResult = await _marketIntelAgent.ExecuteAsync(sku, competitorPrice, cancellationToken);
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketIntelAgent", false, cancellationToken);
+            step1Sw.Stop();
             results.Add(marketIntelResult);
+
+            await EmitTraceAsync(sessionId, "MarketIntelAgent", ReasoningStepType.Observation,
+                $"Received {(marketIntelResult.Success ? "validated competitor data" : "validation failure")} from MarketIntelAgent",
+                step1Id, step1Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
 
             var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
             await RecordAuditEntryAsync(sessionId, "MarketIntelAgent", "Queried competitor pricing via A2A",
@@ -132,7 +151,13 @@ public sealed class ChiefSoftwareArchitectAgent
             // Step 2: Get inventory snapshot (InventoryAgent)
             _logger.LogInformation("Step 2: Delegating to InventoryAgent for inventory snapshot");
             
+            var step2Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to InventoryAgent for inventory snapshot", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "InventoryAgent", ReasoningStepType.ToolCall,
+                $"Calling GetInventoryLevels with SKU={sku}", step2Id, cancellationToken: cancellationToken);
+
             var stage2Start = DateTimeOffset.UtcNow;
+            var step2Sw = Stopwatch.StartNew();
             pipelineStages.Add(new PipelineStage
             {
                 Order = 2,
@@ -147,7 +172,12 @@ public sealed class ChiefSoftwareArchitectAgent
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", true, cancellationToken);
             var inventoryResult = await _inventoryAgent.ExecuteAsync(sku, cancellationToken);
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", false, cancellationToken);
+            step2Sw.Stop();
             results.Add(inventoryResult);
+
+            await EmitTraceAsync(sessionId, "InventoryAgent", ReasoningStepType.Observation,
+                $"Received inventory snapshot from InventoryAgent",
+                step2Id, step2Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
 
             var stage2Duration = DateTimeOffset.UtcNow - stage2Start;
             await RecordAuditEntryAsync(sessionId, "InventoryAgent", "Retrieved inventory snapshot",
@@ -172,7 +202,13 @@ public sealed class ChiefSoftwareArchitectAgent
             // Step 3: Calculate margin impact (PricingAgent)
             _logger.LogInformation("Step 3: Delegating to PricingAgent for margin impact analysis");
             
+            var step3Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to PricingAgent for margin impact analysis", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "PricingAgent", ReasoningStepType.ToolCall,
+                $"Calling GetInventoryLevels with SKU={sku}", step3Id, cancellationToken: cancellationToken);
+
             var stage3Start = DateTimeOffset.UtcNow;
+            var step3Sw = Stopwatch.StartNew();
             pipelineStages.Add(new PipelineStage
             {
                 Order = 3,
@@ -187,7 +223,12 @@ public sealed class ChiefSoftwareArchitectAgent
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "PricingAgent", true, cancellationToken);
             var pricingResult = await _pricingAgent.ExecuteAsync(sku, competitorPrice, cancellationToken);
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "PricingAgent", false, cancellationToken);
+            step3Sw.Stop();
             results.Add(pricingResult);
+
+            await EmitTraceAsync(sessionId, "PricingAgent", ReasoningStepType.Observation,
+                $"Received margin impact analysis from PricingAgent",
+                step3Id, step3Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
 
             var stage3Duration = DateTimeOffset.UtcNow - stage3Start;
             await RecordAuditEntryAsync(sessionId, "PricingAgent", "Calculated margin impact scenarios",
@@ -219,6 +260,10 @@ public sealed class ChiefSoftwareArchitectAgent
             var synthesizeStart = DateTimeOffset.UtcNow;
             var executiveSummary = BuildExecutiveSummary(sku, competitorPrice, results);
             var synthesizeDuration = DateTimeOffset.UtcNow - synthesizeStart;
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Decision,
+                "Recommending review of pricing impact scenarios with validated competitor data",
+                rootStepId, (long)(DateTimeOffset.UtcNow - startTime).TotalMilliseconds, cancellationToken: cancellationToken);
 
             await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Synthesized orchestrator response",
                 "AGUI", synthesizeStart, synthesizeDuration, "Success",
@@ -267,7 +312,10 @@ public sealed class ChiefSoftwareArchitectAgent
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             activity?.SetTag("error.message", ex.Message);
             activity?.SetTag("error.type", ex.GetType().Name);
-            
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Error,
+                $"Workflow failed: {ex.Message}", rootStepId, cancellationToken: cancellationToken);
+
             // Record error audit entry
             await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Workflow execution failed",
                 "AGUI", DateTimeOffset.UtcNow, TimeSpan.Zero, "Failed",
@@ -313,7 +361,14 @@ public sealed class ChiefSoftwareArchitectAgent
         var pipelineStages = new List<PipelineStage>();
 
         var skuList = items.Select(i => i.Sku).ToArray();
-        await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Initiated bulk competitor price response workflow", 
+        var skuSummary = string.Join(", ", skuList.Take(3)) + (skuList.Length > 3 ? $" (+{skuList.Length - 3} more)" : "");
+
+        // Emit root reasoning step for bulk workflow
+        var bulkRootStepId = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+            $"Analyzing bulk competitor price drop from {competitorName} for {items.Count} SKUs: {skuSummary}",
+            cancellationToken: cancellationToken);
+
+        await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Initiated bulk competitor price response workflow",
             "AGUI", startTime, TimeSpan.Zero, "Success", 
             $"Bulk request from {competitorName} for {items.Count} SKUs", 
             activity?.TraceId.ToString(), skuList, null, null, cancellationToken);
@@ -323,7 +378,13 @@ public sealed class ChiefSoftwareArchitectAgent
             // Step 1: Validate competitor claims via A2A (MarketIntelAgent)
             _logger.LogInformation("Step 1: Delegating to MarketIntelAgent for bulk competitor validation");
             
+            var bulkStep1Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to MarketIntelAgent for bulk competitor validation", bulkRootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "MarketIntelAgent", ReasoningStepType.A2AHandshake,
+                $"Querying competitor data for {items.Count} SKUs", bulkStep1Id, cancellationToken: cancellationToken);
+
             var stage1Start = DateTimeOffset.UtcNow;
+            var bulkStep1Sw = Stopwatch.StartNew();
             pipelineStages.Add(new PipelineStage
             {
                 Order = 1,
@@ -338,7 +399,12 @@ public sealed class ChiefSoftwareArchitectAgent
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketIntelAgent", true, cancellationToken);
             var marketIntelResult = await _marketIntelAgent.ExecuteBulkAsync(marketIntelItems, cancellationToken);
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketIntelAgent", false, cancellationToken);
+            bulkStep1Sw.Stop();
             results.Add(marketIntelResult);
+
+            await EmitTraceAsync(sessionId, "MarketIntelAgent", ReasoningStepType.Observation,
+                $"Received {(marketIntelResult.Success ? "validated bulk competitor data" : "validation failure")} from MarketIntelAgent",
+                bulkStep1Id, bulkStep1Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
 
             var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
             await RecordAuditEntryAsync(sessionId, "MarketIntelAgent", "Queried bulk competitor pricing via A2A",
@@ -363,7 +429,13 @@ public sealed class ChiefSoftwareArchitectAgent
             // Step 2: Get bulk inventory snapshot (InventoryAgent)
             _logger.LogInformation("Step 2: Delegating to InventoryAgent for bulk inventory snapshot");
             
+            var bulkStep2Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to InventoryAgent for bulk inventory snapshot", bulkRootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "InventoryAgent", ReasoningStepType.ToolCall,
+                $"Calling GetInventoryLevels for {skuList.Length} SKUs", bulkStep2Id, cancellationToken: cancellationToken);
+
             var stage2Start = DateTimeOffset.UtcNow;
+            var bulkStep2Sw = Stopwatch.StartNew();
             pipelineStages.Add(new PipelineStage
             {
                 Order = 2,
@@ -378,7 +450,12 @@ public sealed class ChiefSoftwareArchitectAgent
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", true, cancellationToken);
             var inventoryResult = await _inventoryAgent.ExecuteBulkAsync(skuList, cancellationToken);
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", false, cancellationToken);
+            bulkStep2Sw.Stop();
             results.Add(inventoryResult);
+
+            await EmitTraceAsync(sessionId, "InventoryAgent", ReasoningStepType.Observation,
+                $"Received bulk inventory snapshot from InventoryAgent",
+                bulkStep2Id, bulkStep2Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
 
             var stage2Duration = DateTimeOffset.UtcNow - stage2Start;
             await RecordAuditEntryAsync(sessionId, "InventoryAgent", "Retrieved bulk inventory snapshot",
@@ -403,7 +480,13 @@ public sealed class ChiefSoftwareArchitectAgent
             // Step 3: Calculate bulk margin impact (PricingAgent)
             _logger.LogInformation("Step 3: Delegating to PricingAgent for bulk margin impact analysis");
             
+            var bulkStep3Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to PricingAgent for bulk margin impact analysis", bulkRootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "PricingAgent", ReasoningStepType.ToolCall,
+                $"Calling GetInventoryLevels for {skuList.Length} SKUs", bulkStep3Id, cancellationToken: cancellationToken);
+
             var stage3Start = DateTimeOffset.UtcNow;
+            var bulkStep3Sw = Stopwatch.StartNew();
             pipelineStages.Add(new PipelineStage
             {
                 Order = 3,
@@ -418,7 +501,12 @@ public sealed class ChiefSoftwareArchitectAgent
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "PricingAgent", true, cancellationToken);
             var pricingResult = await _pricingAgent.ExecuteBulkAsync(items, cancellationToken);
             await _thinkingNotifier.SendThinkingStateAsync(sessionId, "PricingAgent", false, cancellationToken);
+            bulkStep3Sw.Stop();
             results.Add(pricingResult);
+
+            await EmitTraceAsync(sessionId, "PricingAgent", ReasoningStepType.Observation,
+                $"Received bulk margin impact analysis from PricingAgent",
+                bulkStep3Id, bulkStep3Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
 
             var stage3Duration = DateTimeOffset.UtcNow - stage3Start;
             await RecordAuditEntryAsync(sessionId, "PricingAgent", "Calculated bulk margin impact scenarios",
@@ -449,6 +537,10 @@ public sealed class ChiefSoftwareArchitectAgent
             var synthesizeStart = DateTimeOffset.UtcNow;
             var executiveSummary = BuildBulkExecutiveSummary(competitorName, items, results);
             var synthesizeDuration = DateTimeOffset.UtcNow - synthesizeStart;
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Decision,
+                $"Recommending consolidated review of {items.Count} SKU pricing impact scenarios",
+                bulkRootStepId, (long)(DateTimeOffset.UtcNow - startTime).TotalMilliseconds, cancellationToken: cancellationToken);
 
             await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Synthesized bulk orchestrator response",
                 "AGUI", synthesizeStart, synthesizeDuration, "Success",
@@ -494,7 +586,10 @@ public sealed class ChiefSoftwareArchitectAgent
             activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
             activity?.SetTag("error.message", ex.Message);
             activity?.SetTag("error.type", ex.GetType().Name);
-            
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Error,
+                $"Bulk workflow failed: {ex.Message}", bulkRootStepId, cancellationToken: cancellationToken);
+
             await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Bulk workflow execution failed",
                 "AGUI", DateTimeOffset.UtcNow, TimeSpan.Zero, "Failed",
                 ex.Message, activity?.TraceId.ToString(), null, null, null, cancellationToken);
@@ -635,6 +730,36 @@ public sealed class ChiefSoftwareArchitectAgent
             Entries = entries,
             GeneratedAt = DateTimeOffset.UtcNow
         };
+    }
+
+    /// <summary>
+    /// Emits a reasoning trace step and returns the generated StepId for parent-child hierarchy.
+    /// Wrapped in try/catch so trace failures never break the workflow.
+    /// </summary>
+    private async Task<string> EmitTraceAsync(
+        string sessionId,
+        string agentName,
+        ReasoningStepType stepType,
+        string content,
+        string? parentStepId = null,
+        long durationMs = 0,
+        Dictionary<string, string>? metadata = null,
+        CancellationToken cancellationToken = default)
+    {
+        var stepId = Guid.NewGuid().ToString("N")[..12];
+        try
+        {
+            metadata ??= new Dictionary<string, string>();
+            metadata["StepId"] = stepId;
+            await _reasoningTraceEmitter.EmitStepAsync(
+                sessionId, agentName, stepType, content,
+                parentStepId, durationMs, metadata, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Failed to emit reasoning trace step: {StepType} for {Agent}", stepType, agentName);
+        }
+        return stepId;
     }
 }
 

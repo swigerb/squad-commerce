@@ -39,6 +39,7 @@ public class BulkAnalysisTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Bulk analysis for 3 SKUs
@@ -93,9 +94,10 @@ public class BulkAnalysisTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
-        // Act - Bulk analysis for 3 SKUs across 5 stores = 15 inventory entries expected
+        // Act - Bulk analysis for 3 SKUs across 5 stores= 15 inventory entries expected
         var items = new List<(string Sku, decimal CompetitorPrice)>
         {
             ("SKU-1001", 26.99m),
@@ -136,6 +138,7 @@ public class BulkAnalysisTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Bulk pricing analysis
@@ -180,9 +183,10 @@ public class BulkAnalysisTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
-        // Act - Include one valid SKU and one potentially problematic SKU
+        // Act - Include one valid SKUand one potentially problematic SKU
         var items = new List<(string Sku, decimal CompetitorPrice)>
         {
             ("SKU-1001", 26.99m), // Valid
@@ -225,6 +229,7 @@ public class BulkAnalysisTests
             marketIntelAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
+            Mock.Of<IReasoningTraceEmitter>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Bulk analysis for 4 SKUs

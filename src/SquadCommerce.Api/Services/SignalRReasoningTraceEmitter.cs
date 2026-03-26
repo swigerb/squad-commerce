@@ -29,9 +29,13 @@ public sealed class SignalRReasoningTraceEmitter : IReasoningTraceEmitter
         Dictionary<string, string>? metadata = null,
         CancellationToken cancellationToken = default)
     {
+        var stepId = metadata?.TryGetValue("StepId", out var requestedId) == true && !string.IsNullOrEmpty(requestedId)
+            ? requestedId
+            : Guid.NewGuid().ToString();
+
         var step = new ReasoningStep
         {
-            StepId = Guid.NewGuid().ToString(),
+            StepId = stepId,
             SessionId = sessionId,
             AgentName = agentName,
             StepType = stepType,
