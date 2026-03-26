@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR.Client;
+using SquadCommerce.Contracts;
 
 namespace SquadCommerce.Web.Services;
 
@@ -13,8 +14,9 @@ public class SignalRStateService : IAsyncDisposable
     public event Action<object>? OnA2UIPayload;
     public event Action<string>? OnNotification;
     public event Action<string, string, bool>? OnThinkingState;
+    public event Action<ReasoningStep>? OnReasoningStep;
 
-    public bool IsConnected => _hubConnection?.State == HubConnectionState.Connected;
+    public bool IsConnected=> _hubConnection?.State == HubConnectionState.Connected;
     public HubConnectionState ConnectionState => _hubConnection?.State ?? HubConnectionState.Disconnected;
 
     public SignalRStateService(IConfiguration configuration, ILogger<SignalRStateService> logger)
@@ -112,6 +114,13 @@ public class SignalRStateService : IAsyncDisposable
         {
             _logger.LogDebug("Received ThinkingState: Agent={AgentName}, IsThinking={IsThinking}, Session={SessionId}", agentName, isThinking, sessionId);
             OnThinkingState?.Invoke(sessionId, agentName, isThinking);
+        });
+
+        _hubConnection.On<ReasoningStep>("ReasoningStep", (step) =>
+        {
+            _logger.LogDebug("Received ReasoningStep: StepId={StepId}, Agent={AgentName}, Type={StepType}, Session={SessionId}",
+                step.StepId, step.AgentName, step.StepType, step.SessionId);
+            OnReasoningStep?.Invoke(step);
         });
 
         try

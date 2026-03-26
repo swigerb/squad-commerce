@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using SquadCommerce.Contracts;
 
 namespace SquadCommerce.Api.Hubs;
 
@@ -76,5 +77,15 @@ public sealed class AgentHub : Hub
     {
         await Clients.Group(sessionId).SendAsync("ThinkingState", sessionId, agentName, isThinking);
         _logger.LogDebug("ThinkingState sent: Agent={AgentName}, IsThinking={IsThinking}, Session={SessionId}", agentName, isThinking, sessionId);
+    }
+
+    /// <summary>
+    /// Broadcasts a chain of thought reasoning step to all connected clients.
+    /// </summary>
+    public async Task SendReasoningStep(ReasoningStep step)
+    {
+        await Clients.All.SendAsync("ReasoningStep", step);
+        _logger.LogDebug("ReasoningStep sent: StepId={StepId}, Agent={AgentName}, Type={StepType}, Session={SessionId}",
+            step.StepId, step.AgentName, step.StepType, step.SessionId);
     }
 }

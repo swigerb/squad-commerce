@@ -35,6 +35,12 @@
         </div>
     </CommandCard>
 
+    <div class="section-header">
+        <h2>🩺 System Health</h2>
+        <span class="section-status">● Live</span>
+    </div>
+    <TelemetryDashboard />
+
     <CommandCard Title="✨ What You Can Do" CssClass="features-card">
         <div class="feature-grid">
             <div class="feature-item">
@@ -246,5 +252,30 @@
     .tech-badge:hover {
         background: rgba(102, 126, 234, 0.15);
         border-color: rgba(102, 126, 234, 0.5);
+    }
+
+    .section-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 0.25rem;
+    }
+
+    .section-header h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        color: rgba(255, 255, 255, 0.9);
+    }
+
+    .section-status {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #3fb950;
+        animation: status-pulse 2s infinite;
+    }
+
+    @@keyframes status-pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.5; }
     }
 </style>

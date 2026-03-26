@@ -1,0 +1,78 @@
+@implements IDisposable
+
+<div class="telemetry-grid">
+    <CommandCard CssClass="metric-card">
+        <div class="metric-value-row">
+            <span class="metric-number">@_agentInvocations</span>
+            <span class="metric-trend trend-up">▲ 12%</span>
+        </div>
+        <div class="metric-label">Agent Invocations</div>
+        <div class="metric-bar">
+            <div class="metric-bar-fill invocations-fill" style="width: @(Math.Min(_agentInvocations, 100))%"></div>
+        </div>
+    </CommandCard>
+
+    <CommandCard CssClass="metric-card">
+        <div class="metric-value-row">
+            <span class="metric-number">@($"{_avgLatency:F0}")ms</span>
+            <span class="metric-trend trend-down">▼ 8%</span>
+        </div>
+        <div class="metric-label">Avg Latency</div>
+        <div class="metric-bar">
+            <div class="metric-bar-fill latency-fill" style="width: @(Math.Min(_avgLatency / 5.0, 100))%"></div>
+        </div>
+    </CommandCard>
+
+    <CommandCard CssClass="metric-card">
+        <div class="metric-value-row">
+            <span class="metric-number">@_toolCalls</span>
+            <span class="metric-trend trend-up">▲ 5%</span>
+        </div>
+        <div class="metric-label">MCP Tool Calls</div>
+        <div class="metric-bar">
+            <div class="metric-bar-fill tools-fill" style="width: @(Math.Min(_toolCalls * 2, 100))%"></div>
+        </div>
+    </CommandCard>
+
+    <CommandCard CssClass="metric-card">
+        <div class="metric-value-row">
+            <span class="metric-number">@_a2aHandshakes</span>
+            <span class="metric-trend trend-neutral">— 0%</span>
+        </div>
+        <div class="metric-label">A2A Handshakes</div>
+        <div class="metric-bar">
+            <div class="metric-bar-fill a2a-fill" style="width: @(Math.Min(_a2aHandshakes * 5, 100))%"></div>
+        </div>
+    </CommandCard>
+</div>
+
+@code {
+    private System.Threading.Timer? _timer;
+    private readonly Random _rng = new();
+
+    private int _agentInvocations = 47;
+    private double _avgLatency = 234;
+    private int _toolCalls = 31;
+    private int _a2aHandshakes = 12;
+
+    protected override void OnInitialized()
+    {
+        _timer = new System.Threading.Timer(
+            _ => InvokeAsync(UpdateMetrics), null,
+            TimeSpan.FromSeconds(5), TimeSpan.FromSeconds(5));
+    }
+
+    private void UpdateMetrics()
+    {
+        _agentInvocations += _rng.Next(0, 4);
+        _avgLatency = Math.Max(80, _avgLatency + _rng.Next(-15, 20));
+        _toolCalls += _rng.Next(0, 3);
+        _a2aHandshakes += _rng.Next(0, 2);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        _timer?.Dispose();
+    }
+}

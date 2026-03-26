@@ -6,91 +6,97 @@
         return;
     }
 
-    <div class="approval-header">
-        <h3>📋 Manager Approval Required</h3>
-        <button class="btn-close" @onclick="Dismiss" aria-label="Dismiss approval panel">×</button>
-    </div>
-
-    <div class="approval-summary">
-        <div class="summary-item">
-            <span class="summary-label">Total Changes:</span>
-            <span class="summary-value">@_totalChanges</span>
+    <CommandCard CssClass="approval-card">
+        <div class="approval-header">
+            <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.1rem; color: rgba(255,255,255,0.95);">📋 Manager Approval Required</FluentLabel>
+            <FluentButton Appearance="Appearance.Stealth" OnClick="Dismiss" aria-label="Dismiss approval panel"
+                          IconStart="@(new Icons.Regular.Size16.Dismiss())" />
         </div>
-        <div class="summary-item">
-            <span class="summary-label">Estimated Impact:</span>
-            <span class="summary-value @GetImpactClass()">@_estimatedImpact.ToString("C0")</span>
-        </div>
-    </div>
 
-    @if (_editMode)
-    {
-        <div class="approval-edit-mode">
-            <div class="alert alert-info">
-                <strong>✏️ Edit Mode:</strong> Modify proposed values below, then approve or reject.
-            </div>
-            <div class="edit-fields">
-                <!-- Future: Dynamic editing fields based on scenario -->
-                <p class="text-muted">Custom edits will be available in a future update.</p>
-            </div>
-        </div>
-    }
+        <FluentCard Class="approval-summary-card">
+            <FluentStack Orientation="Orientation.Horizontal" HorizontalAlignment="HorizontalAlignment.SpaceBetween" Style="width: 100%;">
+                <FluentStack Orientation="Orientation.Vertical" Style="gap: 0.25rem;">
+                    <FluentLabel Style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">Total Changes</FluentLabel>
+                    <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.5rem; color: rgba(255,255,255,0.95);">@_totalChanges</FluentLabel>
+                </FluentStack>
+                <FluentStack Orientation="Orientation.Vertical" HorizontalAlignment="HorizontalAlignment.End" Style="gap: 0.25rem;">
+                    <FluentLabel Style="color: rgba(255,255,255,0.5); font-size: 0.8rem;">Estimated Impact</FluentLabel>
+                    <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 0.5rem;">
+                        <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.5rem; color: rgba(255,255,255,0.95);">@_estimatedImpact.ToString("C0")</FluentLabel>
+                        <FluentBadge Appearance="@GetRiskBadgeAppearance()" Class="@($"risk-badge {GetRiskCssClass()}")">@GetRiskLabel()</FluentBadge>
+                    </FluentStack>
+                </FluentStack>
+            </FluentStack>
+        </FluentCard>
 
-    <div class="approval-actions">
-        @if (!_processing)
+        @if (_editMode)
         {
-            <button class="btn btn-success btn-lg approval-btn" 
-                    @onclick="ApproveAll" 
-                    aria-label="Approve all changes">
-                <span class="btn-icon">✅</span>
-                <span class="btn-text">Approve All</span>
-            </button>
-
-            <button class="btn btn-warning btn-lg approval-btn" 
-                    @onclick="ToggleEditMode" 
-                    aria-label="Modify changes">
-                <span class="btn-icon">✏️</span>
-                <span class="btn-text">@(_editMode ? "Cancel Edit" : "Modify")</span>
-            </button>
-
-            <button class="btn btn-danger btn-lg approval-btn" 
-                    @onclick="RejectAll" 
-                    aria-label="Reject all changes">
-                <span class="btn-icon">❌</span>
-                <span class="btn-text">Reject All</span>
-            </button>
+            <FluentCard Class="approval-edit-card">
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 0.5rem; margin-bottom: 0.5rem;">
+                    <FluentIcon Value="@(new Icons.Regular.Size20.Edit())" Color="Color.Accent" />
+                    <FluentLabel Weight="FontWeight.Bold" Style="color: rgba(255,255,255,0.9);">Edit Mode</FluentLabel>
+                </FluentStack>
+                <FluentLabel Style="color: rgba(255,255,255,0.5); font-size: 0.875rem;">Custom edits will be available in a future update.</FluentLabel>
+            </FluentCard>
         }
-        else
-        {
-            <div class="processing-indicator">
-                <span class="spinner-border me-2" role="status" aria-hidden="true"></span>
-                <span>Processing your decision...</span>
-            </div>
-        }
-    </div>
 
-    @if (!string.IsNullOrEmpty(_resultMessage))
-    {
-        <div class="approval-result alert @_resultClass" role="alert">
-            @_resultMessage
+        <div class="approval-actions">
+            @if (!_processing)
+            {
+                <FluentButton Appearance="Appearance.Accent" OnClick="ApproveAll"
+                              aria-label="Approve all changes"
+                              IconStart="@(new Icons.Regular.Size20.CheckmarkCircle())"
+                              Class="approval-btn-fluent">
+                    Approve All
+                </FluentButton>
+
+                <FluentButton Appearance="Appearance.Outline" OnClick="ToggleEditMode"
+                              aria-label="Modify changes"
+                              IconStart="@(new Icons.Regular.Size20.Edit())"
+                              Class="approval-btn-fluent">
+                    @(_editMode ? "Cancel Edit" : "Modify")
+                </FluentButton>
+
+                <FluentButton Appearance="Appearance.Outline" OnClick="RejectAll"
+                              aria-label="Reject all changes"
+                              IconStart="@(new Icons.Regular.Size20.DismissCircle())"
+                              Class="approval-btn-fluent reject-btn">
+                    Reject All
+                </FluentButton>
+            }
+            else
+            {
+                <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 0.5rem; justify-content: center; padding: 0.5rem 0;">
+                    <FluentProgress />
+                    <FluentLabel Style="color: rgba(255,255,255,0.7);">Processing your decision...</FluentLabel>
+                </FluentStack>
+            }
         </div>
-    }
+
+        @if (!string.IsNullOrEmpty(_resultMessage))
+        {
+            <FluentCard Class="@($"approval-result {_resultClass}")" role="alert">
+                <FluentLabel Style="color: inherit;">@_resultMessage</FluentLabel>
+            </FluentCard>
+        }
+    </CommandCard>
 
     @if (_showConfirmDialog)
     {
         <div class="approval-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="confirm-dialog-title">
             <div class="confirm-dialog-overlay" @onclick="CancelConfirm"></div>
-            <div class="confirm-dialog-content">
-                <h4 id="confirm-dialog-title">⚠️ Confirm Your Decision</h4>
-                <p>@_confirmMessage</p>
-                <div class="confirm-dialog-actions">
-                    <button class="btn btn-primary" @onclick="ConfirmAction">
+            <CommandCard CssClass="confirm-dialog-card">
+                <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.1rem; color: rgba(255,255,255,0.95); margin-bottom: 0.75rem;">⚠️ Confirm Your Decision</FluentLabel>
+                <FluentLabel Style="color: rgba(255,255,255,0.7); margin-bottom: 1.25rem; display: block;">@_confirmMessage</FluentLabel>
+                <FluentStack Orientation="Orientation.Horizontal" Style="gap: 0.75rem;">
+                    <FluentButton Appearance="Appearance.Accent" OnClick="ConfirmAction">
                         Yes, I'm sure
-                    </button>
-                    <button class="btn btn-secondary" @onclick="CancelConfirm">
+                    </FluentButton>
+                    <FluentButton Appearance="Appearance.Outline" OnClick="CancelConfirm">
                         Cancel
-                    </button>
-                </div>
-            </div>
+                    </FluentButton>
+                </FluentStack>
+            </CommandCard>
         </div>
     }
 </div>
@@ -283,5 +289,32 @@
         if (_estimatedImpact > 0)
             return "text-success";
         return "text-muted";
+    }
+
+    private double GetMarginImpactPercent()
+    {
+        if (_totalChanges == 0) return 0;
+        return (double)Math.Abs(_estimatedImpact) / Math.Max(_totalChanges * 100, 1) * 100;
+    }
+
+    private string GetRiskLabel()
+    {
+        var pct = GetMarginImpactPercent();
+        if (pct <= 5) return "Low Risk";
+        if (pct <= 15) return "Medium Risk";
+        return "High Risk";
+    }
+
+    private string GetRiskCssClass()
+    {
+        var pct = GetMarginImpactPercent();
+        if (pct <= 5) return "risk-low";
+        if (pct <= 15) return "risk-medium";
+        return "risk-high";
+    }
+
+    private Appearance GetRiskBadgeAppearance()
+    {
+        return Appearance.Neutral;
     }
 }

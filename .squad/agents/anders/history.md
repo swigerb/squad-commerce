@@ -624,3 +624,33 @@ Backend developer for squad-commerce. Responsible for ASP.NET Core infrastructur
 **Architecture Decision:** Used interface-in-Contracts pattern instead of direct `IHubContext<AgentHub>` injection. The Agents project cannot reference Api (would be circular). This matches the existing `IA2AClient`, `IInventoryRepository`, `IPricingRepository` pattern.
 
 **Build Status:** ✅ Both `SquadCommerce.Agents` and `SquadCommerce.Api` build with 0 errors, 0 warnings
+
+### 2026-03-26: Phase 2 Item 2.2 — Chain of Thought Data Model
+
+**Task:** Build the critical-path data model and SignalR plumbing for chain of thought visualization. Everything in CoT panel (2.3), tool call timeline (2.4), and orchestrator instrumentation (2.8) depends on this.
+
+**Files Created:**
+
+1. **`src/SquadCommerce.Contracts/ReasoningStep.cs`** — Immutable record with `StepId`, `SessionId`, `AgentName`, `StepType` (enum), `Content`, `Timestamp`, `DurationMs`, `ParentStepId` (for nested traces), and `Metadata` dictionary. Enum covers: Thinking, ToolCall, A2AHandshake, Observation, Decision, Error.
+
+2. **`src/SquadCommerce.Contracts/Interfaces/IReasoningTraceEmitter.cs`** — Interface for emitting reasoning steps. Single method `EmitStepAsync` with sensible defaults for optional params. Lives in Contracts to avoid circular dependency (same pattern as `IThinkingStateNotifier`).
+
+3. **`src/SquadCommerce.Api/Services/SignalRReasoningTraceEmitter.cs`** — Implementation that injects `IHubContext<AgentHub>`, creates a `ReasoningStep` with new GUID StepId, and broadcasts via `Clients.All.SendAsync("ReasoningStep", step)`.
+
+**Files Modified:**
+
+4. **`src/SquadCommerce.Api/Hubs/AgentHub.cs`** — Added `SendReasoningStep(ReasoningStep step)` method. Broadcasts to all clients (not session-scoped, since CoT visualization may aggregate across sessions).
+
+5. **`src/SquadCommerce.Api/Program.cs`** — Registered `IReasoningTraceEmitter` → `SignalRReasoningTraceEmitter` as singleton in DI. Added `using SquadCommerce.Contracts` for the `ReasoningStep` type.
+
+6. **`src/SquadCommerce.Web/Services/SignalRStateService.cs`** — Added `OnReasoningStep` event (`Action<ReasoningStep>?`). Subscribed to `"ReasoningStep"` SignalR event in hub connection setup, invoking the event on receipt.
+
+**Architecture Decisions:**
+- **Interface-in-Contracts pattern** — Same approach as `IThinkingStateNotifier`. Keeps Agents project decoupled from Api/SignalR.
+- **Broadcast to All clients** — CoT traces go to all connected clients, not session-scoped groups. The UI can filter by sessionId client-side. This simplifies the emitter and supports cross-session dashboards.
+- **GUID StepId generation in emitter** — Callers don't need to manage step IDs. The emitter assigns them at creation time.
+- **ParentStepId for nesting** — Enables tree-structured traces (e.g., a Decision step containing multiple ToolCall children).
+
+**Build Status:** ✅ Contracts, Api, and Web projects all build with 0 errors, 0 warnings. Pre-existing test failures (unrelated `ChiefSoftwareArchitectAgent` constructor mismatch) not introduced by this change.
+
+**Unblocks:** Items 2.3 (CoT panel — Clippy), 2.4 (Tool call timeline — Clippy), 2.8 (Orchestrator instrumentation — Satya)

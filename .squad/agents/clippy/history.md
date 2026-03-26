@@ -415,3 +415,70 @@ In .NET 10 Blazor with per-page/component render modes, ANY interactive componen
 - `src/SquadCommerce.Web/Components/A2UI/PricingImpactChart.razor` — Bold metrics + margin deltas + CommandCard wrap
 - `src/SquadCommerce.Web/Components/A2UI/RetailStockHeatmap.razor` — Color-coded quantities + enhanced status + CommandCard wrap
 - `src/SquadCommerce.Web/Components/A2UI/AgentPipelineVisualizer.razor` — Slide-in animation + glow + checkmark
+
+### 2026-03-26: Phase 2 Items 2.5 + 2.6 + 2.7 — Command Palette, HITL Fluent Upgrade, Telemetry Dashboard
+
+**What was done:**
+
+- **Item 2.5 — CMD+K Command Palette:**
+  - Created `Components/Layout/CommandPalette.razor` — Modal overlay with glassmorphism backdrop, search input, filtered command list
+  - Created `CommandPalette.razor.css` — Dark glassmorphism styling with slide-in animation, keyboard hints, and selected-state highlighting
+  - Created `CommandPalette.razor.js` — JS interop module that registers `Ctrl+K` / `Cmd+K` global keyboard listener, calls `[JSInvokable] Toggle()` via DotNetObjectReference
+  - 5 built-in commands: Check Inventory, Analyze Pricing, Compare Market (active), View Pipeline, System Health (disabled/coming-soon)
+  - Fuzzy search: splits query into tokens, matches against label + description + agent name
+  - Keyboard navigation: ↑↓ to move, Enter to execute, Escape to close
+  - Clicking active command sends via `ChatCommandService` and closes palette
+  - Auto-focus search input on open
+  - Added `<CommandPalette />` to `MainLayout.razor`
+  - Implements `IAsyncDisposable` for proper JS module cleanup
+
+- **Item 2.6 — HITL Approval Cards Fluent Upgrade:**
+  - Replaced raw HTML in `ApprovalPanel.razor` with Fluent UI components: `FluentCard`, `FluentButton`, `FluentBadge`, `FluentLabel`, `FluentStack`, `FluentIcon`, `FluentProgress`
+  - Wrapped entire panel in `<CommandCard>` for glassmorphism
+  - Approve button uses `Appearance.Accent`, Modify/Reject use `Appearance.Outline`
+  - Reject button has custom red accent styling via CSS override
+  - Added risk-level badge with color coding: Green (≤5% margin impact), Yellow (5-15%), Red (>15%)
+  - Risk calculated from `_estimatedImpact / (totalChanges * 100)` percentage
+  - Confirmation dialog wrapped in `<CommandCard>` glassmorphism
+  - All existing approve/reject/modify functionality preserved
+  - Created `ApprovalPanel.razor.css` — Scoped styles for risk badges, action buttons, summary card, confirm dialog
+  - Fluent icons: CheckmarkCircle (approve), Edit (modify), DismissCircle (reject), Dismiss (close)
+
+- **Item 2.7 — Telemetry Dashboard (Live Metrics Panel):**
+  - Created `Components/A2UI/TelemetryDashboard.razor` — 4-card grid showing Agent Invocations, Avg Latency, MCP Tool Calls, A2A Handshakes
+  - Each card uses `<CommandCard>` glassmorphism wrapper with large gradient number, label, trend indicator, and progress bar
+  - Auto-refresh via `System.Threading.Timer` every 5 seconds with incremental mock data
+  - Trend indicators: ▲ 12% (invocations), ▼ 8% (latency/good), ▲ 5% (tools), — 0% (handshakes)
+  - Gradient progress bars: purple (invocations), green (latency), blue (tools), violet (handshakes)
+  - Created `TelemetryDashboard.razor.css` — Metric card grid, gradient numbers, trend badges, animated bar fills
+  - Added "🩺 System Health" section with pulsing "● Live" indicator to `Home.razor`
+  - Rendered `<TelemetryDashboard />` on dashboard between Quick Actions and Features sections
+  - Implements `IDisposable` for timer cleanup
+
+- **Dependencies Added:**
+  - `Microsoft.FluentUI.AspNetCore.Components.Icons` v4.14.0 NuGet package (for `FluentIcon` and `Icons.Regular.Size20.*`)
+  - `@using Icons = Microsoft.FluentUI.AspNetCore.Components.Icons` added to `_Imports.razor`
+
+**Key patterns:**
+- Blazor component attributes with mixed C#/markup require `@($"static-class {DynamicMethod()}")` interpolation syntax
+- `Icons` in Fluent UI v4 requires a separate NuGet package and a `using` alias directive
+- JS interop via ES modules: `import("./Components/Layout/CommandPalette.razor.js")` with `DotNetObjectReference` for callbacks
+- `System.Threading.Timer` with `InvokeAsync(StateHasChanged)` for safe Blazor thread-marshal on background updates
+- Risk-level thresholds: ≤5% = Low/Green, 5-15% = Medium/Yellow, >15% = High/Red
+
+**Build status:** ✅ Clean build, 0 errors, 0 warnings. Playwright tests are pre-existing failures (require running app server).
+
+**Files created:**
+- `src/SquadCommerce.Web/Components/Layout/CommandPalette.razor` — CMD+K command palette component
+- `src/SquadCommerce.Web/Components/Layout/CommandPalette.razor.css` — Palette glassmorphism styles
+- `src/SquadCommerce.Web/Components/Layout/CommandPalette.razor.js` — Ctrl+K keyboard shortcut listener
+- `src/SquadCommerce.Web/Components/Chat/ApprovalPanel.razor.css` — Approval panel Fluent styles
+- `src/SquadCommerce.Web/Components/A2UI/TelemetryDashboard.razor` — Live metrics dashboard
+- `src/SquadCommerce.Web/Components/A2UI/TelemetryDashboard.razor.css` — Metrics card styles
+
+**Files modified:**
+- `src/SquadCommerce.Web/Components/Layout/MainLayout.razor` — Added `<CommandPalette />`
+- `src/SquadCommerce.Web/Components/Chat/ApprovalPanel.razor` — Full Fluent UI conversion with risk badges
+- `src/SquadCommerce.Web/Components/Pages/Home.razor` — Added System Health section + TelemetryDashboard
+- `src/SquadCommerce.Web/Components/_Imports.razor` — Added Icons alias
+- `src/SquadCommerce.Web/SquadCommerce.Web.csproj` — Added Fluent UI Icons package

@@ -4,6 +4,7 @@ using SquadCommerce.Api.Middleware;
 using SquadCommerce.Api.Services;
 using SquadCommerce.Agents.Orchestrator;
 using SquadCommerce.Agents.Registration;
+using SquadCommerce.Contracts;
 using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Mcp;
 using SquadCommerce.A2A;
@@ -40,6 +41,9 @@ builder.Services.AddSignalR();
 
 // Thinking-state notifier (broadcasts agent activity over SignalR)
 builder.Services.AddSingleton<IThinkingStateNotifier, SignalRThinkingStateNotifier>();
+
+// Reasoning trace emitter (broadcasts chain of thought steps over SignalR)
+builder.Services.AddSingleton<IReasoningTraceEmitter, SignalRReasoningTraceEmitter>();
 
 // CORS for Blazor frontend
 builder.Services.AddCors(options =>

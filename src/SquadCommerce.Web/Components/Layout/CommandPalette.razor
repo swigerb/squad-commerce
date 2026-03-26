@@ -1,0 +1,182 @@
+@implements IAsyncDisposable
+@inject Services.ChatCommandService CommandService
+@inject IJSRuntime JS
+
+@if (_isOpen)
+{
+    <div class="palette-overlay" @onclick="Close" @onkeydown="HandleKeyDown">
+        <div class="palette-container" @onclick:stopPropagation="true">
+            <div class="palette-search">
+                <FluentIcon Value="@(new Icons.Regular.Size20.Search())" Color="Color.Neutral" />
+                <input @ref="_searchInput"
+                       type="text"
+                       class="palette-input"
+                       placeholder="Type a command..."
+                       @bind="_searchText"
+                       @bind:event="oninput"
+                       @onkeydown="HandleKeyDown"
+                       aria-label="Command palette search" />
+                <FluentBadge Appearance="Appearance.Neutral" Class="palette-shortcut-badge">ESC</FluentBadge>
+            </div>
+
+            <div class="palette-results" role="listbox">
+                @{ var filtered = GetFilteredCommands(); }
+                @if (filtered.Count == 0)
+                {
+                    <div class="palette-empty">
+                        <span>No matching commands</span>
+                    </div>
+                }
+                else
+                {
+                    @for (int i = 0; i < filtered.Count; i++)
+                    {
+                        var cmd = filtered[i];
+                        var isSelected = i == _selectedIndex;
+                        <div class="palette-item @(isSelected ? "selected" : "") @(cmd.Disabled ? "disabled" : "")"
+                             role="option"
+                             aria-selected="@isSelected"
+                             @onclick="() => ExecuteCommand(cmd)"
+                             @onmouseenter="() => _selectedIndex = i">
+                            <span class="palette-item-icon">@cmd.Icon</span>
+                            <div class="palette-item-content">
+                                <span class="palette-item-label">@cmd.Label</span>
+                                <span class="palette-item-description">@cmd.Description</span>
+                            </div>
+                            @if (cmd.Disabled)
+                            {
+                                <FluentBadge Appearance="Appearance.Neutral" Class="palette-coming-soon">Coming Soon</FluentBadge>
+                            }
+                            else
+                            {
+                                <span class="palette-item-agent">@cmd.Agent</span>
+                            }
+                        </div>
+                    }
+                }
+            </div>
+
+            <div class="palette-footer">
+                <span><kbd>↑↓</kbd> Navigate</span>
+                <span><kbd>↵</kbd> Execute</span>
+                <span><kbd>Esc</kbd> Close</span>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private bool _isOpen;
+    private string _searchText = string.Empty;
+    private int _selectedIndex;
+    private ElementReference _searchInput;
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<CommandPalette>? _dotNetRef;
+
+    private readonly List<PaletteCommand> _commands =
+    [
+        new("📦", "Check Inventory", "Check inventory for SKU-100 across all stores",
+            "Show me inventory levels for SKU-100 across all stores", "Inventory Agent"),
+        new("💰", "Analyze Pricing", "Analyze pricing vs competitors with margin impact",
+            "Calculate margin impact if we match competitor prices", "Pricing Agent"),
+        new("📊", "Compare Market", "Compare market with MegaMart for electronics",
+            "Compare our prices with MegaMart for electronics", "Market Intel Agent"),
+        new("🔍", "View Pipeline", "View current agent pipeline status",
+            "", "Pipeline", true),
+        new("🩺", "System Health", "View system health and telemetry metrics",
+            "", "Telemetry", true),
+    ];
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            _jsModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./Components/Layout/CommandPalette.razor.js");
+            await _jsModule.InvokeVoidAsync("registerCommandPaletteShortcut", _dotNetRef);
+        }
+
+        if (_isOpen)
+        {
+            await Task.Yield();
+            try { await _searchInput.FocusAsync(); } catch { }
+        }
+    }
+
+    [JSInvokable]
+    public void Toggle()
+    {
+        _isOpen = !_isOpen;
+        _searchText = string.Empty;
+        _selectedIndex = 0;
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void Close()
+    {
+        _isOpen = false;
+        _searchText = string.Empty;
+        _selectedIndex = 0;
+    }
+
+    private void HandleKeyDown(KeyboardEventArgs e)
+    {
+        var filtered = GetFilteredCommands();
+        switch (e.Key)
+        {
+            case "Escape":
+                Close();
+                break;
+            case "ArrowDown":
+                _selectedIndex = (_selectedIndex + 1) % Math.Max(filtered.Count, 1);
+                break;
+            case "ArrowUp":
+                _selectedIndex = (_selectedIndex - 1 + filtered.Count) % Math.Max(filtered.Count, 1);
+                break;
+            case "Enter":
+                if (filtered.Count > 0 && _selectedIndex < filtered.Count)
+                    ExecuteCommand(filtered[_selectedIndex]);
+                break;
+        }
+    }
+
+    private void ExecuteCommand(PaletteCommand cmd)
+    {
+        if (cmd.Disabled) return;
+        CommandService.SendCommand(cmd.ChatMessage);
+        Close();
+    }
+
+    private List<PaletteCommand> GetFilteredCommands()
+    {
+        if (string.IsNullOrWhiteSpace(_searchText))
+            return _commands;
+
+        var query = _searchText.ToLowerInvariant();
+        return _commands
+            .Where(c => FuzzyMatch(c, query))
+            .ToList();
+    }
+
+    private static bool FuzzyMatch(PaletteCommand cmd, string query)
+    {
+        var tokens = query.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        var searchable = $"{cmd.Label} {cmd.Description} {cmd.Agent}".ToLowerInvariant();
+        return tokens.All(t => searchable.Contains(t));
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule is not null)
+        {
+            try { await _jsModule.InvokeVoidAsync("unregisterCommandPaletteShortcut"); } catch { }
+            await _jsModule.DisposeAsync();
+        }
+        _dotNetRef?.Dispose();
+    }
+
+    private record PaletteCommand(
+        string Icon, string Label, string Description,
+        string ChatMessage, string Agent, bool Disabled = false);
+}
