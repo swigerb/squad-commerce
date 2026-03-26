@@ -575,3 +575,38 @@ In .NET 10 Blazor with per-page/component render modes, ANY interactive componen
 - `InvokeAsync(StateHasChanged)` for thread-safe UI updates from SignalR callbacks
 
 **Build status:** ✅ Clean build — 0 warnings, 0 errors
+
+### 2026-03-25: Phase 3 Items 3.2 + 3.4 + 3.7
+
+**What was done:**
+
+- **Item 3.2 — A2A Handshake Animations:**
+  - Added animated pulse dot inside A2A status badges (`a2a-pulse-dot`) in `AgentFleetPanel.razor`
+  - Added `a2a-connection-line` with `a2a-data-flow` sliding effect — a subtle data-flowing pulse between agents
+  - Colors: blue pulse for negotiating, green flash for completed, red pulse for failed
+  - All CSS animations in `AgentFleetPanel.razor.css` using `@@keyframes` (Blazor-escaped)
+
+- **Item 3.4 — Keyboard Shortcut System:**
+  - Extended `CommandPalette.razor.js` with `registerKeyboardShortcuts()` — handles 1-4 (panel focus), `/` (chat focus), `?` (help overlay), `Esc` (close)
+  - Added `focusChatInput()` and `focusPanel()` JS helpers
+  - Shortcuts skip input fields (except Esc) to avoid conflicts with typing
+  - Created `KeyboardShortcutHelp.razor` + `.razor.css` — modal listing all shortcuts, dark-themed, accessible
+  - Integrated into `MainLayout.razor` via `IAsyncDisposable` lifecycle and `[JSInvokable]` callback
+
+- **Item 3.7 — Responsive / Mobile Layout:**
+  - Added media queries in `MainLayout.razor.css`:
+    - Below 1200px: vertical stacking of sidebar + main + fleet
+    - Below 768px: fleet panel hidden, toggle button appears, touch-friendly 44px hit targets
+    - Below 480px: extra compact spacing
+  - Added `fleet-toggle-btn` in header (🚀 icon), wired to `ToggleFleetPanel()`
+  - `fleet-hidden` CSS class for programmatic toggle
+  - Chat input sticky at bottom on mobile, 16px font to prevent iOS zoom
+  - All existing functionality preserved
+
+**Key patterns:**
+- JS interop module (`CommandPalette.razor.js`) shared between CommandPalette and MainLayout — single source for keyboard handling
+- MainLayout now implements `IAsyncDisposable` for proper JS cleanup
+- Responsive approach uses CSS media queries + Blazor toggle state for fleet panel
+- `@@keyframes` double-@ escaping required in `.razor.css` scoped stylesheets
+
+**Build status:** ✅ Successful compilation

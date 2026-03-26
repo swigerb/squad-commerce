@@ -50,7 +50,11 @@
                             @if (a2aStatus != null)
                             {
                                 <span class="protocol-badge a2a-status a2a-@a2aStatus.CssClass" title="@a2aStatus.Details">
+                                    <span class="a2a-pulse-dot"></span>
                                     @a2aStatus.Emoji @a2aStatus.Label
+                                </span>
+                                <span class="a2a-connection-line a2a-line-@a2aStatus.CssClass" aria-hidden="true">
+                                    <span class="a2a-data-flow"></span>
                                 </span>
                             }
                         </div>

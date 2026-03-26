@@ -97,3 +97,133 @@ main {
         right: 0.75rem;
         top: 0.5rem;
     }
+
+/* ── Fleet Toggle Button ──────────────── */
+.fleet-toggle-btn {
+    display: none; /* shown via media query on small screens */
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.85);
+    font-size: 1.1rem;
+    padding: 0.4rem 0.6rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    line-height: 1;
+}
+
+.fleet-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.fleet-toggle-btn:active {
+    transform: scale(0.95);
+}
+
+/* ── Fleet Hidden (toggled off) ────────── */
+.fleet-hidden {
+    display: none !important;
+}
+
+/* ===== Responsive / Mobile Layout ===== */
+
+/* ── Below 1200px: stack sidebar + main vertically ── */
+@media (max-width: 1200px) {
+    ::deep .layout-body {
+        flex-direction: column !important;
+    }
+
+    .sidebar-left {
+        width: 100% !important;
+        max-height: 45vh;
+        border-right: none !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .main-content {
+        flex: 1;
+        min-height: 0;
+    }
+
+    .sidebar-right {
+        width: 100% !important;
+        max-height: 35vh;
+        border-left: none !important;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+}
+
+/* ── Below 768px: hide fleet panel, show toggle, touch-friendly ── */
+@media (max-width: 768px) {
+    .fleet-toggle-btn {
+        display: inline-flex;
+    }
+
+    .sidebar-right {
+        display: none;
+    }
+
+    .sidebar-right:not(.fleet-hidden) {
+        /* When toggled visible on mobile, show as overlay */
+    }
+
+    .sidebar-left {
+        max-height: 50vh;
+    }
+
+    /* Touch-friendly: increase hit targets */
+    button, .btn, .protocol-badge, .fleet-toggle-btn {
+        min-height: 44px;
+        min-width: 44px;
+    }
+
+    .app-header {
+        padding: 0.5rem 1rem !important;
+    }
+
+    .content-header {
+        padding: 0.75rem 1rem !important;
+    }
+
+    .content-body {
+        padding: 1rem !important;
+    }
+
+    .sidebar-header {
+        padding: 0.75rem 1rem !important;
+    }
+
+    /* Chat input stays accessible at bottom */
+    ::deep .chat-input-container {
+        position: sticky;
+        bottom: 0;
+        z-index: 50;
+        background: #161b22;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    ::deep .chat-input {
+        font-size: 16px; /* prevent iOS zoom */
+        min-height: 44px;
+    }
+
+    ::deep .send-button {
+        min-height: 44px;
+        padding: 0.5rem 1rem;
+    }
+}
+
+/* ── Below 480px: extra compact ── */
+@media (max-width: 480px) {
+    .header-icon {
+        font-size: 1.25rem !important;
+    }
+
+    .sidebar-left {
+        max-height: 55vh;
+    }
+
+    .content-body {
+        padding: 0.75rem !important;
+    }
+}

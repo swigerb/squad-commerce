@@ -1,4 +1,6 @@
 ﻿@inherits LayoutComponentBase
+@implements IAsyncDisposable
+@inject IJSRuntime JS
 
 <FluentStack Orientation="Orientation.Vertical" Style="height: 100vh; overflow: hidden; gap: 0;">
     <FluentHeader Class="app-header" Style="min-height: auto; height: auto;">
@@ -9,18 +11,23 @@
                 <FluentLabel Style="font-size: 0.8rem; opacity: 0.85; color: rgba(255,255,255,0.85); line-height: 1;">AI-Powered Retail Management</FluentLabel>
             </FluentStack>
         </FluentStack>
-        <AgentStatusBar />
+        <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 0.5rem;">
+            <button class="fleet-toggle-btn" @onclick="ToggleFleetPanel" aria-label="Toggle Agent Fleet panel" title="Toggle Fleet Panel">
+                🚀
+            </button>
+            <AgentStatusBar />
+        </FluentStack>
     </FluentHeader>
 
-    <FluentStack Orientation="Orientation.Horizontal" Style="flex: 1; overflow: hidden; gap: 0;">
-        <aside class="sidebar-left">
+    <FluentStack Orientation="Orientation.Horizontal" Class="layout-body" Style="flex: 1; overflow: hidden; gap: 0;">
+        <aside class="sidebar-left" tabindex="-1" aria-label="Chat panel">
             <div class="sidebar-header">
                 <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.125rem; color: rgba(255,255,255,0.9);">💬 Conversation</FluentLabel>
             </div>
             <AgentChat />
         </aside>
 
-        <main class="main-content">
+        <main class="main-content" tabindex="-1" aria-label="Dashboard panel">
             <div class="content-header">
                 <FluentLabel Weight="FontWeight.Bold" Style="font-size: 1.125rem; color: rgba(255,255,255,0.9);">📊 Analysis Dashboard</FluentLabel>
             </div>
@@ -29,13 +36,14 @@
             </article>
         </main>
 
-        <aside class="sidebar-right">
+        <aside class="sidebar-right @(_fleetVisible ? "" : "fleet-hidden")" tabindex="-1" aria-label="Agent Fleet panel">
             <AgentFleetPanel />
         </aside>
     </FluentStack>
 </FluentStack>
 
 <CommandPalette />
+<KeyboardShortcutHelp IsVisible="_showShortcutHelp" OnClose="CloseShortcutHelp" />
 
 <div id="blazor-error-ui" data-nosnippet>
     <div class="blazor-error-content">
@@ -45,3 +53,76 @@
         <button class="blazor-error-dismiss" onclick="document.getElementById('blazor-error-ui').style.display='none'">Dismiss</button>
     </div>
 </div>
+
+@code {
+    private bool _showShortcutHelp;
+    private bool _fleetVisible = true;
+    private IJSObjectReference? _jsModule;
+    private DotNetObjectReference<MainLayout>? _dotNetRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _dotNetRef = DotNetObjectReference.Create(this);
+            _jsModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./Components/Layout/CommandPalette.razor.js");
+            await _jsModule.InvokeVoidAsync("registerKeyboardShortcuts", _dotNetRef);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnShortcutKey(string key)
+    {
+        switch (key)
+        {
+            case "Escape":
+                _showShortcutHelp = false;
+                break;
+            case "1":
+                if (_jsModule is not null)
+                    await _jsModule.InvokeVoidAsync("focusPanel", ".sidebar-left");
+                break;
+            case "2":
+                if (_jsModule is not null)
+                    await _jsModule.InvokeVoidAsync("focusPanel", ".main-content");
+                break;
+            case "3":
+                if (_jsModule is not null)
+                    await _jsModule.InvokeVoidAsync("focusPanel", ".content-body");
+                break;
+            case "4":
+                if (_jsModule is not null)
+                    await _jsModule.InvokeVoidAsync("focusPanel", ".sidebar-right");
+                break;
+            case "/":
+                if (_jsModule is not null)
+                    await _jsModule.InvokeVoidAsync("focusChatInput");
+                break;
+            case "?":
+                _showShortcutHelp = !_showShortcutHelp;
+                break;
+        }
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void CloseShortcutHelp()
+    {
+        _showShortcutHelp = false;
+    }
+
+    private void ToggleFleetPanel()
+    {
+        _fleetVisible = !_fleetVisible;
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_jsModule is not null)
+        {
+            try { await _jsModule.InvokeVoidAsync("unregisterKeyboardShortcuts"); } catch { }
+            await _jsModule.DisposeAsync();
+        }
+        _dotNetRef?.Dispose();
+    }
+}
