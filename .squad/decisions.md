@@ -1770,3 +1770,1328 @@ The Send button in AgentChat.razor was non-functional because the service POSTed
 - ✅ `dotnet build` — zero errors, 1 pre-existing warning (CA2024)
 - ✅ `dotnet test tests/SquadCommerce.Web.Tests` — 13/13 passed
 
+
+---
+
+### 2026-03-26T11:48:55Z: User directive
+**By:** Brian Swiger (via Copilot)
+**What:** Scale Squad Commerce from a single-scenario demo to a comprehensive enterprise showcase with 4 new business scenarios: (1) Supply Chain Shock — logistics/risk with rerouting map A2UI, (2) Viral Spike — marketing/demand with social sentiment streaming, (3) Sustainability & ESG Audit — procurement compliance with supplier risk matrix, (4) Store Readiness — operations with interactive floorplan. Also add a "System Overlay" that highlights the protocol in use (A2A handshake pulse, MCP tool icon, A2UI generative tag, HITL action required glow). Each scenario demonstrates specific MAF/A2A/MCP/A2UI/HITL capabilities.
+**Why:** User request — transform from single-scenario POC to comprehensive enterprise showcase that highlights pro-code strengths of MAF.
+
+---
+
+### 2026-03-26T02:23:57Z: User directive
+**By:** Brian Swiger (via Copilot)
+**What:** Make the entire agent implementation REAL. Reference the latest Microsoft Agent Framework SDK. Remove ALL hardcoded/mock data. Implement a real RetailWorkflow. Replace simulated MCP/A2A with real protocol implementations. This should be a near-production blueprint for MAF, A2A, AG-UI, and modern AI agent patterns. Nothing fake.
+**Why:** User request — this is the foundational quality bar for the project. No more simulations.
+
+---
+
+### 2026-03-26T00:05:25Z: User directive
+**By:** Brian Swiger (via Copilot)
+**What:** Transform Squad Commerce UI from chat-with-data POC into a high-density agentic command center. Five pillars: (1) Agent Fleet Pulse Sidebar with live status, A2A handshake animations, agent personas with thinking states. (2) Chain of Thought visualization with reasoning trace panel, tool call timeline, code transparency. (3) Generative A2UI for retail insights — inventory heatmaps, pricing comparison grids with delta indicators, HITL approval cards. (4) Professional Command Center aesthetic — Fluent UI Blazor, glassmorphism, CMD+K command palette, telemetry dashboard with token usage/latency graphs. (5) Interactive Agentic Pipeline view — node-graph orchestration visualization showing task flow between agents in real time.
+**Why:** User request — captured for team memory. This is the UI vision for the next phase of Squad Commerce, shifting from functional POC to flagship showcase.
+
+---
+
+# Decision: Scenario Expansion — 4 New Scenarios + System Overlay
+
+**Author:** Bill Gates (Lead Architect)
+**Requested by:** Brian Swiger
+**Date:** 2026-03-26
+**Status:** PROPOSED — Awaiting team consensus
+
+---
+
+## Executive Summary
+
+Brian wants to expand squad-commerce from a single "Competitor Price Drop" scenario to **five total scenarios** plus a system-wide protocol overlay. I've inventoried every agent, executor, MCP tool, A2UI component, entity, and seed record we have today. Here's the honest assessment:
+
+- **We can reuse ~40% of existing infrastructure** across the new scenarios (InventoryAgent, PricingAgent, MarketIntelAgent, all 11 A2UI components, SignalR hub, telemetry, audit trail)
+- **We need 9 new agents**, 8 new MCP tools, 4 new A2UI components, 4 new EF Core entities, and significant seed data expansion
+- **The orchestrator pattern generalizes cleanly** — each scenario is a new workflow with its own request type and executor chain, routed by the existing ChiefSoftwareArchitectAgent
+- **Scenario 2 ("Viral Spike") delivers the most showcase value per line of code** — it reuses 2 of 3 existing domain agents and adds the most visually impressive A2UI
+
+**Key constraint honored:** All external data sources (weather APIs, social sentiment, supplier databases, foot traffic) are simulated in-process with realistic seed data — the same pattern we use for competitor pricing today. The architecture (real MCP tools, real A2A conversations, real A2UI rendering) is genuine.
+
+---
+
+## Current Asset Inventory (What We Have)
+
+| Category | Count | Items |
+|----------|-------|-------|
+| Agents | 4 | ChiefSoftwareArchitectAgent, InventoryAgent, PricingAgent, MarketIntelAgent |
+| MAF Executors | 4 | MarketIntelExecutor, InventoryExecutor, PricingExecutor, SynthesisExecutor |
+| MCP Tools | 2 | GetInventoryLevels, UpdateStorePricing |
+| A2UI Components | 11 | A2UIRenderer, RetailStockHeatmap, PricingImpactChart, MarketComparisonGrid, DecisionAuditTrail, AgentPipelineVisualizer, InsightCardRenderer, ToolCallTimeline, ReasoningTracePanel, TelemetryDashboard, PipelineNodeGraph |
+| EF Core Entities | 3 | InventoryEntity, PricingEntity, AuditEntryEntity |
+| Stores | 5 | SEA-001, PDX-002, SFO-003, LAX-004, DEN-005 (all West Coast) |
+| SKUs | 8 | SKU-1001 through SKU-1008 (all Electronics) |
+| Seed Records | 80 | 40 inventory + 40 pricing |
+| SignalR Hub | 1 | AgentHub (9 methods — full lifecycle coverage) |
+| Workflows | 1 | RetailWorkflow (MarketIntel → Inventory → Pricing → Synthesis) |
+
+---
+
+## Reuse Analysis Per Scenario
+
+### Scenario 1: "Supply Chain Shock" (Logistics & Risk)
+| What | Reuse? | Notes |
+|------|--------|-------|
+| InventoryAgent | ✅ REUSE | Query stock levels at Top 10 stores — already works |
+| RetailStockHeatmap | ✅ REUSE | Shows current stock state — perfect fit |
+| AgentPipelineVisualizer | ✅ REUSE | Visualize Logistics → Inventory → Redistribution pipeline |
+| InsightCardRenderer | ✅ REUSE | Risk summary cards |
+| LogisticsAgent | 🆕 NEW | Check shipment delay, calculate new ETA |
+| RedistributionAgent | 🆕 NEW | Negotiate store-to-store rerouting |
+| GetShipmentStatus (MCP) | 🆕 NEW | Pull shipment/delay data from simulated logistics DB |
+| GetDeliveryRoutes (MCP) | 🆕 NEW | Get available routes between stores |
+| ReroutingMap (A2UI) | 🆕 NEW | Live map showing rerouting arrows between stores |
+| RiskScoreGauge (A2UI) | 🆕 NEW | Gauge showing overall supply chain risk score |
+| ShipmentEntity | 🆕 NEW | EF Core entity for shipments |
+
+### Scenario 2: "Viral Spike" (Marketing & Demand)
+| What | Reuse? | Notes |
+|------|--------|-------|
+| MarketIntelAgent | ✅ REUSE | Extend to include social sentiment data |
+| PricingAgent | ✅ REUSE | Dynamic "Flash Sale" pricing — already calculates scenarios |
+| PricingImpactChart | ✅ REUSE | Show flash sale pricing scenarios |
+| MarketComparisonGrid | ✅ REUSE | Show competitor response to our surge pricing |
+| InsightCardRenderer | ✅ REUSE | Demand spike summary cards |
+| MarketingAgent | 🆕 NEW | Generate campaign draft + hero banner (A2UI-heavy) |
+| GetSocialSentiment (MCP) | 🆕 NEW | Pull simulated social sentiment data |
+| GetDemandForecast (MCP) | 🆕 NEW | Pull demand prediction by region |
+| SocialSentimentGraph (A2UI) | 🆕 NEW | Real-time sentiment velocity graph (AG-UI SSE streaming) |
+| CampaignPreview (A2UI) | 🆕 NEW | Email campaign mockup + mobile hero banner |
+| SocialSentimentEntity | 🆕 NEW | EF Core entity for social signals |
+
+### Scenario 3: "Sustainability & ESG Audit" (Procurement)
+| What | Reuse? | Notes |
+|------|--------|-------|
+| DecisionAuditTrail | ✅ REUSE | Perfect for compliance audit chain |
+| InsightCardRenderer | ✅ REUSE | At-risk supplier summary cards |
+| ReasoningTracePanel | ✅ REUSE | Chain-of-thought traces for compliance reasoning |
+| ComplianceAgent | 🆕 NEW | Pull certifications from supplier DB |
+| ResearchAgent | 🆕 NEW | Cross-reference sustainability watchlists |
+| ProcurementAgent | 🆕 NEW | Identify alternative suppliers |
+| GetSupplierCertifications (MCP) | 🆕 NEW | Query supplier certification status |
+| GetSustainabilityWatchlist (MCP) | 🆕 NEW | Query watchlist for flagged suppliers |
+| GetAlternativeSuppliers (MCP) | 🆕 NEW | Find replacement suppliers by category |
+| SupplierRiskMatrix (A2UI) | 🆕 NEW | Matrix showing supplier compliance status with risk colors |
+| SupplierEntity | 🆕 NEW | EF Core entity for suppliers + certifications |
+
+### Scenario 4: "Store Readiness" (Operations)
+| What | Reuse? | Notes |
+|------|--------|-------|
+| RetailStockHeatmap | ✅ REUSE | Show inventory readiness for new store |
+| AgentPipelineVisualizer | ✅ REUSE | Visualize Traffic → Merchandising → Manager pipeline |
+| ToolCallTimeline | ✅ REUSE | Show MCP tool calls for traffic data pulls |
+| TrafficAnalystAgent | 🆕 NEW | Pull heatmap data from Florida stores |
+| MerchandisingAgent | 🆕 NEW | Suggest planogram / shelf layout |
+| ManagerAgent (HITL) | 🆕 NEW | Request approval for layout change |
+| GetFootTrafficData (MCP) | 🆕 NEW | Pull simulated foot traffic heatmap data |
+| GetPlanogramData (MCP) | 🆕 NEW | Pull current shelf layout data |
+| InteractiveFloorplan (A2UI) | 🆕 NEW | Store layout with shelf-level zones, draggable in demo |
+| StoreLayoutEntity | 🆕 NEW | EF Core entity for store sections + foot traffic |
+
+---
+
+## New Agents Summary
+
+| # | Agent | Scenario | Protocol Role | Executor Type |
+|---|-------|----------|--------------|---------------|
+| 1 | **LogisticsAgent** | Supply Chain | MCP consumer | `Executor<SupplyChainShockRequest, AgentResult>` |
+| 2 | **RedistributionAgent** | Supply Chain | A2A (negotiates with InventoryAgent) | `Executor<SupplyChainShockRequest, AgentResult>` |
+| 3 | **MarketingAgent** | Viral Spike | A2UI producer (campaign preview) | `Executor<ViralSpikeRequest, AgentResult>` |
+| 4 | **ComplianceAgent** | ESG Audit | MCP consumer | `Executor<ESGAuditRequest, AgentResult>` |
+| 5 | **ResearchAgent** | ESG Audit | A2A (web/external cross-reference) | `Executor<ESGAuditRequest, AgentResult>` |
+| 6 | **ProcurementAgent** | ESG Audit | A2A (supplier negotiation) | `Executor<ESGAuditRequest, AgentResult>` |
+| 7 | **TrafficAnalystAgent** | Store Readiness | MCP consumer | `Executor<StoreReadinessRequest, AgentResult>` |
+| 8 | **MerchandisingAgent** | Store Readiness | A2A (planogram suggestion) | `Executor<StoreReadinessRequest, AgentResult>` |
+| 9 | **ManagerAgent** | Store Readiness | HITL (approval flow) | `Executor<StoreReadinessRequest, AgentResult>` |
+
+---
+
+## New Request Types (Contracts)
+
+```csharp
+// Scenario 1
+record SupplyChainShockRequest(string Sku, int DelayDays, string Reason, string[] AffectedStoreIds, string SessionId);
+
+// Scenario 2
+record ViralSpikeRequest(string Sku, decimal DemandMultiplier, string Region, string Source, string SessionId);
+
+// Scenario 3
+record ESGAuditRequest(string ProductCategory, string CertificationRequired, DateOnly Deadline, string SessionId);
+
+// Scenario 4
+record StoreReadinessRequest(string StoreId, string Section, DateOnly OpeningDate, string SessionId);
+```
+
+---
+
+## New Workflows
+
+| Workflow | Pipeline | Type |
+|----------|----------|------|
+| **SupplyChainWorkflow** | Logistics → Inventory (reused) → Redistribution → Synthesis | Linear |
+| **ViralSpikeWorkflow** | MarketIntel (reused) → Pricing (reused) → Marketing → Synthesis | Linear |
+| **ESGAuditWorkflow** | Compliance → Research → Procurement → Synthesis | Linear |
+| **StoreReadinessWorkflow** | TrafficAnalyst → Merchandising → Manager (HITL) → Synthesis | Linear with HITL gate |
+
+Each workflow follows the existing `RetailWorkflow` pattern: `WorkflowBuilder` with `Executor<TIn, TOut>` stages.
+
+---
+
+## New MCP Tools
+
+| # | Tool Name | Scenario | What It Does | Data Source |
+|---|-----------|----------|-------------|-------------|
+| 1 | **GetShipmentStatus** | Supply Chain | Returns shipment ETA, delay reason, affected SKUs | Simulated ShipmentEntity |
+| 2 | **GetDeliveryRoutes** | Supply Chain | Returns available rerouting options between stores | Computed from store locations |
+| 3 | **GetSocialSentiment** | Viral Spike | Returns sentiment score, velocity, platform, region | Simulated SocialSentimentEntity |
+| 4 | **GetDemandForecast** | Viral Spike | Returns predicted demand by store/region for next 7 days | Computed from sentiment + history |
+| 5 | **GetSupplierCertifications** | ESG Audit | Returns supplier name, certifications, expiry dates, status | Simulated SupplierEntity |
+| 6 | **GetSustainabilityWatchlist** | ESG Audit | Returns flagged suppliers with violation details | Simulated watchlist data |
+| 7 | **GetAlternativeSuppliers** | ESG Audit | Returns qualified replacement suppliers by category | Simulated SupplierEntity |
+| 8 | **GetFootTrafficData** | Store Readiness | Returns hourly foot traffic heatmap by store section | Simulated StoreLayoutEntity |
+
+All tools follow the existing `[McpServerToolType]` pattern with `[McpServerTool]` methods, backed by EF Core repositories against SQLite. No external API calls — same simulation pattern as `GetInventoryLevels` today.
+
+---
+
+## New A2UI Components
+
+| # | Component | Scenario | Renders | Complexity |
+|---|-----------|----------|---------|-----------|
+| 1 | **ReroutingMap.razor** | Supply Chain | Store-to-store rerouting arrows with quantities, risk overlay | Medium — SVG paths between store nodes |
+| 2 | **SocialSentimentGraph.razor** | Viral Spike | Real-time sentiment velocity line graph with AG-UI SSE streaming | Medium — time-series with streaming updates |
+| 3 | **SupplierRiskMatrix.razor** | ESG Audit | Matrix grid: suppliers × certifications, color-coded risk | Low — table with conditional styling |
+| 4 | **InteractiveFloorplan.razor** | Store Readiness | Store section layout with traffic heatmap overlay, shelf zones | High — SVG/canvas with interactive zones |
+
+**Data contracts for new A2UI components** go in `SquadCommerce.Contracts/A2UI/`:
+- `ReroutingMapData.cs` — Source/destination stores, quantities, risk scores
+- `SocialSentimentGraphData.cs` — Time series of sentiment scores by platform
+- `SupplierRiskMatrixData.cs` — Supplier rows × certification columns with status
+- `InteractiveFloorplanData.cs` — Store sections with traffic intensity, shelf assignments
+
+---
+
+## New EF Core Entities
+
+| Entity | Purpose | Key Fields |
+|--------|---------|-----------|
+| **ShipmentEntity** | Shipment tracking for Supply Chain scenario | ShipmentId, Sku, OriginStoreId, DestStoreId, Status (InTransit/Delayed/Delivered), EtaDate, DelayDays, DelayReason |
+| **SocialSentimentEntity** | Social signal data for Viral Spike scenario | Id, Sku, Platform (TikTok/Instagram/Twitter), SentimentScore, Velocity, Region, DetectedAt |
+| **SupplierEntity** | Supplier & certification data for ESG scenario | SupplierId, Name, Category, Certification (FairTrade/Organic/RainforestAlliance), CertificationExpiry, Status (Compliant/AtRisk/NonCompliant), Country |
+| **StoreLayoutEntity** | Store section layout for Store Readiness scenario | StoreId, Section (Electronics/Grocery/Apparel), SquareFootage, ShelfCount, AvgHourlyTraffic, OptimalPlacement |
+
+All entities use the existing `SquadCommerceDbContext` pattern with composite keys where appropriate.
+
+---
+
+## Seed Data Expansion
+
+### New Stores (expand from 5 → 12)
+
+| StoreId | Name | Region | Why |
+|---------|------|--------|-----|
+| NYC-006 | Times Square Flagship | Northeast | Viral Spike scenario needs Northeast stores |
+| BOS-007 | Back Bay Mall | Northeast | Viral Spike scenario needs multiple NE stores |
+| PHI-008 | Center City Plaza | Northeast | Viral Spike scenario — 3rd NE store |
+| MIA-009 | Miami Flagship | Southeast | Store Readiness scenario — the new store |
+| TPA-010 | Tampa Gateway | Southeast | Store Readiness — Florida reference store |
+| ORL-011 | Orlando Resort District | Southeast | Store Readiness — Florida reference store |
+| ATL-012 | Peachtree Center | Southeast | Supply Chain — regional hub for redistribution |
+
+### New SKU Categories (expand from 8 → 16)
+
+| SKU | Product | Category | Why |
+|-----|---------|----------|-----|
+| SKU-2001 | Organic Fair Trade Coffee | Grocery | Supply Chain scenario ("Organic Coffee") |
+| SKU-2002 | Dark Chocolate Bar (72% Cocoa) | Grocery | ESG scenario (cocoa-based SKU) |
+| SKU-2003 | Cocoa Powder Premium | Grocery | ESG scenario (cocoa-based SKU) |
+| SKU-2004 | Hot Chocolate Mix | Grocery | ESG scenario (cocoa-based SKU) |
+| SKU-3001 | Classic Straight Denim | Apparel | Viral Spike scenario ("Classic Denim") |
+| SKU-3002 | Classic Boot-Cut Denim | Apparel | Viral Spike scenario (complementary item) |
+| SKU-3003 | Denim Jacket Classic | Apparel | Viral Spike scenario (complementary item) |
+| SKU-3004 | Canvas Belt | Apparel | Viral Spike scenario (complementary accessory) |
+
+### Seed Record Counts
+
+| Data | Current | After Expansion | Delta |
+|------|---------|----------------|-------|
+| Stores | 5 | 12 | +7 |
+| SKUs | 8 | 16 | +8 |
+| Inventory records | 40 | 192 (12×16) | +152 |
+| Pricing records | 40 | 192 (12×16) | +152 |
+| Shipment records | 0 | ~15 | +15 |
+| Social sentiment records | 0 | ~20 | +20 |
+| Supplier records | 0 | ~12 | +12 |
+| Store layout records | 0 | ~30 (sections per store) | +30 |
+
+---
+
+## System Overlay — Protocol Highlighting
+
+This is a **UI-only** enhancement that works across ALL scenarios. It makes the existing protocol metadata visible.
+
+| Protocol | Visual Treatment | Data Source |
+|----------|-----------------|-------------|
+| **A2A Handshake** | Pulse animation between agent icons in PipelineNodeGraph | Already emitted via `SendA2AHandshakeStatus` in AgentHub |
+| **MCP Integration** | 🔧 Wrench icon badge in chat message bubbles | Already tracked in `ToolCallTimeline` data |
+| **A2UI Payload** | "Generative UI" flash tag on A2UI component headers | Already present — `A2UIPayload.RenderAs` discriminator |
+| **HITL** | High-glow amber "⚠ Action Required" notification banner | Wire to existing `SendNotification` on AgentHub |
+
+### Implementation
+- New component: **ProtocolBadge.razor** — reusable badge that renders the appropriate icon/animation based on protocol type
+- Modify: **ChatMessage.razor** (or equivalent) — inject ProtocolBadge based on message metadata
+- Modify: **PipelineNodeGraph.razor** — add CSS pulse animation on A2A edges
+- New CSS: **protocol-overlay.css** — glassmorphism badges, pulse keyframes, glow effects
+- Estimated: ~4-5 files touched, 0 backend changes
+
+---
+
+## Priority Ranking
+
+| Rank | Scenario | Showcase Value | Work Estimate | Reuse % | Rationale |
+|------|----------|---------------|---------------|---------|-----------|
+| **0** | System Overlay | HIGH | LOW (1 session) | 90% | Pure UI — makes everything look better. No backend. Do first. |
+| **1** | Viral Spike | **HIGHEST** | MEDIUM (2-3 sessions) | **60%** | Reuses MarketIntelAgent + PricingAgent. Social sentiment graph is visually stunning. Marketing campaign preview is unique A2UI showcase. Best demo narrative. |
+| **2** | Supply Chain Shock | HIGH | MEDIUM (2-3 sessions) | 40% | Rerouting map is visually compelling. InventoryAgent reuse. Logistics is intuitive domain for audience. |
+| **3** | Store Readiness | MEDIUM-HIGH | HIGH (3-4 sessions) | 25% | Interactive floorplan is impressive but complex. HITL approval is a unique protocol showcase. |
+| **4** | ESG Audit | MEDIUM | HIGH (3-4 sessions) | 15% | Least visual impact, most new code. 3 brand-new agents with no reuse. Good for enterprise credibility but worst ROI for demo effort. |
+
+---
+
+## Phased Implementation Plan
+
+### Phase 0: Foundation (1-2 sessions) — PARALLEL SAFE
+**Goal:** Shared infrastructure that all scenarios need. Nothing scenario-specific.
+
+| # | Task | Owner | Files |
+|---|------|-------|-------|
+| 0.1 | Expand seed data: 7 new stores, 8 new SKUs, 192 inventory + pricing records | Anders | `DatabaseSeeder.cs` (modify) |
+| 0.2 | Add new EF Core entities: ShipmentEntity, SocialSentimentEntity, SupplierEntity, StoreLayoutEntity | Anders | 4 new files in `Mcp/Data/Entities/`, modify `SquadCommerceDbContext.cs` |
+| 0.3 | Add scenario request types to Contracts | Satya | 4 new files in `Contracts/Models/` |
+| 0.4 | Add A2UI data contracts for 4 new components | Satya | 4 new files in `Contracts/A2UI/` |
+| 0.5 | Extend `A2UIPayload.RenderAs` discriminator with new component types | Satya | Modify `A2UIPayload.cs` |
+| 0.6 | Add scenario routing to ChiefSoftwareArchitectAgent | Satya | Modify `ChiefSoftwareArchitectAgent.cs` — detect scenario from prompt, dispatch to correct workflow |
+| 0.7 | System Overlay: ProtocolBadge.razor + protocol-overlay.css | Clippy | 2 new files + modify 2 existing components |
+
+**Estimated new/modified files:** ~18
+**Dependencies:** None — this is pure foundation.
+
+---
+
+### Phase 1: "Viral Spike" Scenario (2-3 sessions)
+**Goal:** Second complete scenario with maximum agent reuse.
+
+**Depends on:** Phase 0
+
+| # | Task | Owner | Files |
+|---|------|-------|-------|
+| 1.1 | Seed social sentiment data (TikTok post about Classic Denim, 400% spike, Northeast region) | Anders | Modify `DatabaseSeeder.cs` |
+| 1.2 | MCP tool: GetSocialSentiment | Anders | New `Mcp/Tools/GetSocialSentimentTool.cs` |
+| 1.3 | MCP tool: GetDemandForecast | Anders | New `Mcp/Tools/GetDemandForecastTool.cs` |
+| 1.4 | Extend MarketIntelAgent: add social sentiment analysis alongside competitor pricing | Satya | Modify `Agents/Domain/MarketIntelAgent.cs` |
+| 1.5 | Extend PricingAgent: add "Flash Sale" pricing strategy for complementary items | Satya | Modify `Agents/Domain/PricingAgent.cs` |
+| 1.6 | New agent: MarketingAgent (generates campaign preview + hero banner A2UI) | Satya | New `Agents/Domain/MarketingAgent.cs` |
+| 1.7 | New executors: ViralSpikeMarketIntelExecutor, ViralSpikePricingExecutor, MarketingExecutor, ViralSpikeSynthesisExecutor | Satya | New `Agents/Orchestrator/Executors/ViralSpikeExecutors.cs` |
+| 1.8 | New workflow: ViralSpikeWorkflow | Satya | New `Agents/Orchestrator/ViralSpikeWorkflow.cs` |
+| 1.9 | A2UI: SocialSentimentGraph.razor (with AG-UI SSE streaming) | Clippy | New `Web/Components/A2UI/SocialSentimentGraph.razor` |
+| 1.10 | A2UI: CampaignPreview.razor (email mockup + hero banner) | Clippy | New `Web/Components/A2UI/CampaignPreview.razor` |
+| 1.11 | Extend A2UIRenderer.razor to route new component types | Clippy | Modify `Web/Components/A2UI/A2UIRenderer.razor` |
+| 1.12 | Integration tests for Viral Spike workflow | Steve | New test files |
+
+**Estimated new/modified files:** ~14
+**Agent reuse:** MarketIntelAgent (extended), PricingAgent (extended) = 2/4 agents reused
+**New agents:** 1 (MarketingAgent)
+
+---
+
+### Phase 2: "Supply Chain Shock" Scenario (2-3 sessions)
+**Goal:** Logistics domain with visually impressive rerouting map.
+
+**Depends on:** Phase 0. Can run in PARALLEL with Phase 1 (no shared agents).
+
+| # | Task | Owner | Files |
+|---|------|-------|-------|
+| 2.1 | Seed shipment data (SKU-2001 Organic Coffee delayed, storm, 3 days) | Anders | Modify `DatabaseSeeder.cs` |
+| 2.2 | MCP tool: GetShipmentStatus | Anders | New `Mcp/Tools/GetShipmentStatusTool.cs` |
+| 2.3 | MCP tool: GetDeliveryRoutes | Anders | New `Mcp/Tools/GetDeliveryRoutesTool.cs` |
+| 2.4 | New agent: LogisticsAgent (checks delay, calculates ETA) | Satya | New `Agents/Domain/LogisticsAgent.cs` |
+| 2.5 | New agent: RedistributionAgent (A2A negotiation with InventoryAgent for rerouting) | Satya | New `Agents/Domain/RedistributionAgent.cs` |
+| 2.6 | New executors: LogisticsExecutor, SupplyChainInventoryExecutor, RedistributionExecutor, SupplyChainSynthesisExecutor | Satya | New `Agents/Orchestrator/Executors/SupplyChainExecutors.cs` |
+| 2.7 | New workflow: SupplyChainWorkflow | Satya | New `Agents/Orchestrator/SupplyChainWorkflow.cs` |
+| 2.8 | A2UI: ReroutingMap.razor (SVG store-to-store arrows + risk overlay) | Clippy | New `Web/Components/A2UI/ReroutingMap.razor` |
+| 2.9 | A2UI: RiskScoreGauge.razor (circular gauge with risk score) | Clippy | New `Web/Components/A2UI/RiskScoreGauge.razor` |
+| 2.10 | Extend A2UIRenderer.razor for new component types | Clippy | Modify `A2UIRenderer.razor` |
+| 2.11 | Integration tests for Supply Chain workflow | Steve | New test files |
+
+**Estimated new/modified files:** ~13
+**Agent reuse:** InventoryAgent (as-is) = 1/4 agents reused
+**New agents:** 2 (LogisticsAgent, RedistributionAgent)
+
+---
+
+### Phase 3: "Store Readiness" Scenario (3-4 sessions)
+**Goal:** HITL approval flow + interactive floorplan. The "wow" demo.
+
+**Depends on:** Phase 0. Can start after Phase 1 or 2 (not parallel due to HITL complexity).
+
+| # | Task | Owner | Files |
+|---|------|-------|-------|
+| 3.1 | Seed store layout + foot traffic data (Miami + Florida reference stores) | Anders | Modify `DatabaseSeeder.cs` |
+| 3.2 | MCP tool: GetFootTrafficData | Anders | New `Mcp/Tools/GetFootTrafficDataTool.cs` |
+| 3.3 | MCP tool: GetPlanogramData | Anders | New `Mcp/Tools/GetPlanogramDataTool.cs` |
+| 3.4 | New agent: TrafficAnalystAgent | Satya | New `Agents/Domain/TrafficAnalystAgent.cs` |
+| 3.5 | New agent: MerchandisingAgent | Satya | New `Agents/Domain/MerchandisingAgent.cs` |
+| 3.6 | New agent: ManagerAgent (HITL — wired to MAF HITL executor pattern + ApprovalPanel) | Satya | New `Agents/Domain/ManagerAgent.cs` |
+| 3.7 | New executors: TrafficExecutor, MerchandisingExecutor, ManagerHitlExecutor, StoreReadinessSynthesisExecutor | Satya | New `Agents/Orchestrator/Executors/StoreReadinessExecutors.cs` |
+| 3.8 | New workflow: StoreReadinessWorkflow (with HITL gate before synthesis) | Satya | New `Agents/Orchestrator/StoreReadinessWorkflow.cs` |
+| 3.9 | A2UI: InteractiveFloorplan.razor (SVG store sections + traffic heatmap overlay + shelf zones) | Clippy | New `Web/Components/A2UI/InteractiveFloorplan.razor` |
+| 3.10 | Wire HITL to existing ApprovalPanel + "Action Required" SignalR notification | Clippy | Modify `ApprovalPanel.razor`, modify `AgentHub.cs` |
+| 3.11 | Integration tests for Store Readiness workflow + HITL approval flow | Steve | New test files |
+
+**Estimated new/modified files:** ~14
+**Agent reuse:** None directly (but InventoryAgent pattern informs TrafficAnalystAgent)
+**New agents:** 3 (TrafficAnalystAgent, MerchandisingAgent, ManagerAgent)
+
+---
+
+### Phase 4: "ESG Audit" Scenario (3-4 sessions)
+**Goal:** Enterprise credibility. Compliance + procurement domain.
+
+**Depends on:** Phase 0. Can run in PARALLEL with Phase 3.
+
+| # | Task | Owner | Files |
+|---|------|-------|-------|
+| 4.1 | Seed supplier + certification data (10-12 suppliers, cocoa category, FairTrade/Organic certs) | Anders | Modify `DatabaseSeeder.cs` |
+| 4.2 | MCP tool: GetSupplierCertifications | Anders | New `Mcp/Tools/GetSupplierCertificationsTool.cs` |
+| 4.3 | MCP tool: GetSustainabilityWatchlist | Anders | New `Mcp/Tools/GetSustainabilityWatchlistTool.cs` |
+| 4.4 | MCP tool: GetAlternativeSuppliers | Anders | New `Mcp/Tools/GetAlternativeSuppliersTool.cs` |
+| 4.5 | New agent: ComplianceAgent | Satya | New `Agents/Domain/ComplianceAgent.cs` |
+| 4.6 | New agent: ResearchAgent (A2A cross-reference against watchlists) | Satya | New `Agents/Domain/ResearchAgent.cs` |
+| 4.7 | New agent: ProcurementAgent (A2A — find alternative suppliers) | Satya | New `Agents/Domain/ProcurementAgent.cs` |
+| 4.8 | New executors: ComplianceExecutor, ResearchExecutor, ProcurementExecutor, ESGSynthesisExecutor | Satya | New `Agents/Orchestrator/Executors/ESGAuditExecutors.cs` |
+| 4.9 | New workflow: ESGAuditWorkflow | Satya | New `Agents/Orchestrator/ESGAuditWorkflow.cs` |
+| 4.10 | A2UI: SupplierRiskMatrix.razor (grid: suppliers × certs, color-coded) | Clippy | New `Web/Components/A2UI/SupplierRiskMatrix.razor` |
+| 4.11 | Extend A2UIRenderer.razor for SupplierRiskMatrix | Clippy | Modify `A2UIRenderer.razor` |
+| 4.12 | Integration tests for ESG Audit workflow | Steve | New test files |
+
+**Estimated new/modified files:** ~14
+
+**Agent reuse:** None
+**New agents:** 3 (ComplianceAgent, ResearchAgent, ProcurementAgent)
+
+---
+
+## Parallelism Map
+
+```
+Phase 0 (Foundation)          ████████████
+                                          ↓
+Phase 1 (Viral Spike)                     ████████████████
+Phase 2 (Supply Chain)                    ████████████████     ← PARALLEL with Phase 1
+                                                          ↓
+Phase 3 (Store Readiness)                                 ████████████████████
+Phase 4 (ESG Audit)                                       ████████████████████  ← PARALLEL with Phase 3
+                                                                               ↓
+System Overlay polish                                                          ████
+```
+
+**Critical path:** Phase 0 → Phase 1 → Phase 3 → Done
+**Total estimated sessions:** 12-16 (with parallel execution: 8-10)
+
+---
+
+## Scope Honesty: Demo vs Production
+
+| Aspect | Demo (What We're Building) | Production (What We're NOT) |
+|--------|---------------------------|----------------------------|
+| External APIs | Simulated in-process data (weather, social, supplier DBs) | Real API integrations (TikTok API, weather service, SAP) |
+| LLM reasoning | Deterministic logic with structured responses | Real LLM calls with prompt engineering |
+| Agent negotiation | Scripted A2A conversations with realistic handshakes | Free-form multi-turn agent negotiation |
+| HITL approval | UI-triggered approval with simulated manager response | Real approval workflows with auth + timeout + escalation |
+| Rerouting optimization | Heuristic-based (closest store with surplus) | Operations research / linear programming |
+| Demand forecasting | Static multiplier on seed data | Time-series ML model |
+| Floorplan | SVG sections with predefined zones | Real planogram optimization with shelf physics |
+| Supplier database | 12 seeded suppliers with static certifications | Integration with real supplier management systems |
+
+**The key principle:** The *architecture* is real (real MCP tools querying real databases via real protocols, real A2A handshakes with real message serialization, real A2UI components rendering real typed data). The *data sources* are simulated. This is the exact same pattern we use for competitor pricing today — and it works because the audience cares about the architecture, not the data.
+
+---
+
+## Total Impact Summary
+
+| Metric | Current | After All Phases | Delta |
+|--------|---------|-----------------|-------|
+| Agents | 4 | 13 | +9 |
+| MAF Executors | 4 | 20 | +16 |
+| MCP Tools | 2 | 10 | +8 |
+| A2UI Components | 11 | 15 | +4 |
+| A2UI Data Contracts | 7 | 11 | +4 |
+| EF Core Entities | 3 | 7 | +4 |
+| Workflows | 1 | 5 | +4 |
+| Stores | 5 | 12 | +7 |
+| SKU Categories | 1 (Electronics) | 3 (+Grocery, +Apparel) | +2 |
+| SKUs | 8 | 16 | +8 |
+| Scenarios | 1 | 5 | +4 |
+| Estimated new files | — | ~55 | — |
+| Estimated modified files | — | ~15 | — |
+
+---
+
+## Recommendation
+
+**Start with Phase 0 + Phase 1 immediately.** The Viral Spike scenario is the highest-impact, lowest-effort expansion. It reuses two of our three domain agents, adds the most visually striking A2UI (social sentiment streaming + marketing campaign preview), and tells the best demo narrative ("a TikTok post goes viral — watch four AI agents react in real time").
+
+Phase 0 (foundation) and the System Overlay can be done in parallel by different team members. Once Phase 0 lands, Phases 1 and 2 can run in parallel since they touch different agents.
+
+The ESG scenario should be last — it has the least visual payoff per line of code, but adds enterprise credibility if we have time.
+
+**One honest warning:** If the MAF rewrite (from the previous decision doc) hasn't landed yet, doing these scenarios on the current hand-rolled agent infrastructure means we'll rewrite them again when MAF lands. My recommendation: **finish the MAF rewrite first**, then build new scenarios on the real framework. Building 9 new agents on fake infrastructure just to rewrite them is waste.
+
+---
+
+**Status:** PROPOSED — Awaiting Brian's prioritization and team capacity assessment.
+
+---
+
+# Code Review: Squad Commerce — Full Findings Report
+
+**Reviewer:** Bill Gates (Lead Architect)  
+**Requested by:** Brian Swiger  
+**Date:** 2026-03-26  
+**Build Status:** ✅ `dotnet build SquadCommerce.slnx --configuration Release` — **0 warnings, 0 errors**
+
+---
+
+## CRITICAL Issues (Blocks the Demo)
+
+### C1. Chat Pipeline — SSE Event Property Mismatch (No Chat Responses Appear)
+
+**Files:**
+- `src/SquadCommerce.Api/Services/AgUiEvent.cs` (line 18-20)
+- `src/SquadCommerce.Web/Services/AgUiStreamService.cs` (lines 94-146)
+
+**Problem:** The server wraps all SSE events as `{"type":"...","data":{...}}`, but the client reads content fields (`text`, `status`, `payload`) from the **root** object — not from the nested `data` property. Every event type except `done` silently fails to extract its content.
+
+| Event Type | Server sends | Client looks for | Result |
+|---|---|---|---|
+| `text_delta` | `root.data.text` | `root.text` | ❌ MISS — no text extracted |
+| `status_update` | `root.data.status` | `root.status` | ❌ MISS — no status shown |
+| `a2ui_payload` | `root.data` (type = `"a2ui_payload"`) | `root.payload` (type = `"a2ui"`) | ❌ MISS — type AND property wrong |
+| `done` | type match | `yield break` | ✅ Works |
+
+**Symptom:** User sends a message → "Connecting to agent stream..." appears → stream completes silently → no response text or A2UI components ever appear. Looks like a hang.
+
+**Fix (AgUiStreamService.cs):** After parsing `type`, read content from `root.data` instead of `root`:
+```csharp
+// After getting the type string, extract the data object:
+var dataElement = root.TryGetProperty("data", out var d) ? d : root;
+
+// Then in each case, read from dataElement:
+case "text_delta":
+case "text":
+    if (dataElement.TryGetProperty("text", out var textProperty)) { ... }
+    break;
+case "status_update":
+case "status":
+    if (dataElement.TryGetProperty("status", out var statusProperty)) { ... }
+    break;
+```
+
+**Fix (A2UI type mismatch):** Either change the server type from `"a2ui_payload"` to `"a2ui"`, or add `"a2ui_payload"` to the client's switch case. Then read payload from `dataElement` instead of looking for `root.payload`.
+
+---
+
+### C2. Chat Pipeline — CancellationToken Race Condition Kills Background Orchestration
+
+**File:** `src/SquadCommerce.Api/Program.cs` (lines 158-208)
+
+**Problem:** The `/api/agui/chat` POST endpoint captures the HTTP request's `CancellationToken` and passes it into `Task.Run`. When the endpoint returns `Results.Accepted()` (202), the HTTP request lifecycle completes and ASP.NET Core signals the `HttpContext.RequestAborted` token. The background orchestration receives this cancellation and aborts — often before writing any events.
+
+**Symptom:** Even after fixing C1, responses would be intermittent or empty because the orchestrator gets cancelled mid-flight.
+
+**Fix:** Create a new `CancellationTokenSource` independent of the request:
+```csharp
+// Replace: _ = Task.Run(async () => { ... }, cancellationToken);
+// With:
+var bgCts = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+_ = Task.Run(async () =>
+{
+    try { /* same body but use bgCts.Token everywhere */ }
+    finally { bgCts.Dispose(); }
+}, bgCts.Token);
+```
+
+---
+
+### C3. Chat Pipeline — SKU Regex Extracts "100" as Competitor Price
+
+**File:** `src/SquadCommerce.Api/Program.cs` (lines 137-141)
+
+**Problem:** The price regex `\$?([\d]+\.?\d*)` matches ANY number, including digits inside `SKU-100`. For "Check inventory for SKU-100", `priceMatch` captures `"100"`, so `competitorPrice = 100m` instead of the default `24.99m`. The orchestrator then runs the pricing analysis with a wildly wrong competitor price.
+
+**Fix:** Only match prices that are preceded by `$` or standalone numbers, and exclude numbers that follow `SKU-`:
+```csharp
+var priceMatch = Regex.Match(message, @"(?<!SKU-)\$(\d+\.?\d*)", RegexOptions.IgnoreCase);
+if (!priceMatch.Success)
+    priceMatch = Regex.Match(message, @"(?<!SKU-)\b(\d+\.\d{2})\b"); // match decimal prices like 24.99
+```
+
+---
+
+### C4. SSE Channel Never Completes — Subscriber Hangs If "done" Event Is Lost
+
+**File:** `src/SquadCommerce.Api/Services/AgUiStreamWriter.cs` (lines 55-58)
+
+**Problem:** `WriteDoneAsync()` writes a "done" event but never calls `channel.Writer.Complete()`. If the client fails to parse the "done" event (see C1), or if the background task is cancelled (see C2), the `SubscribeAsync` reader loops forever on `ReadAllAsync`. The SSE GET connection never terminates.
+
+**Fix:** Complete the channel after writing the done event:
+```csharp
+public async Task WriteDoneAsync(string sessionId, CancellationToken cancellationToken = default)
+{
+    var evt = new AgUiEvent { Type = "done", Data = new { completed = true } };
+    await WriteEventAsync(sessionId, evt, cancellationToken);
+    
+    if (_sessions.TryGetValue(sessionId, out var channel))
+    {
+        channel.Writer.TryComplete();
+    }
+}
+```
+
+---
+
+## MAJOR Issues (Looks Bad but App Functions)
+
+### M1. Header Background — FluentHeader Overrides Dark Theme with Light Blue
+
+**File:** `src/SquadCommerce.Web/Components/Layout/MainLayout.razor` (line 6)
+
+**Problem:** `<FluentHeader>` renders as a `<fluent-header>` web component with its own internal accent-colored background (light blue by default). The custom `.app-header` CSS class (defined in `app.css` line 71-81) sets a subtle dark gradient, but the web component's host-level styles win due to higher specificity.
+
+**Symptom:** Header bar is visibly light blue against the dark `#0d1117` body — looks terrible.
+
+**Fix Option A (recommended):** Replace `<FluentHeader>` with a plain `<header>` element that uses the existing `.app-header` class:
+```razor
+<header class="app-header">
+    <!-- keep inner FluentStack children unchanged -->
+</header>
+```
+
+**Fix Option B:** Override the FluentHeader's background via inline style with `!important`:
+```razor
+<FluentHeader Class="app-header" Style="min-height: auto; height: auto; background: linear-gradient(135deg, rgba(102,126,234,0.15), rgba(118,75,162,0.15)) !important;">
+```
+
+Option A is cleaner — you don't actually need FluentHeader's built-in features (it's just a container).
+
+---
+
+### M2. Header Layout — AgentStatusBar Content Causes Wrapping/Overflow
+
+**Files:**
+- `src/SquadCommerce.Web/Components/Layout/MainLayout.razor` (lines 6-23)
+- `src/SquadCommerce.Web/Components/Chat/AgentStatusBar.razor` (lines 4-91)
+
+**Problem:** The header's right-side `FluentStack` contains the mute button, fleet toggle, AND `AgentStatusBar` — which itself renders 4 persona badges + status section + connection indicator + urgency badges + pipeline progress bar. That's far too much content for a horizontal header row. There's no `overflow: hidden` or `flex-wrap: nowrap` constraint, so elements wrap to the next line and overlap.
+
+**Fix:**
+1. Add `overflow: hidden` and `flex-shrink: 0` to the `.app-header` CSS
+2. Add `flex-wrap: nowrap; overflow: hidden;` to the right-side FluentStack:
+```razor
+<FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" 
+             Style="gap: 0.5rem; flex-wrap: nowrap; overflow: hidden; flex-shrink: 1; min-width: 0;">
+```
+3. In AgentStatusBar, hide the pipeline progress bar and urgency badges when in the header — move those to the dashboard body. The header should show only: persona badges + connection dot.
+4. Add `white-space: nowrap;` to `.persona-label` (already present, confirm not overridden).
+
+---
+
+### M3. MainLayout.razor.css Has Stale Default Template Styles
+
+**File:** `src/SquadCommerce.Web/Components/Layout/MainLayout.razor.css` (lines 1-77)
+
+**Problem:** The scoped CSS file still contains the default Blazor template styles (`.page`, `.sidebar` with purple gradient, `.top-row` with `#f7f7f7` light background, etc.). These are dead CSS — they don't match any elements in the current layout — but they could interfere if class names ever overlap. They also confuse anyone reading the code.
+
+**Fix:** Delete lines 1-77 (everything from `.page` through the `@media (min-width: 641px)` block). Keep only the fleet/audio button styles and responsive rules (lines 101+).
+
+---
+
+## MINOR Issues (Polish)
+
+### N1. No Dark-Theme Class on `<body>` — Conditional Only
+
+**File:** `src/SquadCommerce.Web/Components/App.razor` (line 18)
+
+**Status:** ✅ Actually fine — `<body class="dark-theme">` is hardcoded. No issue here.
+
+---
+
+### N2. App.razor Loads `reboot.css` but No Main Fluent UI Theme CSS
+
+**File:** `src/SquadCommerce.Web/Components/App.razor` (lines 10-11)
+
+**Observation:** Only `reboot.css` is loaded from Fluent UI, not the full theme CSS. This works because the `FluentDesignSystemProvider` handles theming via CSS custom properties and Web Components. Not a bug — but if any non-web-component Fluent styles are expected (e.g., `fluent-button` styling fallbacks), they may not render.
+
+**Recommendation:** No change needed, but worth noting for future component additions.
+
+---
+
+### N3. `SignalRStateService` Registered as Singleton — Thread Safety
+
+**File:** `src/SquadCommerce.Web/Program.cs` (line 31)
+
+**Observation:** `SignalRStateService` is registered as Singleton and holds a single `HubConnection`. In Blazor Server, all users share this singleton. Multiple concurrent circuits will share the same SignalR connection, which works for broadcasting but means disconnection affects everyone.
+
+**Recommendation:** For a demo this is fine. For production, consider Scoped registration so each circuit gets its own connection.
+
+---
+
+### N4. `HandleCommand` in AgentChat.razor Uses `async void`
+
+**File:** `src/SquadCommerce.Web/Components/Chat/AgentChat.razor` (line 141)
+
+**Problem:** `private async void HandleCommand(string command)` — `async void` swallows exceptions. If `SendMessage()` throws, the exception is unobserved and could crash the process in non-debug builds.
+
+**Fix:** Wrap the body in try/catch:
+```csharp
+private async void HandleCommand(string command)
+{
+    try
+    {
+        _inputText = command;
+        await InvokeAsync(async () =>
+        {
+            StateHasChanged();
+            await SendMessage();
+        });
+    }
+    catch (Exception ex)
+    {
+        // Log error - async void can't propagate
+    }
+}
+```
+
+---
+
+### N5. Cleanup: Sessions Dictionary Grows Unbounded
+
+**File:** `src/SquadCommerce.Api/Services/AgUiStreamWriter.cs` (line 12)
+
+**Problem:** `_sessions` `ConcurrentDictionary` never removes completed sessions. Each chat message creates a new channel that persists forever in memory.
+
+**Fix:** After `WriteDoneAsync` and `TryComplete()`, schedule removal:
+```csharp
+_ = Task.Delay(TimeSpan.FromMinutes(1)).ContinueWith(_ => _sessions.TryRemove(sessionId, out _));
+```
+
+---
+
+## Summary
+
+| Severity | Count | Key Theme |
+|---|---|---|
+| **CRITICAL** | 4 | Chat pipeline completely broken — events can't be parsed, orchestration gets cancelled, channel never closes |
+| **MAJOR** | 3 | Header visual regression from FluentHeader defaults + overflow, dead CSS |
+| **MINOR** | 4 | Thread safety, memory leak, exception handling polish |
+
+### Root Cause Analysis
+
+The issues fall into two buckets:
+
+1. **Integration gap (C1-C4):** The server-side AG-UI event format and client-side parser were built by different work streams and never tested end-to-end together. The `data` nesting mismatch and `a2ui` vs `a2ui_payload` type mismatch are classic contract-first development gaps.
+
+2. **Fluent UI component behavior (M1-M2):** The FluentHeader web component brings its own visual opinions (accent background) that conflict with the custom dark theme CSS. This is a known pitfall when mixing Fluent UI Web Components with custom styling.
+
+### Recommended Fix Order
+
+1. **C1 + C2 + C4** — Fix these together and chat will work end-to-end
+2. **C3** — Fix regex so demo data makes sense
+3. **M1** — Swap FluentHeader → `<header>` for immediate visual fix
+4. **M2** — Constrain header content to prevent overflow
+5. **M3, N4, N5** — Cleanup in a follow-up pass
+
+### Build Report
+
+```
+dotnet build SquadCommerce.slnx --configuration Release
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+Time Elapsed 00:00:09.95
+```
+
+All 14 projects compile cleanly (8 src + 6 test). No runtime errors detectable from static analysis — the issues above are all runtime/behavioral.
+
+---
+
+# Decision: MAF Rewrite — Make It Real
+
+**Author:** Bill Gates (Lead Architect)
+**Requested by:** Brian Swiger
+**Date:** 2026-03-26
+**Status:** PROPOSED — Awaiting team consensus
+
+---
+
+## Executive Summary
+
+Brian's directive is clear: **"I want this to be REAL."** Satya's deep inspection confirmed what we suspected — our agents are plain C# classes with zero `Microsoft.Agents.*` NuGet packages, MCP is a hand-rolled shim, A2A returns mock data, and `RetailWorkflow` is an empty stub. This plan scopes the full rewrite from toy to production using real frameworks that now exist as stable packages.
+
+### The Good News
+
+Every package we need is **publicly available on NuGet right now**:
+
+| Package | Version | Status | Purpose |
+|---------|---------|--------|---------|
+| `Microsoft.Agents.AI` | `1.0.0-rc4` | Release Candidate | Core agent abstractions |
+| `Microsoft.Agents.AI.Workflows` | `1.0.0-rc4` | Release Candidate | Graph-based workflow builder |
+| `Microsoft.Agents.AI.OpenAI` | `1.0.0-rc4` | Release Candidate | LLM integration (Azure OpenAI) |
+| `Microsoft.Agents.AI.Hosting` | `1.0.0-rc4` | Release Candidate | Agent hosting infrastructure |
+| `Microsoft.Agents.AI.Hosting.A2A.AspNetCore` | `1.0.0-rc4` | Release Candidate | A2A protocol hosting |
+| `Microsoft.Agents.Protocols` | `1.0.0-rc4` | Release Candidate | Wire-level protocol support |
+| `ModelContextProtocol` | `1.1.0` | **Stable GA** | MCP client + server + DI |
+| `ModelContextProtocol.AspNetCore` | `1.1.0` | **Stable GA** | MCP over HTTP/ASP.NET Core |
+| `A2A` | latest | Stable | A2A client SDK |
+| `A2A.AspNetCore` | latest | Stable | A2A server hosting |
+
+**Bottom line:** We are not waiting on Microsoft. The packages exist. The only thing between us and "real" is engineering work.
+
+---
+
+## Current State (What Satya Found)
+
+### What IS Real ✅
+- **InventoryAgent** — EF Core + SQLite, fully functional data layer
+- **PricingAgent** — EF Core + SQLite, multi-scenario pricing calculations
+- **MCP Tool Registry** — Hand-rolled but working (`GetInventoryLevels`, `UpdateStorePricing`)
+- **PolicyEnforcementFilter** — Agent policies enforced (scopes, tool whitelists)
+- **OpenTelemetry** — Spans + metrics on every agent call
+- **SignalR** — Real-time thinking state + A2A handshake status notifications
+- **A2UI Payloads** — Typed payloads for Blazor (heatmap, chart, grid)
+- **ChiefSoftwareArchitectAgent orchestration** — Real multi-step delegation flow
+- **SQLite + EF Core** — Persistent audit trails
+
+### What Is FAKE ❌
+- **No `Microsoft.Agents.*` packages** — Agents are plain DI-registered classes, not MAF agents
+- **MCP is hand-rolled** — `IMcpToolRegistry` is a custom shim, not the official `ModelContextProtocol` SDK
+- **A2AClient returns mock data** — `GetMockCompetitorDataAsync()` with hardcoded prices for 3 fake competitors
+- **A2AServer handlers are stubs** — All 3 capability handlers have TODO comments, return canned responses
+- **RetailWorkflow is empty** — `ConfigureWorkflow()` and `ConfigureCompensation()` are no-ops
+
+### What This Means
+The architecture is sound. The interfaces are clean. The data layer works. But the **protocol implementations** are theatrical — they look real from the UI but there's no actual framework underneath. Brian wants the framework underneath.
+
+---
+
+## Honest Assessment: What MAF Provides vs. What We Build
+
+### MAF (`Microsoft.Agents.AI` 1.0.0-rc4) — What It Gives Us
+
+| Feature | MAF Support | Our Current Approach |
+|---------|------------|---------------------|
+| Agent base class (`AIAgent`) | ✅ Built-in | ❌ Custom `IDomainAgent` interface |
+| `ChatClientAgent` for LLM-backed agents | ✅ Built-in | ❌ Not using LLMs at all |
+| `WorkflowBuilder` graph-based orchestration | ✅ Built-in | ❌ Hardcoded in `ChiefSoftwareArchitectAgent` |
+| Conditional edges / branching | ✅ Built-in | ❌ If/else in orchestrator |
+| Human-in-the-loop (HITL) executors | ✅ Built-in | ⚠️ We have `ApprovalPanel` but not wired to MAF |
+| Agent hosting in ASP.NET Core | ✅ `Microsoft.Agents.AI.Hosting` | ❌ Manual DI registration |
+| A2A protocol integration | ✅ `Microsoft.Agents.AI.Hosting.A2A.AspNetCore` | ❌ Hand-rolled |
+| MCP tool calling | ✅ Via `Microsoft.Extensions.AI` + `ModelContextProtocol` | ❌ Hand-rolled `IMcpToolRegistry` |
+| Checkpoint / persistence | ✅ Built-in workflow state | ❌ Only audit trail |
+| Compensation / rollback | ✅ Built-in | ❌ `ConfigureCompensation()` is a stub |
+
+### What MAF Does NOT Provide (We Still Own)
+- **Domain logic** — Our pricing calculations, inventory queries, market intelligence rules
+- **A2UI rendering** — MAF has no Blazor component system; our `A2UIPayload` pattern stays
+- **SignalR push** — MAF doesn't provide real-time UI push; our thinking-state notifier stays
+- **OpenTelemetry instrumentation** — MAF has some built-in, but our custom metrics stay
+- **Data layer** — EF Core + SQLite is ours; MAF doesn't provide data access
+
+### Risk: RC4 Pre-release
+MAF is at `1.0.0-rc4` — not yet GA. This means:
+- API surface could change before 1.0 final
+- We should pin versions and accept minor churn
+- **Recommendation:** Proceed. RC4 is feature-complete. The risk of waiting is higher than the risk of minor breaking changes. This is a showcase project, not a bank.
+
+---
+
+## Phased Implementation Plan
+
+### Phase A: Foundation — Add Real Packages + Base Classes
+**Estimated effort:** 1 session | **Risk:** Low | **Owner:** Anders (backend specialist)
+
+#### Scope
+1. **Add NuGet packages to `SquadCommerce.Agents.csproj`:**
+   ```xml
+   <PackageReference Include="Microsoft.Agents.AI" Version="1.0.0-rc4" />
+   <PackageReference Include="Microsoft.Agents.AI.Workflows" Version="1.0.0-rc4" />
+   <PackageReference Include="Microsoft.Agents.AI.Hosting" Version="1.0.0-rc4" />
+   ```
+
+2. **Add NuGet packages to `SquadCommerce.Mcp.csproj`:**
+   ```xml
+   <PackageReference Include="ModelContextProtocol" Version="1.1.0" />
+   <PackageReference Include="ModelContextProtocol.AspNetCore" Version="1.1.0" />
+   ```
+
+3. **Add NuGet packages to `SquadCommerce.A2A.csproj`:**
+   ```xml
+   <PackageReference Include="Microsoft.Agents.AI.Hosting.A2A.AspNetCore" Version="1.0.0-rc4" />
+   ```
+
+4. **Refactor agents to inherit MAF base classes:**
+   - `InventoryAgent` → implement MAF's agent interface/base class
+   - `PricingAgent` → implement MAF's agent interface/base class
+   - `MarketIntelAgent` → implement MAF's agent interface/base class
+   - `ChiefSoftwareArchitectAgent` → become a MAF workflow executor
+   - Keep `IDomainAgent` as our domain-specific extension interface
+   - Keep `AgentPolicy` — MAF doesn't replace our policy model
+
+5. **Update `AddSquadCommerceAgents()` DI registration** to use MAF's hosting model:
+   - Register agents with MAF's agent host builder
+   - Agents should be discoverable by the framework, not just injected manually
+
+6. **Verify build** — everything compiles, existing tests pass
+
+#### What Changes
+- Agents gain framework identity (discoverable, hostable, composable)
+- No behavior changes yet — same logic, new base classes
+
+#### What Doesn't Change
+- Domain logic inside agents stays identical
+- Data layer untouched
+- A2UI payloads untouched
+- OpenTelemetry untouched
+
+---
+
+### Phase B: Real MCP Server Implementation
+**Estimated effort:** 1 session | **Risk:** Low | **Owner:** Anders
+
+#### Scope
+1. **Replace `IMcpToolRegistry` / `McpToolRegistry`** with official MCP SDK:
+   - Use `ModelContextProtocol` package's `IMcpServer` / `McpServerBuilder`
+   - Register tools using `[McpTool]` attribute annotations on our existing tool classes
+   - `GetInventoryLevelsTool` → annotate with `[McpTool("GetInventoryLevels")]`
+   - `UpdateStorePricingTool` → annotate with `[McpTool("UpdateStorePricing")]`
+
+2. **Expose MCP server endpoint in API:**
+   - Use `ModelContextProtocol.AspNetCore` to host MCP over HTTP
+   - Map MCP endpoint in `Api/Program.cs` (e.g., `app.MapMcp("/mcp")`)
+
+3. **Wire agents to use MCP client** for tool invocation:
+   - `InventoryAgent` calls tools via MCP client (not direct repository injection)
+   - `PricingAgent` calls tools via MCP client (not direct repository injection)
+   - This is the key change: agents talk to tools through the protocol, not through DI
+
+4. **Remove hand-rolled shim:**
+   - Delete `IMcpToolRegistry` interface
+   - Delete `McpToolRegistry` class
+   - Delete `ToolSchema` and `ToolParameter` records (SDK provides these)
+
+5. **Verify:** MCP Inspector or equivalent can discover and invoke our tools
+
+#### What Changes
+- Tools are protocol-accessible, not just DI-accessible
+- External clients (LLMs, other agents) can discover our tools via MCP
+- Agents become true MCP clients
+
+#### What Doesn't Change
+- Tool logic inside `GetInventoryLevelsTool` / `UpdateStorePricingTool` stays identical
+- Data layer untouched
+- The tools do the same thing — they're just hosted properly
+
+---
+
+### Phase C: Real A2A Client/Server
+**Estimated effort:** 1-2 sessions | **Risk:** Medium | **Owner:** Anders + Satya
+
+#### Scope
+1. **Replace `A2AClient` mock data with real A2A protocol client:**
+   - Use `Microsoft.Agents.AI.Hosting.A2A.AspNetCore` or `A2A` NuGet package
+   - `A2AClient` should use `A2AClient` from the SDK (real JSON-RPC calls)
+   - Agent discovery via `A2ACardResolver` (protocol-compliant `.well-known/agent.json`)
+   - Remove `GetMockCompetitorDataAsync()` entirely
+
+2. **Implement `A2AServer` handlers for real:**
+   - `HandleGetInventoryLevels()` → call `InventoryAgent`, return real data
+   - `HandleGetStorePricing()` → call `PricingAgent`, return real data
+   - `HandleCalculateMarginImpact()` → call `PricingAgent`, return real margin analysis
+   - Expose via ASP.NET Core middleware (`.well-known/agent.json` + JSON-RPC endpoint)
+
+3. **Create a local competitor agent** (for demo/testing without external services):
+   - A self-contained "MockCompetitorAgent" that acts as an external vendor
+   - Runs as a separate Aspire service in AppHost
+   - Responds to A2A discovery and pricing queries with realistic data
+   - This replaces hardcoded mock data with a **real A2A conversation** between two actual agents
+
+4. **Wire `AgentCard` discovery:**
+   - Expose our agent cards at `/.well-known/agent.json`
+   - `AgentCardFactory` outputs protocol-compliant agent cards
+   - `A2AClient.DiscoverAgentsAsync()` uses real HTTP discovery
+
+5. **Keep `ExternalDataValidator`** — this is domain logic, not protocol. It stays.
+
+#### What Changes
+- A2A is now a real protocol conversation, not hardcoded data
+- We have a demo competitor agent that responds to A2A queries
+- Our server can receive and handle real A2A requests from external agents
+
+#### What Doesn't Change
+- `ExternalDataValidator` stays
+- A2A handshake status notifications (SignalR) stay
+- Retry logic stays (but now retries real HTTP calls)
+
+#### Key Decision: External vs. Local
+Brian said "nothing hardcoded." But we can't control external vendor APIs. The solution: **a local competitor agent** that behaves exactly like a real external vendor but runs in our Aspire host. For a demo, this is "real" — it's a genuine A2A conversation between two independent agents. For production, you'd swap the endpoint URL to a real vendor.
+
+---
+
+### Phase D: Real RetailWorkflow with MAF's WorkflowBuilder
+**Estimated effort:** 1-2 sessions | **Risk:** Medium-High | **Owner:** Anders + Satya
+
+#### Scope
+1. **Implement `RetailWorkflow` using `WorkflowBuilder`:**
+   ```
+   Graph:
+   [ValidateCompetitorClaim] → [GetInventory] → [CalculateMarginImpact]
+                                                         ↓
+                                               [SynthesizeProposal]
+                                                    ↓         ↓
+                                        (auto-approve)  (needs-human)
+                                                    ↓         ↓
+                                             [Execute]   [HumanApproval]
+                                                              ↓
+                                                         [Execute]
+   ```
+
+2. **Create workflow executors** (nodes in the graph):
+   - `ValidateCompetitorClaimExecutor` — wraps `MarketIntelAgent`
+   - `GetInventoryExecutor` — wraps `InventoryAgent`
+   - `CalculateMarginImpactExecutor` — wraps `PricingAgent`
+   - `SynthesizeProposalExecutor` — orchestrator logic (currently in `ChiefSoftwareArchitectAgent`)
+   - `HumanApprovalExecutor` — HITL gate (connects to `ApprovalPanel` in Blazor)
+   - `ExecutePriceChangeExecutor` — calls `UpdateStorePricingTool` via MCP
+
+3. **Implement `ConfigureCompensation()`:**
+   - If price update fails → revert to previous price
+   - If inventory data was stale → re-query and re-evaluate
+   - Log compensation actions to audit trail
+
+4. **Refactor `ChiefSoftwareArchitectAgent`:**
+   - Remove the hardcoded `ProcessCompetitorPriceDropAsync()` sequential logic
+   - Replace with workflow invocation: `workflow.ExecuteAsync(context)`
+   - The orchestrator becomes a **workflow launcher**, not a step-by-step executor
+   - Thinking state + reasoning trace emissions move into executor callbacks
+
+5. **Wire workflow to API:**
+   - `TriggerAnalysis` endpoint invokes the workflow, not the orchestrator directly
+   - Workflow emits events that the API relays via SignalR
+
+#### What Changes
+- Orchestration becomes graph-based, not imperative
+- Workflow is resumable, checkpointable, and compensatable
+- HITL is a first-class graph node, not a UI afterthought
+- The orchestrator is simplified dramatically
+
+#### What Doesn't Change
+- Domain agent logic inside executors is identical
+- A2UI payloads still emitted at each stage
+- OpenTelemetry spans still emitted
+- Data layer untouched
+
+---
+
+### Phase E: Remove All Mocks and Hardcoded Data
+**Estimated effort:** 1 session | **Risk:** Low | **Owner:** Satya (code quality)
+
+#### Scope
+1. **Audit and remove all mock/hardcoded data:**
+   - ❌ `GetMockCompetitorDataAsync()` in `A2AClient` — should be gone after Phase C
+   - ❌ Hardcoded base prices (`SKU-1001` through `SKU-1008` lookup table in `A2AClient`)
+   - ❌ `A2AServer` stub handlers — should be real after Phase C
+   - ❌ `RetailWorkflow` stubs — should be real after Phase D
+   - ❌ Hardcoded `GetProductName()` lookup in `MarketIntelAgent` — move to data layer
+   - ❌ Any remaining TODO comments about "MAF integration" or "replace with real"
+
+2. **Ensure `DatabaseSeeder` is the single source of demo data:**
+   - All product names, base prices, SKU lists come from SQLite seed data
+   - No hardcoded data in agent code
+
+3. **Update README.md:**
+   - Remove references to `SquadCommerce.Shared` (should be `Contracts`)
+   - Remove SQL Server prerequisite claim (we use SQLite)
+   - Update DI pattern code examples
+   - Add real package list
+
+4. **Update `.squad/architecture.md`:**
+   - Reflect real MAF base classes
+   - Reflect real MCP SDK
+   - Reflect real A2A protocol
+   - Reflect graph-based workflow
+
+5. **Final build + test pass**
+
+---
+
+## Dependency Graph
+
+```
+Phase A ──→ Phase B ──→ Phase D ──→ Phase E
+  │                        ↑
+  └──→ Phase C ────────────┘
+```
+
+- Phase A (packages + base classes) must be first
+- Phase B (MCP) and Phase C (A2A) can run in parallel after A
+- Phase D (workflow) needs both B and C complete (workflow invokes MCP tools and A2A agents)
+- Phase E (cleanup) is last
+
+---
+
+## Team Assignments
+
+| Phase | Primary | Support | Sessions |
+|-------|---------|---------|----------|
+| A: Foundation | Anders | — | 1 |
+| B: Real MCP | Anders | — | 1 |
+| C: Real A2A | Anders | Satya | 1-2 |
+| D: Real Workflow | Anders | Satya | 1-2 |
+| E: Cleanup | Satya | — | 1 |
+
+**Total: 5-7 sessions**
+
+Clippy and Steve are not involved — this is backend infrastructure. Clippy continues UI work (command center plan). Steve continues E2E testing work.
+
+---
+
+## What "Real" Means — Brian's Litmus Test
+
+After this rewrite, every one of these must be true:
+
+- [ ] `dotnet list package` shows `Microsoft.Agents.AI`, `ModelContextProtocol`, and `A2A` packages
+- [ ] Agents inherit from MAF base classes, not just `IDomainAgent`
+- [ ] MCP tools are discoverable via protocol (not just DI)
+- [ ] A2A conversations happen over HTTP between real agent processes
+- [ ] `RetailWorkflow` uses `WorkflowBuilder` with nodes and edges
+- [ ] Zero hardcoded competitor prices in agent code
+- [ ] Zero TODO comments about "replace with real implementation"
+- [ ] The demo runs with Aspire, and you can watch agents talk to each other
+
+---
+
+## Decision: APPROVED for planning, pending team review
+
+This is a significant rewrite of the protocol infrastructure layer. The domain logic, data layer, UI components, and telemetry remain untouched. We are replacing the plumbing, not the rooms.
+
+The packages exist. The APIs are documented. The risk is low-to-medium. Let's make it real.
+
+— Bill Gates, Lead Architect
+
+---
+
+# Agentic Command Center — Phased Implementation Plan
+
+**Decision:** UI-CMD-CENTER-001
+**Author:** Bill Gates (Lead)
+**Date:** 2026-03-26
+**Status:** Proposed
+**Requested by:** Brian Swiger
+
+---
+
+## Context
+
+Brian's directive outlines 5 pillars to transform the Squad Commerce UI from a chat-with-data POC into a flagship agentic command center. This plan decomposes those pillars into phased, actionable work items prioritized by **visual impact per unit of effort**.
+
+### What Already Exists (leverage these)
+- **5 A2UI components:** RetailStockHeatmap, PricingImpactChart, MarketComparisonGrid, DecisionAuditTrail, AgentPipelineVisualizer
+- **AgentStatusBar:** SignalR-connected, shows agent status + pipeline progress (4 steps)
+- **ApprovalPanel:** HITL approve/reject/modify for pricing decisions
+- **SignalR Hub:** 6 methods — StatusUpdate, UrgencyUpdate, A2UIPayload, Notification
+- **AG-UI SSE pipeline:** POST /api/agui/chat → GET /api/agui?sessionId (working)
+- **OpenTelemetry:** 8 custom metrics (invocations, durations, tool calls, A2A handshakes, payloads, decisions)
+- **Bootstrap 5 + custom CSS:** Purple/indigo gradient theme, 3-column layout
+- **.NET 10 / Blazor Server** with InteractiveServer render mode
+
+### What's Missing
+- Fluent UI Blazor (not installed — still on raw Bootstrap)
+- Chain of thought / reasoning trace visualization
+- Agent personas (avatars, thinking animations)
+- CMD+K command palette
+- Telemetry dashboard (metrics exist but no UI)
+- Node-graph orchestration view
+- A2A handshake animations
+
+---
+
+## Phased Work Items
+
+### Phase 1 — MVP / Quick Wins (Demo-Ready in One Session)
+> **Goal:** Biggest visual transformation with least effort. Make it look like a command center.
+
+| # | Work Item | Pillar | Owner | Dependencies | Effort | Notes |
+|---|-----------|--------|-------|-------------|--------|-------|
+| 1.1 | **Install Fluent UI Blazor + dark theme** — Add `Microsoft.FluentUI.AspNetCore.Components` NuGet, register services, wrap App.razor in `<FluentDesignSystemProvider>`, set dark mode as default | 4-Aesthetic | Clippy | None | S | Single NuGet + ~20 lines. Instant visual upgrade. |
+| 1.2 | **Convert MainLayout to Fluent shell** — Replace Bootstrap grid with `<FluentHeader>`, `<FluentNavMenu>`, `<FluentBodyContent>`, `<FluentStack>`. Keep 3-column structure. | 4-Aesthetic | Clippy | 1.1 | M | Layout stays the same, chrome gets professional. |
+| 1.3 | **Glassmorphism card system** — Create `CommandCard.razor` shared component with backdrop-filter blur, semi-transparent background, subtle border glow. Wrap all A2UI components in it. | 4-Aesthetic | Clippy | 1.1 | S | Pure CSS (~30 lines). Apply to existing components via wrapper. |
+| 1.4 | **Agent persona avatars + thinking dots** — Add agent avatar icons (emoji or SVG) and CSS-animated "thinking..." pulse to `AgentStatusBar.razor`. Map agent names to personas. | 1-Fleet Pulse | Clippy | None | S | CSS animation + 4 persona mappings. High visual impact. |
+| 1.5 | **Polish existing A2UI components** — Add Fluent UI `<FluentDataGrid>` to MarketComparisonGrid, color-coded delta indicators (▲/▼/–) to PricingImpactChart, status badges to RetailStockHeatmap | 3-A2UI Retail | Clippy | 1.1 | M | Components exist — this is styling + Fluent primitives. |
+| 1.6 | **Pipeline progress animation** — Add CSS transitions to AgentPipelineVisualizer stage cards: slide-in on appear, pulse on active, checkmark on complete. Color-code by status. | 5-Pipeline | Clippy | 1.3 | S | CSS only. The component already renders stages. |
+| 1.7 | **Wire SignalR thinking-state events** — Add `SendThinkingState(sessionId, agentName, isThinking)` to AgentHub. Emit from orchestrator when agents start/stop reasoning. | 1-Fleet Pulse | Anders | None | S | One new hub method + emit calls in orchestrator. |
+| 1.8 | **Integrate thinking-state in AgentStatusBar** — Subscribe to new `ThinkingState` SignalR event, toggle animated thinking indicator per agent. | 1-Fleet Pulse | Clippy | 1.4, 1.7 | S | JS interop not needed — Blazor re-renders on state change. |
+
+### Phase 2 — Core Experience (Command Center Identity)
+> **Goal:** Deliver the features that make this feel like a real agent operations center.
+
+| # | Work Item | Pillar | Owner | Dependencies | Effort | Notes |
+|---|-----------|--------|-------|-------------|--------|-------|
+| 2.1 | **Agent Fleet Pulse sidebar panel** — New `AgentFleetPanel.razor`: list of 4 agents as cards with real-time status (idle/thinking/executing/error), last action, protocol badge (A2A/MCP), uptime. Replace or augment current status bar. | 1-Fleet Pulse | Clippy | 1.4, 1.7 | M | Replaces simple status bar with rich panel. |
+| 2.2 | **Chain of Thought data model** — Add `ReasoningTrace` record to Contracts: `StepId`, `AgentName`, `StepType` (thinking/tool-call/a2a-handshake/decision), `Content`, `Timestamp`, `Duration`, `ParentStepId`. Add `SendReasoningStep` to AgentHub. | 2-CoT | Anders | None | M | Data model + hub method + emit from agents. |
+| 2.3 | **Chain of Thought panel component** — New `ReasoningTracePanel.razor`: vertical timeline with collapsible steps, icon per step type, duration badges, expandable content. Subscribe to `ReasoningStep` SignalR events. | 2-CoT | Clippy | 2.2 | L | New component, needs thoughtful UX for nested traces. |
+| 2.4 | **Tool call timeline** — New `ToolCallTimeline.razor`: horizontal Gantt-style bar chart showing MCP tool calls by agent over time. Renders from ReasoningTrace data (filtered to tool-call type). | 2-CoT | Clippy | 2.2 | M | Visual timeline — could use CSS grid or simple SVG bars. |
+| 2.5 | **CMD+K command palette** — New `CommandPalette.razor`: modal overlay with search input, fuzzy-matched commands (analyze SKU, check inventory, compare prices, view pipeline, open settings). Wire keyboard shortcut via JS interop. | 4-Aesthetic | Clippy | 1.1 | M | JS interop for Ctrl+K listener, Blazor for rendering. |
+| 2.6 | **HITL approval cards — Fluent upgrade** — Restyle `ApprovalPanel.razor` with Fluent `<FluentCard>`, `<FluentButton>`, `<FluentDialog>`. Add risk-level color coding and confidence score display. | 3-A2UI Retail | Clippy | 1.1 | S | Component exists — this is a Fluent facelift. |
+| 2.7 | **Telemetry dashboard — live metrics panel** — New `TelemetryDashboard.razor`: cards showing agent invocation count, avg latency, tool call count, A2A handshake count. Pull from `SquadCommerceMetrics` singleton via DI. Auto-refresh via timer. | 4-Aesthetic | Clippy | None | M | Metrics already collected — this is read + display. |
+| 2.8 | **Emit ReasoningTrace from orchestrator** — Instrument `ChiefSoftwareArchitectAgent` and domain agents to emit `ReasoningStep` events at each decision point: intent classification, tool selection, A2A delegation, result synthesis. | 2-CoT | Satya | 2.2 | L | Deep agent integration — needs care to not clutter agent logic. |
+| 2.9 | **A2A handshake status tracking** — Extend `AgentFleetPanel` to show A2A connection state between agents (connected/negotiating/failed). Use existing `A2AHandshakeCount` metric + new SignalR event. | 1-Fleet Pulse | Anders | 2.1 | M | Bridge between telemetry data and UI state. |
+| 2.10 | **E2E tests for Phase 1+2 components** — bUnit tests for AgentFleetPanel, ReasoningTracePanel, CommandPalette, TelemetryDashboard. Verify SignalR subscription, rendering, and state transitions. | All | Steve | 2.1–2.9 | L | Test coverage for new components. |
+
+### Phase 3 — Polish / Wow Factor
+> **Goal:** The details that make people say "wait, how did you build this?"
+
+| # | Work Item | Pillar | Owner | Dependencies | Effort | Notes |
+|---|-----------|--------|-------|-------------|--------|-------|
+| 3.1 | **Interactive node-graph pipeline** — Replace linear AgentPipelineVisualizer with DAG-style node graph. Use SVG or `<canvas>` with JS interop. Nodes = agents, edges = data flow. Animate active edges. Click node to inspect. | 5-Pipeline | Clippy | 2.8 | XL | Most complex UI work. Consider Blazor.Diagrams or custom SVG. |
+| 3.2 | **A2A handshake animations** — Animated connection lines between agent nodes in fleet panel. Pulse on handshake, color by protocol (green=MCP, blue=A2A, orange=AG-UI). | 1-Fleet Pulse | Clippy | 2.1, 3.1 | M | CSS/SVG animation between positioned elements. |
+| 3.3 | **Token usage + latency live graphs** — Add real-time line charts to TelemetryDashboard: tokens consumed per agent over time, p50/p95 latency. Use lightweight charting (CSS sparklines or minimal JS chart lib). | 4-Aesthetic | Clippy | 2.7 | L | Need to accumulate time-series data in memory or via metrics API. |
+| 3.4 | **Keyboard shortcut system** — Global shortcut handler: `1-4` to switch panels, `Esc` to close modals, `/` to focus chat, `?` for shortcut help overlay. | 4-Aesthetic | Clippy | 2.5 | S | Extend CMD+K JS interop to handle more keys. |
+| 3.5 | **Generative insight cards** — New A2UI type: `InsightCard` — agent-generated summary cards with title, key metric, trend arrow, action button. Orchestrator emits these as synthesis of multi-agent analysis. | 3-A2UI Retail | Satya | 2.8 | M | New A2UIPayload type + renderer + orchestrator emit logic. |
+| 3.6 | **Ambient sound / haptic feedback cues** — Optional: subtle audio cues on agent completion, error. Toggle in settings. Web Audio API via JS interop. | 4-Aesthetic | Clippy | 2.5 | S | Pure delight feature. Keep optional. |
+| 3.7 | **Responsive / mobile layout** — Ensure command center degrades gracefully: stack panels vertically, collapse sidebar, touch-friendly controls. | 4-Aesthetic | Clippy | 2.1 | M | CSS media queries + Fluent responsive utilities. |
+| 3.8 | **Performance + load testing** — Verify SignalR fan-out under 10+ concurrent sessions, SSE stream stability, Blazor re-render perf with all panels active. | All | Steve | 3.1–3.5 | L | Non-functional but critical for showcase credibility. |
+
+---
+
+## Dependency Graph (Simplified)
+
+```
+Phase 1 (foundations)
+├── 1.1 Fluent UI Install
+│   ├── 1.2 Layout conversion
+│   ├── 1.3 Glassmorphism cards
+│   │   └── 1.6 Pipeline animation
+│   └── 1.5 A2UI polish
+├── 1.4 Agent personas
+│   └── 1.8 Thinking-state UI (+ 1.7)
+└── 1.7 SignalR thinking events
+
+Phase 2 (core)
+├── 2.1 Fleet Pulse panel (← 1.4, 1.7)
+│   └── 2.9 A2A status tracking
+├── 2.2 CoT data model
+│   ├── 2.3 CoT panel
+│   ├── 2.4 Tool call timeline
+│   └── 2.8 Orchestrator instrumentation
+├── 2.5 CMD+K palette (← 1.1)
+├── 2.6 HITL Fluent upgrade (← 1.1)
+├── 2.7 Telemetry dashboard
+└── 2.10 E2E tests (← all above)
+
+Phase 3 (wow)
+├── 3.1 Node-graph pipeline (← 2.8)
+│   └── 3.2 A2A animations (← 2.1)
+├── 3.3 Live charts (← 2.7)
+├── 3.4 Keyboard shortcuts (← 2.5)
+├── 3.5 Insight cards (← 2.8)
+├── 3.6 Audio cues (← 2.5)
+├── 3.7 Responsive layout (← 2.1)
+└── 3.8 Perf testing (← 3.1–3.5)
+```
+
+---
+
+## Effort Summary
+
+| Phase | Items | Total Effort | Calendar Estimate |
+|-------|-------|-------------|-------------------|
+| Phase 1 | 8 | 4S + 3M + 1M = ~5 dev-sessions | 1–2 sessions (parallelizable) |
+| Phase 2 | 10 | 2S + 4M + 3L + 1L = ~12 dev-sessions | 3–5 sessions |
+| Phase 3 | 8 | 2S + 3M + 2L + 1XL = ~10 dev-sessions | 3–5 sessions |
+
+**Phase 1 is demo-ready in a single focused session.** Items 1.1–1.3 are the critical path — once Fluent is installed and the glassmorphism system is in place, everything else in Phase 1 is parallel CSS/component work.
+
+---
+
+## Key Decisions & Guardrails
+
+1. **Fluent UI Blazor over custom design system** — We get dark mode, accessibility, and professional components for free. Don't fight the framework.
+2. **SignalR for all real-time state, SSE for streaming text** — Don't mix paradigms. SignalR = push state. AG-UI SSE = streaming responses.
+3. **No heavy JS charting libraries in Phase 1-2** — CSS-based visualizations first. JS interop only for CMD+K and node-graph (Phase 3).
+4. **ReasoningTrace is the unlock for Phases 2-3** — Item 2.2 (data model) is the highest-leverage backend work. Everything in CoT, pipeline viz, and insight cards flows from it.
+5. **Test coverage gates Phase 3** — Steve's E2E tests (2.10) must pass before we invest in wow-factor features.
+6. **Keep existing A2UI components working** — All changes in Phase 1 are additive styling. No breaking changes to payload types or rendering logic.
+
+---
+
+*This plan is ready for team review. Clippy should start on 1.1 immediately — it's zero-risk and high-impact.*
+
+---
+
+# Decision: Fix Blazor Interactivity — Send Button & Action Cards
+
+**Date:** 2026-03-25  
+**Author:** Clippy (User Advocate / AG-UI Expert)  
+**Status:** Implemented  
+**Requested by:** Brian Swiger
+
+## Problem
+
+The web app UI renders correctly but is completely non-functional:
+- Send button does nothing when clicked
+- Action cards ("Try These Commands") are not clickable
+- `@bind`, `@onsubmit`, `@onclick`, `@onkeydown` are all inert
+
+## Root Cause
+
+In .NET 10 Blazor, components without an explicit render mode render as **static SSR** — HTML is generated server-side but no SignalR circuit is established, so event handlers are dead.
+
+- `AgentChat` lives in `MainLayout.razor` → no render mode → static SSR
+- `Home.razor` had `@rendermode InteractiveServer` but that only covers the page body (`@Body`), NOT layout-level components like `AgentChat` and `AgentStatusBar`
+
+## Decision
+
+Set `@rendermode="InteractiveServer"` at the `<Routes />` level in `App.razor`. This makes the entire app interactive with a single SignalR circuit.
+
+### Why Routes-level instead of per-component?
+
+- **Layout components need interactivity**: `AgentChat` and `AgentStatusBar` live in the layout, outside `@Body`. Per-page render modes don't reach them.
+- **Single circuit**: One SignalR connection for the entire app is simpler and avoids render mode boundary issues.
+- **Already configured**: `Program.cs` already calls `.AddInteractiveServerComponents()` and `MapRazorComponents<App>().AddInteractiveServerRenderMode()`.
+
+### Trade-off
+
+Every page is now interactive (no static SSR pages). For this app, that's fine — it's a real-time agent dashboard where every page needs interactivity.
+
+## Changes Made
+
+| File | Change |
+|------|--------|
+| `App.razor` | `<Routes />` → `<Routes @rendermode="InteractiveServer" />` |
+| `Home.razor` | Removed redundant `@rendermode InteractiveServer`, added `@onclick` handlers to action cards |
+| `Services/ChatCommandService.cs` | New — event-based cross-component command service |
+| `Program.cs` | Registered `ChatCommandService` as singleton |
+| `AgentChat.razor` | Injected `ChatCommandService`, subscribes to commands, implements `IDisposable` |
+
+## Verification
+
+- ✅ Clean build (0 warnings, 0 errors)
+- ✅ All 13 Web unit tests pass
+

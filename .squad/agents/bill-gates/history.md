@@ -57,3 +57,33 @@ Lead architect for squad-commerce. This project is a Microsoft showcase of excel
 - **Key decision:** Fluent UI Blazor over custom design system; no heavy JS charting until Phase 3; SignalR for push state, SSE for streaming text
 - **Existing assets leveraged:** 5 A2UI components, AgentStatusBar, ApprovalPanel, 8 OpenTelemetry metrics, SignalR hub — all reused, not replaced
 - **Owner split:** Clippy (18 items — all UI), Anders (3 items — backend/SignalR), Satya (2 items — agent integration), Steve (2 items — testing)
+
+### 2026-03-26: MAF Rewrite Plan — Research + Scope Complete
+- **Decision doc:** `.squad/decisions/inbox/bill-gates-maf-rewrite-plan.md` — 5-phase rewrite plan
+- **Trigger:** Satya's deep inspection confirmed agents are plain C# classes with zero MAF packages. Brian directive: "I want this to be REAL."
+- **Key research finding:** All required packages exist on NuGet TODAY:
+  - `Microsoft.Agents.AI` 1.0.0-rc4 (Release Candidate, feature-complete)
+  - `Microsoft.Agents.AI.Workflows` 1.0.0-rc4 (graph-based WorkflowBuilder)
+  - `Microsoft.Agents.AI.Hosting` 1.0.0-rc4 (agent hosting infrastructure)
+  - `Microsoft.Agents.AI.Hosting.A2A.AspNetCore` 1.0.0-rc4 (A2A protocol hosting)
+  - `ModelContextProtocol` 1.1.0 (STABLE GA — official C# MCP SDK)
+  - `ModelContextProtocol.AspNetCore` 1.1.0 (MCP over HTTP)
+  - `A2A` + `A2A.AspNetCore` (stable A2A protocol SDK)
+- **Current state confirmed:** InventoryAgent/PricingAgent have real EF Core logic; MCP shim works but is hand-rolled; A2AClient returns hardcoded mock data; A2AServer stubs have TODO comments; RetailWorkflow is empty
+- **5-phase plan:** A (packages+base classes) → B (real MCP) → C (real A2A) → D (real workflow) → E (cleanup)
+- **Critical design decision:** Local competitor agent replaces hardcoded mocks — a real A2A conversation between two Aspire-hosted agents, swappable to external vendors via endpoint config
+- **Estimated effort:** 5-7 sessions, primarily Anders with Satya support
+- **Risk assessment:** RC4 is pre-release but feature-complete; acceptable risk for showcase project
+- **Key insight:** Domain logic, data layer, UI components, and telemetry are untouched. We're replacing plumbing, not rooms.
+
+### 2026-03-26: Scenario Expansion Plan — 4 New Scenarios + System Overlay
+- **Decision doc:** `.squad/decisions/inbox/bill-gates-scenario-expansion-plan.md` — comprehensive phased plan
+- **Scope:** 4 new scenarios (Supply Chain Shock, Viral Spike, ESG Audit, Store Readiness) + System Overlay protocol highlighting
+- **Reuse analysis:** ~40% infrastructure reuse across scenarios; InventoryAgent, PricingAgent, MarketIntelAgent all extend to new use cases
+- **Priority ranking:** System Overlay (lowest effort, highest visual impact) → Viral Spike (60% reuse, best demo narrative) → Supply Chain (40% reuse, visual rerouting map) → Store Readiness (HITL showcase) → ESG Audit (enterprise credibility, least ROI)
+- **Total new assets:** 9 agents, 8 MCP tools, 4 A2UI components, 4 EF Core entities, 4 workflows, 16 executors
+- **Seed data expansion:** 5→12 stores (add Northeast + Southeast), 8→16 SKUs (add Grocery + Apparel categories), 80→420+ seed records
+- **Phasing:** Phase 0 (foundation, 1-2 sessions) → Phase 1+2 in parallel (Viral Spike + Supply Chain, 2-3 sessions each) → Phase 3+4 in parallel (Store Readiness + ESG, 3-4 sessions each)
+- **Critical path:** 8-10 sessions with parallelism, 12-16 sequential
+- **Key warning:** Recommended completing MAF rewrite BEFORE building 9 new agents — building on hand-rolled infrastructure means double-rewriting later
+- **Honest scope boundary:** Architecture is real (real MCP, A2A, A2UI), data sources are simulated — same pattern as existing competitor pricing
