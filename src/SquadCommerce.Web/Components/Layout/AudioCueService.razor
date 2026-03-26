@@ -1,0 +1,159 @@
+@implements IAsyncDisposable
+@inject IJSRuntime JS
+@inject SquadCommerce.Web.Services.SignalRStateService StateService
+
+@* Invisible component — provides audio feedback for agent events *@
+
+@code {
+    private IJSObjectReference? _jsModule;
+    private bool _isMuted = true;
+
+    /// <summary>Whether audio cues are currently muted.</summary>
+    [Parameter] public bool IsMuted { get; set; } = true;
+
+    /// <summary>Callback when mute state changes (for parent to update toggle UI).</summary>
+    [Parameter] public EventCallback<bool> IsMutedChanged { get; set; }
+
+    // Track which agents are currently thinking to detect completion
+    private readonly HashSet<string> _thinkingAgents = new(StringComparer.OrdinalIgnoreCase);
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            _jsModule = await JS.InvokeAsync<IJSObjectReference>(
+                "import", "./Components/Layout/AudioCueService.razor.js");
+
+            // Read persisted mute state
+            _isMuted = await _jsModule.InvokeAsync<bool>("isMuted");
+            IsMuted = _isMuted;
+            await IsMutedChanged.InvokeAsync(_isMuted);
+
+            // Subscribe to SignalR events
+            StateService.OnThinkingState += HandleThinkingState;
+            StateService.OnReasoningStep += HandleReasoningStep;
+            StateService.OnA2AHandshakeStatus += HandleA2AHandshakeStatus;
+            StateService.OnStatusUpdate += HandleStatusUpdate;
+        }
+    }
+
+    /// <summary>Toggle mute state — called from parent layout.</summary>
+    public async Task ToggleMuteAsync()
+    {
+        _isMuted = !_isMuted;
+        IsMuted = _isMuted;
+        if (_jsModule is not null)
+        {
+            await _jsModule.InvokeVoidAsync("setMuted", _isMuted);
+        }
+        await IsMutedChanged.InvokeAsync(_isMuted);
+    }
+
+    private void HandleThinkingState(string sessionId, string agentName, bool isThinking)
+    {
+        if (isThinking)
+        {
+            var isNew = _thinkingAgents.Add(agentName);
+            if (isNew)
+            {
+                // Agent starts thinking → short rising tone (200ms, 440→660Hz)
+                _ = PlaySweepAsync(440, 660, 0.2, "sine", 0.08);
+            }
+        }
+        else
+        {
+            var wasThinking = _thinkingAgents.Remove(agentName);
+            if (wasThinking)
+            {
+                if (_thinkingAgents.Count == 0)
+                {
+                    // All agents done → satisfying C major completion chord (400ms)
+                    _ = PlayChordAsync(new[] { 523.25, 659.25, 783.99 }, 0.4, 0.12, "sine");
+                }
+                else
+                {
+                    // Single agent completes → two-note chime (C5→E5)
+                    _ = PlayChimeAsync(new[] { 523.25, 659.25 }, 0.2, 0.1, "sine");
+                }
+            }
+        }
+    }
+
+    private void HandleReasoningStep(SquadCommerce.Contracts.ReasoningStep step)
+    {
+        // No sound for individual reasoning steps — too frequent.
+        // Completion is handled by ThinkingState going false.
+    }
+
+    private void HandleA2AHandshakeStatus(string sessionId, string sourceAgent, string targetAgent, string status, string details)
+    {
+        switch (status?.ToLowerInvariant())
+        {
+            case "completed":
+            case "connected":
+                // A2A handshake completed → three-note arpeggio (C5→E5→G5, 100ms each)
+                _ = PlayChimeAsync(new[] { 523.25, 659.25, 783.99 }, 0.1, 0.1, "triangle");
+                break;
+            case "failed":
+                // A2A handshake failed → low descending tone
+                _ = PlaySweepAsync(330, 220, 0.3, "sine", 0.1);
+                break;
+        }
+    }
+
+    private void HandleStatusUpdate(string message)
+    {
+        // Play error tone if the status message indicates an error
+        if (message is not null &&
+            (message.Contains("error", StringComparison.OrdinalIgnoreCase) ||
+             message.Contains("failed", StringComparison.OrdinalIgnoreCase) ||
+             message.Contains("exception", StringComparison.OrdinalIgnoreCase)))
+        {
+            // Error → low descending tone (300ms, 330→220Hz)
+            _ = PlaySweepAsync(330, 220, 0.3, "sine", 0.1);
+        }
+    }
+
+    private async Task PlaySweepAsync(double startFreq, double endFreq, double duration, string type, double volume)
+    {
+        if (_jsModule is null) return;
+        try
+        {
+            await _jsModule.InvokeVoidAsync("playSweep", startFreq, endFreq, duration, type, volume);
+        }
+        catch { /* Audio failures are non-critical */ }
+    }
+
+    private async Task PlayChimeAsync(double[] frequencies, double noteDuration, double volume, string type)
+    {
+        if (_jsModule is null) return;
+        try
+        {
+            await _jsModule.InvokeVoidAsync("playChime", frequencies, noteDuration, volume, type);
+        }
+        catch { /* Audio failures are non-critical */ }
+    }
+
+    private async Task PlayChordAsync(double[] frequencies, double duration, double volume, string type)
+    {
+        if (_jsModule is null) return;
+        try
+        {
+            await _jsModule.InvokeVoidAsync("playChord", frequencies, duration, volume, type);
+        }
+        catch { /* Audio failures are non-critical */ }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        StateService.OnThinkingState -= HandleThinkingState;
+        StateService.OnReasoningStep -= HandleReasoningStep;
+        StateService.OnA2AHandshakeStatus -= HandleA2AHandshakeStatus;
+        StateService.OnStatusUpdate -= HandleStatusUpdate;
+
+        if (_jsModule is not null)
+        {
+            try { await _jsModule.DisposeAsync(); } catch { }
+        }
+    }
+}

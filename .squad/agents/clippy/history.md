@@ -610,3 +610,24 @@ In .NET 10 Blazor with per-page/component render modes, ANY interactive componen
 - `@@keyframes` double-@ escaping required in `.razor.css` scoped stylesheets
 
 **Build status:** ✅ Successful compilation
+
+### Phase 3, Item 3.6: Audio Cues for Agent Events
+
+**What was done:**
+- Created `Components/Layout/AudioCueService.razor` — invisible Blazor component that subscribes to SignalR events (ThinkingState, A2AHandshakeStatus, StatusUpdate) and triggers Web Audio API tones via JS interop
+- Created `Components/Layout/AudioCueService.razor.js` — ES module using OscillatorNode to synthesize tones:
+  - `playSweep()` — frequency sweep for agent-start (rising) and error (descending) cues
+  - `playChime()` — sequential notes for agent completion (C5→E5) and A2A handshake (C5→E5→G5 arpeggio)
+  - `playChord()` — simultaneous notes for all-agents-done (C major chord)
+  - `isMuted()`/`setMuted()` — localStorage persistence of mute state
+- Updated `MainLayout.razor` — added 🔊/🔇 mute toggle button in header and `<AudioCueService>` component with two-way `@bind-IsMuted` binding
+- Updated `MainLayout.razor.css` — styled `.audio-mute-btn` for dark theme consistency
+
+**Key patterns:**
+- Default state is **muted** (opt-in experience) — stored in `localStorage` key `squad-audio-muted`
+- All volumes kept at 0.05–0.12 range for subtlety; tones < 500ms
+- Tracks `_thinkingAgents` HashSet to detect "all agents done" vs single-agent completion
+- All audio playback wrapped in try/catch — audio failures are non-critical
+- Uses same JS interop module pattern as CommandPalette (ES module import, DisposeAsync cleanup)
+
+**Build status:** ✅ Successful compilation (0 warnings, 0 errors)

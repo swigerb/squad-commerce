@@ -12,6 +12,9 @@
             </FluentStack>
         </FluentStack>
         <FluentStack Orientation="Orientation.Horizontal" VerticalAlignment="VerticalAlignment.Center" Style="gap: 0.5rem;">
+            <button class="audio-mute-btn" @onclick="ToggleAudioMute" aria-label="@(_audioMuted ? "Enable audio cues" : "Mute audio cues")" title="@(_audioMuted ? "Enable audio cues" : "Mute audio cues")">
+                @(_audioMuted ? "🔇" : "🔊")
+            </button>
             <button class="fleet-toggle-btn" @onclick="ToggleFleetPanel" aria-label="Toggle Agent Fleet panel" title="Toggle Fleet Panel">
                 🚀
             </button>
@@ -42,6 +45,7 @@
     </FluentStack>
 </FluentStack>
 
+<AudioCueService @ref="_audioCueService" @bind-IsMuted="_audioMuted" />
 <CommandPalette />
 <KeyboardShortcutHelp IsVisible="_showShortcutHelp" OnClose="CloseShortcutHelp" />
 
@@ -57,6 +61,8 @@
 @code {
     private bool _showShortcutHelp;
     private bool _fleetVisible = true;
+    private bool _audioMuted = true;
+    private AudioCueService? _audioCueService;
     private IJSObjectReference? _jsModule;
     private DotNetObjectReference<MainLayout>? _dotNetRef;
 
@@ -114,6 +120,14 @@
     private void ToggleFleetPanel()
     {
         _fleetVisible = !_fleetVisible;
+    }
+
+    private async Task ToggleAudioMute()
+    {
+        if (_audioCueService is not null)
+        {
+            await _audioCueService.ToggleMuteAsync();
+        }
     }
 
     public async ValueTask DisposeAsync()
