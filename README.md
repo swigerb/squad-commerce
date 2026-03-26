@@ -11,22 +11,75 @@
 
 ## 🎯 What Is This?
 
-Squad Commerce is a **pro-code, enterprise-grade multi-agent system** that solves retail supply chain silos for consumer goods organizations. It demonstrates how AI agents can work together — coordinating across inventory management, pricing optimization, and market intelligence — using Microsoft's cutting-edge agent protocols and frameworks.
+Squad Commerce is a **pro-code, enterprise-grade multi-agent system** that solves retail supply chain silos for consumer goods organizations. It demonstrates how AI agents can work together — coordinating across inventory, pricing, marketing, logistics, compliance, and store operations — using Microsoft's cutting-edge agent protocols and frameworks.
 
-### The Core Scenario
-
-> *"A competitor drops their prices. What do we do?"*
-
-Squad Commerce answers this automatically through a choreographed pipeline of AI agents:
-
-1. **🔍 Detect** — A market intelligence agent spots the competitor price change
-2. **📦 Analyze** — The inventory agent queries local stock levels via **MCP** tools
-3. **🤝 Verify** — An external vendor agent confirms the competitor's claim via **A2A** protocol
-4. **📊 Calculate** — The pricing agent computes margin impact
-5. **🖥️ Present** — A native **A2UI** component renders a visual proposal in the Blazor UI
-6. **✅ Decide** — The store manager approves or rejects with full auditability
+> **13 Agents · 10 MCP Tools · 5 Workflows · 12 Stores · 16 SKUs · 18 A2UI Components**
 
 Every step is traced with **OpenTelemetry**, streamed to the UI via **AG-UI**, and auditable through the **Aspire Dashboard**.
+
+### The Scenarios
+
+Squad Commerce ships five end-to-end scenarios — each one a real business problem solved by a choreographed pipeline of AI agents.
+
+---
+
+#### Scenario 1 — Competitor Price Drop
+
+> *"MegaMart dropped SKU-1001 to $24.99. What do we do?"*
+
+| | |
+|---|---|
+| **Agent Pipeline** | MarketIntel → Inventory → Pricing → Synthesis |
+| **Business Outcome** | **Protect margins while staying competitive** — AI agents validate the claim, check inventory positions, calculate margin impact across 4 scenarios, and present an executive-ready pricing recommendation with full audit trail |
+| **A2UI Visualization** | `RetailStockHeatmap` · `PricingImpactChart` · `MarketComparisonGrid` |
+
+---
+
+#### Scenario 2 — Viral Spike
+
+> *"A TikTok influencer posted about our Classic Denim. Demand is spiking 400% in the Northeast."*
+
+| | |
+|---|---|
+| **Agent Pipeline** | MarketIntel (social sentiment) → Pricing (flash sale) → Marketing (campaign) → Synthesis |
+| **Business Outcome** | **Capitalize on viral moments in real-time** — detect social signals, dynamically price complementary items to maximize AOV, and generate ready-to-deploy marketing campaigns before the trend cools |
+| **A2UI Visualization** | `SocialSentimentGraph` · `PricingImpactChart` · `CampaignPreview` |
+
+---
+
+#### Scenario 3 — Supply Chain Shock
+
+> *"Our coffee shipment is delayed 3 days due to a storm. How do we minimize impact?"*
+
+| | |
+|---|---|
+| **Agent Pipeline** | Logistics → Inventory → Redistribution → Synthesis |
+| **Business Outcome** | **Minimize stockout risk through intelligent redistribution** — verify the delay, identify at-risk stores, negotiate store-to-store rerouting from surplus locations, reducing customer impact by 60–80% |
+| **A2UI Visualization** | `ReroutingMap` · `RetailStockHeatmap` · `RiskScoreGauge` |
+
+---
+
+#### Scenario 4 — Store Readiness
+
+> *"Miami Flagship opens Friday. The Electronics layout isn't optimized for foot traffic."*
+
+| | |
+|---|---|
+| **Agent Pipeline** | TrafficAnalyst → Merchandising → Manager (HITL) → Synthesis |
+| **Business Outcome** | **Optimize store layouts using data-driven planograms** — analyze foot traffic patterns from similar stores, generate optimized shelf placements, and route changes through manager approval before the grand opening |
+| **A2UI Visualization** | `InteractiveFloorplan` (with HITL approval) |
+
+---
+
+#### Scenario 5 — ESG Audit
+
+> *"New regulation: verify Fair Trade certification for all cocoa suppliers by next week."*
+
+| | |
+|---|---|
+| **Agent Pipeline** | Compliance → Research → Procurement → Synthesis |
+| **Business Outcome** | **Proactive compliance risk management** — automatically audit supplier certifications, cross-reference sustainability watchlists, identify at-risk vendors, and source alternative suppliers before the deadline hits |
+| **A2UI Visualization** | `SupplierRiskMatrix` |
 
 ---
 
@@ -48,13 +101,29 @@ Every step is traced with **OpenTelemetry**, streamed to the UI via **AG-UI**, a
 
 ### A2UI Components
 
-Squad Commerce enforces **generative UI** — no raw markdown tables for complex data:
+Squad Commerce enforces **generative UI** — no raw markdown tables for complex data. Each component is a Blazor-native, interactive visualization rendered from structured A2UI JSON payloads:
 
-| Component | Renders When | Description |
-|-----------|-------------|-------------|
-| `RetailStockHeatmap` | Displaying inventory levels | Visual heatmap of stock across locations |
-| `PricingImpactChart` | Proposing price changes | Interactive chart showing margin impact |
-| `MarketComparisonGrid` | Showing competitor comparisons | Side-by-side competitive analysis |
+| Component | Scenario | Description |
+|-----------|----------|-------------|
+| `RetailStockHeatmap` | Competitor / Supply Chain | Color-coded inventory heatmap across locations |
+| `PricingImpactChart` | Competitor / Viral Spike | Interactive margin impact scenarios |
+| `MarketComparisonGrid` | Competitor | Side-by-side competitive price analysis |
+| `SocialSentimentGraph` | Viral Spike | Real-time social media velocity tracking |
+| `CampaignPreview` | Viral Spike | Email + mobile hero banner mockup |
+| `ReroutingMap` | Supply Chain | SVG store-to-store rerouting with risk gauge |
+| `InteractiveFloorplan` | Store Readiness | Store layout with traffic heatmap + HITL approval |
+| `SupplierRiskMatrix` | ESG Audit | Supplier compliance dashboard with deadline countdown |
+
+### System Overlay — Protocol Highlighting
+
+When agent-to-agent activity fires, the UI surfaces protocol-level cues so executives and developers can **see the system thinking**:
+
+| Event | Visual Cue |
+|-------|------------|
+| **A2A Handshake** | Pulse animation between agent icons |
+| **MCP Tool Call** | 🔧 Badge on messages |
+| **A2UI Payload** | ✨ "Generative UI" flash |
+| **HITL (Human-in-the-Loop)** | ⚠️ "Action Required" glow notification |
 
 ---
 
@@ -135,7 +204,7 @@ The demo guide includes:
 - ✅ Manager approval workflow (Approve/Reject/Modify)
 - ✅ Aspire Dashboard navigation (Traces, Metrics, Logs)
 - ✅ API reference with all endpoints
-- ✅ Demo data reference (5 stores, 8 SKUs)
+- ✅ Demo data reference (12 stores, 16 SKUs across 3 categories)
 - ✅ Troubleshooting guide
 
 ---
