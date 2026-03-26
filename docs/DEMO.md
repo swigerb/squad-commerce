@@ -2,24 +2,45 @@
 
 > **A step-by-step guide to experiencing Microsoft's showcase of Agent Framework excellence**
 
-This guide walks you through the complete Squad-Commerce competitor price drop scenario, demonstrating the power of Microsoft Agent Framework, A2A, MCP, AG-UI, and A2UI working together in a real enterprise application.
+This guide walks you through all five Squad-Commerce demo scenarios — from competitor price drops to ESG audits — demonstrating the power of Microsoft Agent Framework, A2A, MCP, AG-UI, and A2UI working together in a real enterprise application.
 
 ---
 
 ## 📋 Table of Contents
 
+- [Scenarios Overview](#-scenarios-overview)
 - [Prerequisites](#-prerequisites)
 - [Quick Start](#-quick-start)
-- [Demo Walkthrough: Competitor Price Drop Scenario](#-demo-walkthrough-competitor-price-drop-scenario)
+- [Demo Walkthrough: Scenario 1 — Competitor Price Drop](#-demo-walkthrough-competitor-price-drop-scenario)
   - [Step 1: Trigger Analysis](#step-1-trigger-analysis)
   - [Step 2: Watch the AG-UI Stream](#step-2-watch-the-ag-ui-stream)
   - [Step 3: Review A2UI Components](#step-3-review-a2ui-components)
   - [Step 4: Manager Decision](#step-4-manager-decision)
   - [Step 5: Verify in Aspire Dashboard](#step-5-verify-in-aspire-dashboard)
+- [Demo Walkthrough: Scenario 2 — Viral Spike](#-demo-walkthrough-scenario-2--viral-spike)
+- [Demo Walkthrough: Scenario 3 — Supply Chain Shock](#-demo-walkthrough-scenario-3--supply-chain-shock)
+- [Demo Walkthrough: Scenario 4 — Store Readiness](#-demo-walkthrough-scenario-4--store-readiness)
+- [Demo Walkthrough: Scenario 5 — ESG Audit](#-demo-walkthrough-scenario-5--esg-audit)
 - [API Reference](#-api-reference)
 - [Architecture Overview](#-architecture-overview)
 - [Demo Data](#-demo-data)
 - [Troubleshooting](#-troubleshooting)
+
+---
+
+## 🗺️ Scenarios Overview
+
+Squad Commerce ships with **5 end-to-end demo scenarios**, each representing a real business challenge that multi-agent orchestration solves in minutes instead of days.
+
+| # | Scenario | Business Challenge | Agents | Key A2UI |
+|---|----------|-------------------|--------|----------|
+| 1 | Competitor Price Drop | Protect margins while staying competitive | MarketIntel → Inventory → Pricing | RetailStockHeatmap, PricingImpactChart, MarketComparisonGrid |
+| 2 | Viral Spike | Capitalize on viral demand without stockouts | MarketIntel → Pricing → Marketing | SocialSentimentGraph, CampaignPreview, PricingImpactChart |
+| 3 | Supply Chain Shock | Minimize stockout risk through redistribution | Logistics → Inventory → Redistribution | ReroutingMap, RetailStockHeatmap, RiskScoreGauge |
+| 4 | Store Readiness | Optimize layouts using traffic data | TrafficAnalyst → Merchandising → Manager | InteractiveFloorplan (HITL) |
+| 5 | ESG Audit | Proactive compliance risk management | Compliance → Research → Procurement | SupplierRiskMatrix |
+
+> **Tip:** Each scenario is triggered by natural language in the chat UI. The orchestrator detects the intent and routes to the correct agent pipeline automatically. See [Scenario Detection Keywords](#scenario-detection-keywords) in the API Reference for the full list.
 
 ---
 
@@ -102,7 +123,7 @@ When you run the application:
 4. **Background services initialize**:
    - MCP server tools register (`GetInventoryLevels`, `UpdateStorePricing`)
    - Agents register with policy enforcement (Orchestrator, MarketIntel, Inventory, Pricing)
-   - Demo data loads (5 stores, 8 SKUs, realistic inventory and pricing)
+   - Demo data loads (12 stores, 16 SKUs, realistic inventory and pricing across 3 categories)
 
 ### Expected Startup Output
 
@@ -568,6 +589,150 @@ Navigate to **Logs** and filter by your session ID.
 
 ---
 
+## 🎯 Demo Walkthrough: Scenario 2 — Viral Spike
+
+### Business Context
+
+A social media post about your product goes viral. You have hours to respond before the trend peaks. Traditional retail organizations take days to react to viral moments — by then the trend has passed. Squad Commerce detects the spike, adjusts pricing on complementary items, and generates marketing assets in real time.
+
+### Demo Prompt
+
+Type this into the Squad Commerce chat UI:
+
+```
+A TikTok influencer just posted about our Classic Denim line. Demand is spiking 400% in the Northeast. Can we capitalize on this without stockouts?
+```
+
+### What Happens
+
+1. **ChiefSoftwareArchitect** (Orchestrator) detects viral/social keywords and routes to the viral spike pipeline
+2. **MarketIntelAgent** analyzes social sentiment velocity across platforms (TikTok, Instagram, Twitter) via A2A
+3. **PricingAgent** calculates flash sale scenarios on complementary items to maximize basket size
+4. **MarketingAgent** generates ready-to-deploy campaign assets (email templates, hero banners)
+5. **AG-UI events** stream real-time progress to the Blazor frontend
+6. **A2UI components** render interactive sentiment graphs, campaign previews, and pricing scenarios
+
+### What You'll See
+
+| A2UI Component | Description |
+|----------------|-------------|
+| **SocialSentimentGraph** | Real-time sentiment velocity by platform — shows TikTok spike, Instagram echo, Twitter trailing. Includes trend line and peak prediction. |
+| **CampaignPreview** | Generated email template + hero banner mockup. Shows subject line, CTA, and discount code. Editable before deployment. |
+| **PricingImpactChart** | Flash sale scenarios on complementary items (e.g., accessories for the Classic Denim line). Shows margin trade-offs for 10%, 15%, and 20% discounts. |
+
+### Business Outcome
+
+**Dynamic response to viral moments** — flash sale pricing on complementary products + ready-to-deploy marketing assets, all generated in under 60 seconds. Captures revenue during the trend window instead of missing it entirely.
+
+---
+
+## 🎯 Demo Walkthrough: Scenario 3 — Supply Chain Shock
+
+### Business Context
+
+A weather event disrupts your supply chain. Stock is running low at key stores. Manual redistribution takes days of phone calls between store managers. Squad Commerce identifies affected stores, calculates optimal store-to-store transfers, and presents a redistribution plan — all in seconds.
+
+### Demo Prompt
+
+Type this into the Squad Commerce chat UI:
+
+```
+Our main shipment of SKU-2001 Organic Coffee is delayed by 3 days due to a storm. How do we minimize the impact on our top regional stores?
+```
+
+### What Happens
+
+1. **ChiefSoftwareArchitect** (Orchestrator) detects supply chain disruption keywords and routes to the redistribution pipeline
+2. **LogisticsAgent** verifies the shipment delay and estimates the impact window
+3. **InventoryAgent** queries current stock levels across all 12 stores using MCP tools (`GetInventoryLevels`)
+4. **RedistributionAgent** plans optimal store-to-store transfers to cover high-risk locations
+5. **AG-UI events** stream transfer calculations in real time
+6. **A2UI components** render an interactive rerouting map and risk assessment
+
+### What You'll See
+
+| A2UI Component | Description |
+|----------------|-------------|
+| **ReroutingMap** | Store network visualization with transfer arrows showing source → destination stores. Includes transfer quantities and estimated delivery times. |
+| **RetailStockHeatmap** | Current inventory levels across all affected stores, color-coded by risk. Highlights stores below reorder point in red. |
+| **RiskScoreGauge** | Overall stockout risk score (0-100) before and after redistribution. Shows percentage reduction in customer-facing stockout probability. |
+
+### Business Outcome
+
+**Automated redistribution reduces customer-facing stockouts by 60–80%.** Instead of days of manual coordination, the system produces an optimized transfer plan in seconds — preserving revenue at high-traffic locations while minimizing logistics cost.
+
+---
+
+## 🎯 Demo Walkthrough: Scenario 4 — Store Readiness
+
+### Business Context
+
+A new flagship store opens in days. The layout needs to be optimized for local shopping patterns, but traditional planogram design relies on gut instinct. Squad Commerce uses foot traffic heatmaps and sales data to generate a data-driven layout — with manager sign-off before anything moves.
+
+### Demo Prompt
+
+Type this into the Squad Commerce chat UI:
+
+```
+We are opening the new Miami Flagship store on Friday. The Electronics section layout isn't optimized for current foot traffic trends. Fix it.
+```
+
+### What Happens
+
+1. **ChiefSoftwareArchitect** (Orchestrator) detects store readiness keywords and routes to the layout optimization pipeline
+2. **TrafficAnalystAgent** pulls foot traffic heatmap data for the store region and comparable locations
+3. **MerchandisingAgent** generates an optimized planogram based on traffic flow, product adjacency, and margin contribution
+4. **ManagerAgent** requests Human-in-the-Loop (HITL) approval before finalizing the layout
+5. **AG-UI events** stream the analysis and layout generation in real time
+6. **A2UI components** render an interactive floorplan with approval controls
+
+### What You'll See
+
+| A2UI Component | Description |
+|----------------|-------------|
+| **InteractiveFloorplan** | Full store layout with color-coded traffic heatmap overlay. Individual sections (Electronics, Grocery, Apparel) are clickable. Shelf-level approve/reject buttons let the manager sign off on each zone. HITL workflow — nothing changes without explicit approval. |
+
+### Business Outcome
+
+**Data-driven store layouts with manager sign-off before opening day.** Replaces weeks of manual planogram design with AI-generated layouts grounded in real traffic data. The HITL approval ensures human judgment remains in the loop for high-stakes decisions.
+
+---
+
+## 🎯 Demo Walkthrough: Scenario 5 — ESG Audit
+
+### Business Context
+
+New regulations require certification verification for all suppliers in a product category. Non-compliance means fines, shipment holds, and reputational damage. Manually auditing supplier certifications across hundreds of SKUs takes weeks. Squad Commerce automates the entire audit in minutes.
+
+### Demo Prompt
+
+Type this into the Squad Commerce chat UI:
+
+```
+A new regulation requires us to verify the Fair Trade certification of all suppliers for our Cocoa-based SKUs by next week. Who is at risk?
+```
+
+### What Happens
+
+1. **ChiefSoftwareArchitect** (Orchestrator) detects compliance/ESG keywords and routes to the audit pipeline
+2. **ComplianceAgent** checks certification records for all suppliers associated with Cocoa-based SKUs
+3. **ResearchAgent** cross-references suppliers against regulatory watchlists and industry databases via A2A
+4. **ProcurementAgent** identifies pre-vetted alternative suppliers for any flagged vendors
+5. **AG-UI events** stream the audit progress in real time
+6. **A2UI components** render a comprehensive supplier risk matrix
+
+### What You'll See
+
+| A2UI Component | Description |
+|----------------|-------------|
+| **SupplierRiskMatrix** | Supplier cards showing: supplier name, certification status (✅ Valid, ⚠️ Expiring, ❌ Missing), risk level (Low/Medium/High/Critical), deadline countdown, and pre-vetted alternative suppliers. Sortable by risk level. Actionable — click to initiate procurement switch. |
+
+### Business Outcome
+
+**Proactive compliance — identify and replace at-risk suppliers before the deadline.** Transforms a weeks-long manual audit into a minutes-long automated process. Prevents regulatory fines and protects brand reputation by ensuring full supply chain certification coverage.
+
+---
+
 ## 📚 API Reference
 
 ### Agent Endpoints
@@ -765,6 +930,22 @@ data: {"type":"done","data":{"completed":true}}
 
 ---
 
+### Scenario Detection Keywords
+
+The orchestrator detects the scenario type from natural language input. Use these keywords to trigger each pipeline:
+
+| Scenario | Trigger Keywords | Example Phrases |
+|----------|-----------------|-----------------|
+| **1. Competitor Price Drop** | SKU identifier + price (e.g., `SKU-1001`, `$24.99`) | "Competitor dropped SKU-1001 to $24.99" |
+| **2. Viral Spike** | `viral`, `TikTok`, `trending`, `spike`, `influencer` | "A TikTok influencer posted about our product" |
+| **3. Supply Chain Shock** | `delayed`, `shipment`, `storm`, `supply chain` | "Our shipment is delayed by a storm" |
+| **4. Store Readiness** | `new store`, `opening`, `flagship`, `layout` | "We are opening a new flagship store on Friday" |
+| **5. ESG Audit** | `certification`, `Fair Trade`, `ESG`, `compliance` | "Verify Fair Trade certification for all suppliers" |
+
+> **Note:** The orchestrator uses keyword matching combined with intent classification. Including at least one keyword from the table above ensures reliable routing to the correct agent pipeline.
+
+---
+
 ## 🏗️ Architecture Overview
 
 ### System Architecture Diagram
@@ -813,28 +994,45 @@ data: {"type":"done","data":{"completed":true}}
 
 ## 📊 Demo Data
 
-### Stores (5 locations)
+### Stores (12 locations)
 
-| Store ID | Name | Type |
-|----------|------|------|
-| **SEA-001** | Downtown Flagship | Urban flagship store |
-| **PDX-002** | Suburban Mall | Suburban location |
-| **SFO-003** | Airport Terminal | High-traffic airport location |
-| **LAX-004** | University District | College campus area |
-| **DEN-005** | Waterfront Plaza | Waterfront retail complex |
+| Store ID | Name | Region | Type |
+|----------|------|--------|------|
+| **SEA-001** | Downtown Flagship | Northwest | Urban flagship store |
+| **PDX-002** | Suburban Mall | Northwest | Suburban location |
+| **SFO-003** | Airport Terminal | West | High-traffic airport location |
+| **LAX-004** | University District | West | College campus area |
+| **DEN-005** | Waterfront Plaza | Mountain | Waterfront retail complex |
+| **CHI-006** | Magnificent Mile | Midwest | Premium urban location |
+| **NYC-007** | Times Square Express | Northeast | High-traffic tourist area |
+| **BOS-008** | Harvard Square | Northeast | University area |
+| **ATL-009** | Peachtree Center | Southeast | Downtown business district |
+| **MIA-010** | Miami Flagship | Southeast | Flagship beach district |
+| **DAL-011** | Galleria Outlet | South | Outlet mall location |
+| **PHX-012** | Desert Ridge | Southwest | Suburban power center |
 
-### Products (8 SKUs)
+### Products (16 SKUs)
 
 | SKU | Product Name | Category | Avg. Price | Avg. Cost | Avg. Margin |
 |-----|--------------|----------|------------|-----------|-------------|
-| **SKU-1001** | Wireless Mouse | Peripherals | $29.99 | $15.00 | 50.0% |
-| **SKU-1002** | USB-C Cable 6ft | Accessories | $12.99 | $4.50 | 65.4% |
-| **SKU-1003** | Laptop Stand | Accessories | $49.99 | $25.00 | 50.0% |
+| **SKU-1001** | Wireless Mouse | Electronics | $29.99 | $15.00 | 50.0% |
+| **SKU-1002** | USB-C Cable 6ft | Electronics | $12.99 | $4.50 | 65.4% |
+| **SKU-1003** | Laptop Stand | Electronics | $49.99 | $25.00 | 50.0% |
 | **SKU-1004** | Webcam 1080p | Electronics | $79.99 | $40.00 | 50.0% |
-| **SKU-1005** | Mechanical Keyboard | Peripherals | $119.99 | $65.00 | 45.8% |
+| **SKU-1005** | Mechanical Keyboard | Electronics | $119.99 | $65.00 | 45.8% |
 | **SKU-1006** | Noise-Cancelling Headphones | Electronics | $199.99 | $110.00 | 45.0% |
-| **SKU-1007** | External SSD 1TB | Storage | $89.99 | $50.00 | 44.4% |
+| **SKU-1007** | External SSD 1TB | Electronics | $89.99 | $50.00 | 44.4% |
 | **SKU-1008** | Monitor 27-inch | Electronics | $349.99 | $200.00 | 42.9% |
+| **SKU-2001** | Organic Coffee Beans 1lb | Grocery | $14.99 | $8.00 | 46.6% |
+| **SKU-2002** | Fair Trade Cocoa Powder | Grocery | $9.99 | $5.50 | 44.9% |
+| **SKU-2003** | Artisan Granola Mix | Grocery | $7.49 | $3.50 | 53.3% |
+| **SKU-2004** | Cold-Pressed Olive Oil | Grocery | $18.99 | $10.00 | 47.3% |
+| **SKU-3001** | Classic Denim Jacket | Apparel | $89.99 | $38.00 | 57.8% |
+| **SKU-3002** | Classic Denim Jeans | Apparel | $69.99 | $28.00 | 60.0% |
+| **SKU-3003** | Organic Cotton T-Shirt | Apparel | $34.99 | $12.00 | 65.7% |
+| **SKU-3004** | Recycled Polyester Hoodie | Apparel | $59.99 | $25.00 | 58.3% |
+
+> **3 Product Categories:** Electronics (8 SKUs), Grocery (4 SKUs), Apparel (4 SKUs)
 
 ### Sample Inventory Levels (SKU-1001 — Wireless Mouse)
 
@@ -861,7 +1059,8 @@ data: {"type":"done","data":{"completed":true}}
 - **In-Memory Repositories:** `InventoryRepository` and `PricingRepository` in `SquadCommerce.Mcp`
 - **Thread-Safe:** Uses `ConcurrentDictionary` for atomic updates
 - **Realistic Values:** Prices vary by store, inventory reflects typical turnover patterns
-- **40 Records Total:** 5 stores × 8 SKUs = 40 inventory records, 40 pricing records
+- **192 Records Total:** 12 stores × 16 SKUs = 192 inventory records, 192 pricing records
+- **3 Categories:** Electronics (8 SKUs), Grocery (4 SKUs), Apparel (4 SKUs)
 
 ### Modifying Demo Data
 
@@ -1083,11 +1282,13 @@ If you encounter issues not covered here:
 
 By completing this demo, you've experienced:
 
+✅ **5 Enterprise Scenarios** — Competitor pricing, viral response, supply chain resilience, store optimization, and ESG compliance  
 ✅ **Microsoft Agent Framework (MAF)** — Graph-based workflows orchestrating multiple specialized agents  
 ✅ **Model Context Protocol (MCP)** — Tool execution for inventory and pricing operations  
 ✅ **Agent-to-Agent (A2A)** — External vendor communication for competitor validation  
 ✅ **Agent-to-UI (AG-UI)** — Real-time streaming responses via Server-Sent Events  
-✅ **A2UI Generative UI** — Rich Blazor components rendered from agent payloads  
+✅ **A2UI Generative UI** — Rich Blazor components rendered from agent payloads (heatmaps, floorplans, risk matrices)  
+✅ **Human-in-the-Loop (HITL)** — Manager approval workflows for high-stakes decisions  
 ✅ **OpenTelemetry** — Distributed tracing for full observability  
 ✅ **.NET Aspire** — Modern orchestration with built-in dashboard and telemetry  
 ✅ **Enterprise Patterns** — Audit logs, policy enforcement, manager approval workflows
@@ -1096,7 +1297,8 @@ By completing this demo, you've experienced:
 
 ## 📄 Next Steps
 
-- **Extend the Scenario:** Add more SKUs, stores, or competitor sources
+- **Try All 5 Scenarios:** Run through each demo scenario to see the full range of agent capabilities
+- **Extend the Scenarios:** Add more SKUs, stores, or competitor sources
 - **Customize Agents:** Modify agent prompts and policies in `SquadCommerce.Agents`
 - **Build New A2UI Components:** Create custom Blazor components in `SquadCommerce.Web`
 - **Deploy to Production:** Use Aspire for container orchestration and Azure deployment
