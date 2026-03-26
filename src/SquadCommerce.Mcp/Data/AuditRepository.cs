@@ -76,8 +76,9 @@ public sealed class AuditRepository
 
         var entities = await _context.AuditEntries
             .Where(e => e.SessionId == sessionId)
-            .OrderBy(e => e.Timestamp)
             .ToListAsync(cancellationToken);
+
+        entities = entities.OrderBy(e => e.Timestamp).ToList();
 
         _logger.LogInformation(
             "Retrieved {Count} audit entries for session {SessionId}",
@@ -101,9 +102,9 @@ public sealed class AuditRepository
             throw new ArgumentOutOfRangeException(nameof(count), "Count must be greater than 0");
 
         var entities = await _context.AuditEntries
-            .OrderByDescending(e => e.Timestamp)
-            .Take(count)
             .ToListAsync(cancellationToken);
+
+        entities = entities.OrderByDescending(e => e.Timestamp).Take(count).ToList();
 
         _logger.LogInformation("Retrieved {Count} recent audit entries", entities.Count);
 

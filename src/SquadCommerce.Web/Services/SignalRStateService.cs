@@ -46,7 +46,8 @@ public class SignalRStateService : IAsyncDisposable
             }
         }
 
-        var hubUrl = _configuration["SignalR:HubUrl"] ?? "https://localhost:7001/hubs/agent";
+        var hubUrl = _configuration["services:api:http:0"] ?? _configuration["services:api:https:0"] ?? _configuration["SignalR:HubUrl"] ?? "http://localhost:5000";
+        hubUrl = hubUrl.TrimEnd('/') + "/hubs/agent";
         _logger.LogInformation("Creating SignalR connection to {HubUrl}", hubUrl);
 
         _hubConnection = new HubConnectionBuilder()

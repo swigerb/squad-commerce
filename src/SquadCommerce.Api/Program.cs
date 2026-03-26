@@ -74,7 +74,10 @@ await app.UseSquadCommerceDatabaseAsync();
 
 app.MapDefaultEndpoints();
 
-app.UseHttpsRedirection();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseHttpsRedirection();
+}
 app.UseCors();
 
 // Entra ID scope validation middleware (demo mode by default)
