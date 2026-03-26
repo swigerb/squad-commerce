@@ -76,7 +76,7 @@
     private bool _fleetVisible = true;
     private bool _audioMuted = true;
     private bool _settingsPanelOpen;
-    private bool _hitlPending;
+    private bool _hitlPending = false; // Wired to SignalR in Phase 3 (Store Readiness HITL)
     private AudioCueService? _audioCueService;
     private IJSObjectReference? _jsModule;
     private DotNetObjectReference<MainLayout>? _dotNetRef;

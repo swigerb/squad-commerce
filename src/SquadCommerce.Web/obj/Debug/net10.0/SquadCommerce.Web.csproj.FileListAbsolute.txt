@@ -173,5 +173,7 @@ C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net1
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\SquadCommerce.Web.genruntimeconfig.cache
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\ref\SquadCommerce.Web.dll
 C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\scopedcss\Components\A2UI\ProtocolBadge.razor.rz.scp.css
-C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\compressed\79ou7ubfys-{0}-w4axoq00sp-w4axoq00sp.gz
-C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\compressed\vw62l4on5q-{0}-ao9h5x57tm-ao9h5x57tm.gz
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\scopedcss\Components\A2UI\CampaignPreview.razor.rz.scp.css
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\scopedcss\Components\A2UI\SocialSentimentGraph.razor.rz.scp.css
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\compressed\79ou7ubfys-{0}-81q81t9yaj-81q81t9yaj.gz
+C:\Users\brswig\source\repos\squad-commerce\src\SquadCommerce.Web\obj\Debug\net10.0\compressed\vw62l4on5q-{0}-8g1i37iijd-8g1i37iijd.gz

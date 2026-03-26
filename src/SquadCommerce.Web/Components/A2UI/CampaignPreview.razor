@@ -1,0 +1,126 @@
+@using SquadCommerce.Contracts.A2UI
+@using System.Text.Json
+
+<div class="campaign-wrapper" role="region" aria-label="Campaign Preview for @(_data?.ProductName ?? "product")">
+    @if (_data != null)
+    {
+        <div class="campaign-title-bar">
+            <div class="title-left">
+                <h3 class="campaign-title">📧 Campaign Preview — <span class="product-accent">@_data.ProductName</span></h3>
+                <ProtocolBadge Protocol="A2UI" />
+            </div>
+            <span class="campaign-ts">@_data.Timestamp.ToString("g")</span>
+        </div>
+
+        @* Two-column layout *@
+        <div class="preview-columns">
+            @* Left column — Email Preview *@
+            <div class="column-email" style="animation-delay: 0s">
+                <div class="email-card">
+                    <div class="email-header">
+                        <div class="email-dots">
+                            <span class="dot dot-red"></span>
+                            <span class="dot dot-yellow"></span>
+                            <span class="dot dot-green"></span>
+                        </div>
+                        <span class="email-label">Email Preview</span>
+                    </div>
+                    <div class="email-subject-bar">
+                        <span class="email-field-label">Subject:</span>
+                        <span class="email-subject">@_data.EmailSubjectLine</span>
+                    </div>
+                    <div class="email-body-area">
+                        @foreach (var paragraph in GetEmailParagraphs())
+                        {
+                            <p class="email-paragraph">@paragraph</p>
+                        }
+                    </div>
+                    <div class="email-footer">
+                        <span class="agent-badge">🤖 Powered by MarketingAgent</span>
+                    </div>
+                </div>
+            </div>
+
+            @* Right column — Hero Banner Preview *@
+            <div class="column-banner" style="animation-delay: 0.15s">
+                <div class="banner-card">
+                    <span class="mobile-label">📱 Mobile App Preview</span>
+                    <div class="banner-content">
+                        <h2 class="banner-headline">@_data.HeroBannerHeadline</h2>
+                        <p class="banner-subtext">@_data.HeroBannerSubtext</p>
+                        <div class="price-display">
+                            <span class="price-original">@_data.OriginalPrice.ToString("C")</span>
+                            <span class="price-arrow">→</span>
+                            <span class="price-flash">@_data.FlashSalePrice.ToString("C")</span>
+                        </div>
+                        <button class="cta-button" aria-label="@_data.CallToAction">
+                            @_data.CallToAction
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @* Flash Sale metrics row *@
+        <div class="flash-metrics">
+            <div class="flash-metric" style="animation-delay: 0.3s">
+                <span class="flash-metric-value flash-discount">@GetDiscountPercent()% OFF</span>
+                <span class="flash-metric-label">Discount</span>
+            </div>
+            <div class="flash-metric" style="animation-delay: 0.4s">
+                <span class="flash-metric-value">
+                    <span class="region-pin">📍</span> @_data.TargetRegion
+                </span>
+                <span class="flash-metric-label">Target Region</span>
+            </div>
+            <div class="flash-metric" style="animation-delay: 0.5s">
+                <span class="flash-metric-value flash-ready">✅ Campaign Ready</span>
+                <span class="flash-metric-label">Status</span>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="no-data">Loading campaign data…</div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Payload { get; set; }
+
+    private CampaignPreviewData? _data;
+
+    protected override void OnParametersSet()
+    {
+        if (Payload?.Data != null)
+        {
+            if (Payload.Data is JsonElement jsonElement)
+            {
+                _data = JsonSerializer.Deserialize<CampaignPreviewData>(
+                    jsonElement.GetRawText(),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            else if (Payload.Data is CampaignPreviewData typedData)
+            {
+                _data = typedData;
+            }
+        }
+    }
+
+    private int GetDiscountPercent()
+    {
+        if (_data == null || _data.OriginalPrice == 0) return 0;
+        return (int)Math.Round((1 - (_data.FlashSalePrice / _data.OriginalPrice)) * 100);
+    }
+
+    private IEnumerable<string> GetEmailParagraphs()
+    {
+        if (string.IsNullOrWhiteSpace(_data?.EmailBody))
+            return Enumerable.Empty<string>();
+        return _data.EmailBody
+            .Split(new[] { "\n\n", "\r\n\r\n" }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(p => p.Trim())
+            .Where(p => !string.IsNullOrWhiteSpace(p));
+    }
+}

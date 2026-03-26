@@ -30,14 +30,15 @@ public class ChiefSoftwareArchitectAgentCoverageTests
 
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, CreateTestDbContext(), NullLogger<MarketIntelAgent>.Instance);
+        var marketingAgent = new MarketingAgent(CreateTestDbContext(), pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
 
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
-            null!,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -68,14 +69,15 @@ public class ChiefSoftwareArchitectAgentCoverageTests
 
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, CreateTestDbContext(), NullLogger<MarketIntelAgent>.Instance);
+        var marketingAgent = new MarketingAgent(CreateTestDbContext(), pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
 
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
-            null!,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -104,14 +106,15 @@ public class ChiefSoftwareArchitectAgentCoverageTests
 
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, CreateTestDbContext(), NullLogger<MarketIntelAgent>.Instance);
+        var marketingAgent = new MarketingAgent(CreateTestDbContext(), pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
 
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
-            null!,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -126,6 +129,10 @@ public class ChiefSoftwareArchitectAgentCoverageTests
         result.ExecutiveSummary.Should().NotBeEmpty();
         result.AgentResults.Should().HaveCount(3);
     }
+
+    private static SquadCommerceDbContext CreateTestDbContext() =>
+        new(new DbContextOptionsBuilder<SquadCommerceDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
 
     private static AuditRepository CreateInMemoryAuditRepository()
     {

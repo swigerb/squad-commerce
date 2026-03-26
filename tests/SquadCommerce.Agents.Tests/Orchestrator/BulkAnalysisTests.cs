@@ -32,14 +32,14 @@ public class BulkAnalysisTests
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
         var dbContext = CreateInMemoryDbContext();
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, dbContext, NullLogger<MarketIntelAgent>.Instance);
         var marketingAgent = new MarketingAgent(dbContext, pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
-            null!,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -90,14 +90,14 @@ public class BulkAnalysisTests
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
         var dbContext = CreateInMemoryDbContext();
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, dbContext, NullLogger<MarketIntelAgent>.Instance);
         var marketingAgent = new MarketingAgent(dbContext, pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
-            null!,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -137,14 +137,14 @@ public class BulkAnalysisTests
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
         var dbContext = CreateInMemoryDbContext();
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, dbContext, NullLogger<MarketIntelAgent>.Instance);
         var marketingAgent = new MarketingAgent(dbContext, pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
-            null!,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -185,14 +185,14 @@ public class BulkAnalysisTests
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
         var dbContext = CreateInMemoryDbContext();
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, dbContext, NullLogger<MarketIntelAgent>.Instance);
         var marketingAgent = new MarketingAgent(dbContext, pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
-            null!,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -234,14 +234,14 @@ public class BulkAnalysisTests
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
         var dbContext = CreateInMemoryDbContext();
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, dbContext, NullLogger<MarketIntelAgent>.Instance);
         var marketingAgent = new MarketingAgent(dbContext, pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
-            null!,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),

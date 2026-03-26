@@ -33,11 +33,17 @@
                 <ProtocolBadge Protocol="A2UI" />
                 <InsightCardRenderer Payload="Payload" />
                 break;
-            case "ReroutingMap":
             case "SocialSentimentGraph":
+                <ProtocolBadge Protocol="MCP" />
+                <SocialSentimentGraph Payload="Payload" />
+                break;
+            case "CampaignPreview":
+                <ProtocolBadge Protocol="A2UI" />
+                <CampaignPreview Payload="Payload" />
+                break;
+            case "ReroutingMap":
             case "SupplierRiskMatrix":
             case "InteractiveFloorplan":
-            case "CampaignPreview":
                 <div class="a2ui-placeholder">
                     <span>🚧 @Payload.RenderAs — Coming in next phase</span>
                 </div>

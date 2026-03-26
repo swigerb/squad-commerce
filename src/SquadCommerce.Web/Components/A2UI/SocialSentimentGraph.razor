@@ -1,0 +1,235 @@
+@using SquadCommerce.Contracts.A2UI
+@using System.Text.Json
+
+<div class="sentiment-wrapper" role="region" aria-label="Social Sentiment Graph for @(_data?.ProductName ?? "product")">
+    @if (_data != null)
+    {
+        <div class="sentiment-title-bar">
+            <div class="title-left">
+                <h3 class="sentiment-title">📈 Social Sentiment — <span class="product-accent">@_data.ProductName</span></h3>
+                <ProtocolBadge Protocol="MCP" />
+            </div>
+            <span class="sentiment-ts">@_data.Timestamp.ToString("g")</span>
+        </div>
+
+        @* Hero metrics row *@
+        <div class="hero-metrics">
+            <div class="metric-card @GetDemandClass()" style="animation-delay: 0s">
+                <span class="metric-label">Demand Multiplier</span>
+                <span class="metric-value metric-demand">@_data.DemandMultiplier.ToString("0.0")×</span>
+                <span class="metric-sub">@GetDemandSub()</span>
+            </div>
+            <div class="metric-card" style="animation-delay: 0.1s">
+                <span class="metric-label">Sentiment Score</span>
+                <div class="gauge-container">
+                    <svg class="gauge-svg" viewBox="0 0 100 60" aria-hidden="true">
+                        <path class="gauge-track" d="M10,55 A40,40 0 0,1 90,55" />
+                        <path class="gauge-fill" d="M10,55 A40,40 0 0,1 90,55"
+                              style="stroke-dasharray: @GetGaugeDash(); stroke-dashoffset: @GetGaugeOffset()" />
+                    </svg>
+                    <span class="gauge-value">@GetAverageScore().ToString("0.00")</span>
+                </div>
+            </div>
+            <div class="metric-card" style="animation-delay: 0.2s">
+                <span class="metric-label">Region</span>
+                <span class="metric-value metric-region">📍 @_data.Region</span>
+                <span class="metric-sub">Active monitoring</span>
+            </div>
+        </div>
+
+        @* Trend badge *@
+        <div class="trend-row">
+            <span class="trend-badge @GetTrendClass()">@GetTrendEmoji() @_data.TrendDirection.ToUpperInvariant()</span>
+        </div>
+
+        @* Sentiment timeline chart *@
+        @if (_data.DataPoints != null && _data.DataPoints.Any())
+        {
+            <div class="chart-section">
+                <h4 class="section-heading">Sentiment Timeline</h4>
+                <div class="chart-container" role="img" aria-label="Bar chart showing sentiment scores over time">
+                    <div class="chart-y-axis">
+                        <span>1.0</span>
+                        <span>0.5</span>
+                        <span>0.0</span>
+                    </div>
+                    <div class="chart-area">
+                        <div class="chart-bars">
+                            @{ var dpIdx = 0; }
+                            @foreach (var dp in _data.DataPoints)
+                            {
+                                var barHeight = Math.Clamp(dp.Score * 100, 0, 100);
+                                var barColor = GetPlatformColor(dp.Platform);
+                                <div class="bar-group" style="animation-delay: @(dpIdx * 0.08)s">
+                                    <span class="velocity-arrow @(dp.Velocity >= 0 ? "vel-up" : "vel-down")">
+                                        @(dp.Velocity >= 0 ? "↑" : "↓")
+                                    </span>
+                                    <div class="bar" style="height: @barHeight%; background: @barColor; box-shadow: 0 0 12px @barColor"
+                                         title="@dp.Platform: @dp.Score.ToString("0.00") (velocity: @dp.Velocity.ToString("+0.00;-0.00"))">
+                                    </div>
+                                    <span class="bar-label">@dp.MeasuredAt.ToString("HH:mm")</span>
+                                </div>
+                                dpIdx++;
+                            }
+                        </div>
+                        <div class="chart-baseline"></div>
+                    </div>
+                </div>
+                <div class="chart-legend">
+                    <span class="legend-item"><span class="legend-dot" style="background: #ff0050"></span> TikTok</span>
+                    <span class="legend-item"><span class="legend-dot" style="background: #E4405F"></span> Instagram</span>
+                    <span class="legend-item"><span class="legend-dot" style="background: #1DA1F2"></span> Twitter</span>
+                </div>
+            </div>
+
+            @* Platform breakdown *@
+            <div class="platform-section">
+                <h4 class="section-heading">Platform Breakdown</h4>
+                @foreach (var group in GetPlatformGroups())
+                {
+                    var platformColor = GetPlatformColor(group.Platform);
+                    var avgScore = group.AvgScore;
+                    var avgVelocity = group.AvgVelocity;
+                    <div class="platform-row">
+                        <div class="platform-info">
+                            <span class="platform-icon">@GetPlatformIcon(group.Platform)</span>
+                            <span class="platform-name">@group.Platform</span>
+                        </div>
+                        <div class="score-bar-container">
+                            <div class="score-bar-track">
+                                <div class="score-bar-fill" style="width: @(avgScore * 100)%; background: @platformColor; box-shadow: 0 0 8px @platformColor"></div>
+                            </div>
+                            <span class="score-value">@avgScore.ToString("0.00")</span>
+                        </div>
+                        <span class="velocity-text @(avgVelocity >= 0 ? "vel-positive" : "vel-negative")">
+                            @(avgVelocity >= 0 ? "▲" : "▼") @Math.Abs(avgVelocity).ToString("0.00")/hr
+                        </span>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="no-data">No sentiment data points available</div>
+        }
+
+        @* Summary footer *@
+        <div class="sentiment-footer">
+            <span class="footer-summary">
+                Detected <strong>@(_data.DataPoints?.Count ?? 0)</strong> signals across
+                <strong>@GetUniquePlatformCount()</strong> platforms in <strong>@_data.Region</strong>
+            </span>
+        </div>
+    }
+    else
+    {
+        <div class="no-data">Loading sentiment data…</div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public A2UIPayload? Payload { get; set; }
+
+    private SocialSentimentGraphData? _data;
+
+    protected override void OnParametersSet()
+    {
+        if (Payload?.Data != null)
+        {
+            if (Payload.Data is JsonElement jsonElement)
+            {
+                _data = JsonSerializer.Deserialize<SocialSentimentGraphData>(
+                    jsonElement.GetRawText(),
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+            }
+            else if (Payload.Data is SocialSentimentGraphData typedData)
+            {
+                _data = typedData;
+            }
+        }
+    }
+
+    private string GetDemandClass()
+    {
+        if (_data == null) return "";
+        return _data.DemandMultiplier switch
+        {
+            > 10m => "demand-extreme",
+            > 5m => "demand-high",
+            > 2m => "demand-elevated",
+            _ => "demand-normal"
+        };
+    }
+
+    private string GetDemandSub() => _data?.DemandMultiplier switch
+    {
+        > 10m => "🔥 Extreme demand",
+        > 5m => "⚠️ High demand",
+        > 2m => "📈 Elevated",
+        _ => "Baseline"
+    };
+
+    private double GetAverageScore()
+    {
+        if (_data?.DataPoints == null || !_data.DataPoints.Any()) return 0;
+        return _data.DataPoints.Average(dp => dp.Score);
+    }
+
+    private string GetGaugeDash() => "126";
+
+    private string GetGaugeOffset()
+    {
+        var score = GetAverageScore();
+        var offset = 126 - (126 * Math.Clamp(score, 0, 1));
+        return offset.ToString("0.0", System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private string GetTrendClass() => _data?.TrendDirection?.ToLowerInvariant() switch
+    {
+        "surging" => "trend-surging",
+        "rising" => "trend-rising",
+        "stable" => "trend-stable",
+        "declining" => "trend-declining",
+        _ => "trend-stable"
+    };
+
+    private string GetTrendEmoji() => _data?.TrendDirection?.ToLowerInvariant() switch
+    {
+        "surging" => "🚀",
+        "rising" => "📈",
+        "stable" => "➡️",
+        "declining" => "📉",
+        _ => "➡️"
+    };
+
+    private string GetPlatformColor(string platform) => platform.ToLowerInvariant() switch
+    {
+        "tiktok" => "#ff0050",
+        "instagram" => "#E4405F",
+        "twitter" or "x" => "#1DA1F2",
+        _ => "#58a6ff"
+    };
+
+    private string GetPlatformIcon(string platform) => platform.ToLowerInvariant() switch
+    {
+        "tiktok" => "🎵",
+        "instagram" => "📸",
+        "twitter" or "x" => "🐦",
+        _ => "🌐"
+    };
+
+    private record PlatformGroup(string Platform, double AvgScore, double AvgVelocity);
+
+    private IEnumerable<PlatformGroup> GetPlatformGroups()
+    {
+        if (_data?.DataPoints == null) return Enumerable.Empty<PlatformGroup>();
+        return _data.DataPoints
+            .GroupBy(dp => dp.Platform, StringComparer.OrdinalIgnoreCase)
+            .Select(g => new PlatformGroup(g.Key, g.Average(dp => dp.Score), g.Average(dp => dp.Velocity)))
+            .OrderByDescending(g => g.AvgScore);
+    }
+
+    private int GetUniquePlatformCount() =>
+        _data?.DataPoints?.Select(dp => dp.Platform).Distinct(StringComparer.OrdinalIgnoreCase).Count() ?? 0;
+}

@@ -23,7 +23,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("SquadCommerce.AppHost")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9963c74057f03d5cbb39a14031b8dee1a96a91eb")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cf5fc3177d12a20cc56cb66e110d60f49157151f")]
 [assembly: System.Reflection.AssemblyProductAttribute("SquadCommerce.AppHost")]
 [assembly: System.Reflection.AssemblyTitleAttribute("SquadCommerce.AppHost")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

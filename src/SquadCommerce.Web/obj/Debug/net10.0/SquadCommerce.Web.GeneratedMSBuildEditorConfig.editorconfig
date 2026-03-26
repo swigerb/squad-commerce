@@ -94,6 +94,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfSW1wb3J0cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/CampaignPreview.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXENhbXBhaWduUHJldmlldy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-l6qqylq13z
+
 [C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/MarketComparisonGrid.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXE1hcmtldENvbXBhcmlzb25HcmlkLnJhem9y
 build_metadata.AdditionalFiles.CssScope = b-5rqob0ugrl
@@ -109,6 +113,10 @@ build_metadata.AdditionalFiles.CssScope = b-w2zkdqrxjm
 [C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/RetailStockHeatmap.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFJldGFpbFN0b2NrSGVhdG1hcC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-bwthwdk3y4
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/SocialSentimentGraph.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFNvY2lhbFNlbnRpbWVudEdyYXBoLnJhem9y
+build_metadata.AdditionalFiles.CssScope = b-o1wtmipx9p
 
 [C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/TelemetryDashboard.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFRlbGVtZXRyeURhc2hib2FyZC5yYXpvcg==
