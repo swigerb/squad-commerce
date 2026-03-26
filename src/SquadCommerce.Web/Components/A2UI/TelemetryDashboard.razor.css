@@ -91,3 +91,214 @@
 .a2a-fill {
     background: linear-gradient(90deg, #d2a8ff, #bc8cff);
 }
+
+/* Charts Card */
+::deep .charts-card {
+    margin-top: 1.25rem;
+    padding: 1.25rem !important;
+}
+
+/* Agent Latency Chart */
+.latency-chart {
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+.latency-row {
+    display: grid;
+    grid-template-columns: 90px 1fr 110px;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.latency-agent-name {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.7);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    text-align: right;
+}
+
+.latency-bar-track {
+    position: relative;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(255, 255, 255, 0.06);
+    overflow: visible;
+}
+
+.latency-bar-spark {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    position: relative;
+}
+
+.latency-fill-pricing {
+    background: linear-gradient(90deg, #667eea, #764ba2);
+}
+
+.latency-fill-inventory {
+    background: linear-gradient(90deg, #3fb950, #56d364);
+}
+
+.latency-fill-market {
+    background: linear-gradient(90deg, #58a6ff, #79c0ff);
+}
+
+.latency-fill-orchestrator {
+    background: linear-gradient(90deg, #d2a8ff, #bc8cff);
+}
+
+.latency-fill-default {
+    background: linear-gradient(90deg, #8b949e, #c9d1d9);
+}
+
+.latency-peak-marker {
+    position: absolute;
+    top: -3px;
+    width: 2px;
+    height: 12px;
+    background: rgba(255, 255, 255, 0.35);
+    border-radius: 1px;
+    transition: left 0.8s cubic-bezier(0.22, 1, 0.36, 1);
+    z-index: 1;
+}
+
+.latency-labels {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.1rem;
+}
+
+.latency-current {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.85);
+    transition: color 0.3s ease;
+}
+
+.latency-peak-label {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.35);
+    font-weight: 500;
+}
+
+/* Activity Timeline */
+.activity-timeline {
+    margin-bottom: 1.25rem;
+}
+
+.timeline-track {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 6px;
+    padding: 0.75rem 0.5rem;
+    min-height: 28px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.timeline-dot {
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, 
+        color-mix(in srgb, #f97583 calc(var(--heat) * 100%), #58a6ff) 0%,
+        color-mix(in srgb, #f97583 calc(var(--heat) * 100%), #58a6ff) 40%,
+        transparent 100%);
+    box-shadow: 0 0 4px color-mix(in srgb, #f97583 calc(var(--heat) * 100%), #58a6ff);
+    transition: width 0.4s ease, height 0.4s ease, opacity 0.4s ease;
+    animation: dot-pulse 2s ease-in-out infinite;
+}
+
+@keyframes dot-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+}
+
+.timeline-dot:last-child {
+    animation: dot-arrive 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes dot-arrive {
+    from { transform: scale(0); opacity: 0; }
+    to { transform: scale(1); opacity: var(--opacity, 1); }
+}
+
+.timeline-empty {
+    font-size: 0.75rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-style: italic;
+}
+
+.timeline-labels {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.25rem 0.5rem 0;
+}
+
+.timeline-label-start,
+.timeline-label-end {
+    font-size: 0.6rem;
+    color: rgba(255, 255, 255, 0.3);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Invocation Sparkline */
+.sparkline-section {
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sparkline-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 0.5rem;
+}
+
+.sparkline-title {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.sparkline-value {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.sparkline-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 32px;
+    padding: 0 2px;
+}
+
+.sparkline-bar {
+    flex: 1;
+    min-width: 4px;
+    border-radius: 2px 2px 0 0;
+    background: linear-gradient(180deg, #667eea, rgba(102, 126, 234, 0.3));
+    transition: height 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+    min-height: 2px;
+}
+
+.sparkline-bar:last-child {
+    background: linear-gradient(180deg, #764ba2, rgba(118, 75, 162, 0.5));
+    animation: bar-highlight 0.5s ease forwards;
+}
+
+@keyframes bar-highlight {
+    from { opacity: 0.5; transform: scaleY(0.8); }
+    to { opacity: 1; transform: scaleY(1); }
+}

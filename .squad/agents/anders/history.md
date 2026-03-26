@@ -682,3 +682,46 @@ Extended the Agent Fleet Panel to show real-time A2A connection state between ag
 - **Session ID from Activity** — Uses `Activity.Current?.TraceId` to correlate with existing OpenTelemetry traces, falls back to GUID.
 
 **Build Status:** ✅ All 7 projects build with 0 errors, 0 warnings. 191 unit/integration tests pass. Playwright E2E tests excluded (require running server).
+
+### Phase 3, Item 3.3: Live Token/Latency Charts
+
+**What was done:**
+- Enhanced `TelemetryDashboard.razor` with real-time charts using pure CSS (no JS charting libraries, per D3 decision)
+
+**Components added:**
+
+1. **Agent Latency Bar Chart** — 4 horizontal bars (Pricing, Inventory, Market Intel, Orchestrator) with:
+   - Per-agent gradient fills matching the project color palette
+   - Peak markers (vertical line showing historical max from rolling window)
+   - "current" and "peak" labels per agent
+   - Smooth cubic-bezier transitions on width changes
+
+2. **Activity Timeline** — Flexbox row of dots where:
+   - Dot size = invocation count per interval (clamped 4–16px)
+   - Dot color = latency heat (blue→red via CSS `color-mix`)
+   - Opacity fades from old→new for temporal context
+   - Subtle pulse animation + arrival animation on newest dot
+
+3. **Invocation Sparkline** — Mini vertical bar chart:
+   - 20-bar rolling window, each bar height proportional to max
+   - Last bar highlighted with distinct color + scale animation
+   - "current" value label
+
+4. **Time-series data accumulation:**
+   - `MetricSnapshot` sealed class: timestamp, invocation count, avg latency, per-agent latency dictionary
+   - Rolling window of 20 snapshots, collected every 5s from existing timer
+   - Drives all chart widths/heights from accumulated data
+
+**CSS patterns used:**
+   - `linear-gradient` for bar fills and sparkline bars
+   - `color-mix(in srgb, ...)` for latency heat coloring on timeline dots
+   - `radial-gradient` for dot glow effect
+   - `cubic-bezier(0.22, 1, 0.36, 1)` for smooth bar/dot transitions
+   - `@keyframes dot-pulse`, `dot-arrive`, `bar-highlight` for animations
+   - All dark-theme compatible using rgba whites and existing palette
+
+**Files modified:**
+   - `src/SquadCommerce.Web/Components/A2UI/TelemetryDashboard.razor` — markup + code-behind
+   - `src/SquadCommerce.Web/Components/A2UI/TelemetryDashboard.razor.css` — scoped styles
+
+**Build Status:** ✅ Builds with 0 errors, 0 warnings.

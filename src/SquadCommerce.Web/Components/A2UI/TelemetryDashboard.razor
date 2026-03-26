@@ -46,6 +46,78 @@
     </CommandCard>
 </div>
 
+@* Agent Latency Sparklines *@
+<CommandCard CssClass="charts-card" Title="Agent Latency">
+    <div class="latency-chart">
+        @foreach (var agent in _agentLatencies)
+        {
+            var peakLatency = _snapshots.Count > 0
+                ? _snapshots.Max(s => s.AgentLatencies.GetValueOrDefault(agent.Key, 0))
+                : agent.Value;
+            var barPercent = _maxLatency > 0 ? (agent.Value / _maxLatency) * 100.0 : 0;
+            var peakPercent = _maxLatency > 0 ? (peakLatency / _maxLatency) * 100.0 : 0;
+
+            <div class="latency-row">
+                <span class="latency-agent-name">@agent.Key</span>
+                <div class="latency-bar-track">
+                    <div class="latency-peak-marker" style="left: @($"{peakPercent:F1}")%"
+                         title="Peak: @($"{peakLatency:F0}")ms"></div>
+                    <div class="latency-bar-spark latency-fill-@GetAgentCssClass(agent.Key)"
+                         style="width: @($"{barPercent:F1}")%"></div>
+                </div>
+                <div class="latency-labels">
+                    <span class="latency-current">@($"{agent.Value:F0}")ms</span>
+                    <span class="latency-peak-label">peak @($"{peakLatency:F0}")</span>
+                </div>
+            </div>
+        }
+    </div>
+</CommandCard>
+
+@* Activity Timeline *@
+<CommandCard CssClass="charts-card" Title="Activity Timeline">
+    <div class="activity-timeline">
+        <div class="timeline-track">
+            @foreach (var snapshot in _snapshots)
+            {
+                var dotSize = Math.Clamp(snapshot.InvocationCount * 3, 4, 16);
+                var opacity = 0.3 + (0.7 * (_snapshots.IndexOf(snapshot) + 1.0) / _snapshots.Count);
+                var latencyHeat = Math.Clamp(snapshot.AvgLatency / 400.0, 0, 1);
+
+                <div class="timeline-dot"
+                     style="width: @(dotSize)px; height: @(dotSize)px; opacity: @($"{opacity:F2}"); --heat: @($"{latencyHeat:F2}")"
+                     title="@snapshot.Timestamp.ToString("HH:mm:ss") — @snapshot.InvocationCount invocations, @($"{snapshot.AvgLatency:F0}")ms avg">
+                </div>
+            }
+            @if (_snapshots.Count == 0)
+            {
+                <span class="timeline-empty">Collecting data…</span>
+            }
+        </div>
+        <div class="timeline-labels">
+            <span class="timeline-label-start">@(_snapshots.Count > 0 ? _snapshots[0].Timestamp.ToString("HH:mm:ss") : "—")</span>
+            <span class="timeline-label-end">@(_snapshots.Count > 0 ? _snapshots[^1].Timestamp.ToString("HH:mm:ss") : "—")</span>
+        </div>
+    </div>
+
+    @* Invocation Sparkline *@
+    <div class="sparkline-section">
+        <div class="sparkline-header">
+            <span class="sparkline-title">Invocations / interval</span>
+            <span class="sparkline-value">current @(_snapshots.Count > 0 ? _snapshots[^1].InvocationCount.ToString() : "—")</span>
+        </div>
+        <div class="sparkline-bars">
+            @foreach (var snapshot in _snapshots)
+            {
+                var maxInv = _snapshots.Max(s => s.InvocationCount);
+                var heightPct = maxInv > 0 ? (snapshot.InvocationCount * 100.0 / maxInv) : 0;
+
+                <div class="sparkline-bar" style="height: @($"{heightPct:F0}")%"></div>
+            }
+        </div>
+    </div>
+</CommandCard>
+
 @code {
     private System.Threading.Timer? _timer;
     private readonly Random _rng = new();
@@ -54,6 +126,21 @@
     private double _avgLatency = 234;
     private int _toolCalls = 31;
     private int _a2aHandshakes = 12;
+
+    // Per-agent latency tracking
+    private readonly Dictionary<string, double> _agentLatencies = new()
+    {
+        ["Pricing"] = 180,
+        ["Inventory"] = 120,
+        ["Market Intel"] = 310,
+        ["Orchestrator"] = 95
+    };
+
+    private double _maxLatency = 500;
+
+    // Time-series rolling window (max 20 snapshots)
+    private const int MaxSnapshots = 20;
+    private readonly List<MetricSnapshot> _snapshots = new();
 
     protected override void OnInitialized()
     {
@@ -68,11 +155,52 @@
         _avgLatency = Math.Max(80, _avgLatency + _rng.Next(-15, 20));
         _toolCalls += _rng.Next(0, 3);
         _a2aHandshakes += _rng.Next(0, 2);
+
+        // Update per-agent latencies
+        _agentLatencies["Pricing"] = Math.Max(60, _agentLatencies["Pricing"] + _rng.Next(-20, 25));
+        _agentLatencies["Inventory"] = Math.Max(40, _agentLatencies["Inventory"] + _rng.Next(-15, 20));
+        _agentLatencies["Market Intel"] = Math.Max(100, _agentLatencies["Market Intel"] + _rng.Next(-25, 30));
+        _agentLatencies["Orchestrator"] = Math.Max(30, _agentLatencies["Orchestrator"] + _rng.Next(-10, 15));
+
+        _maxLatency = Math.Max(_agentLatencies.Values.Max() * 1.2, 200);
+
+        // Accumulate snapshot
+        var snapshot = new MetricSnapshot
+        {
+            Timestamp = DateTime.Now,
+            InvocationCount = _rng.Next(0, 4),
+            AvgLatency = _avgLatency,
+            AgentLatencies = new Dictionary<string, double>(_agentLatencies)
+        };
+
+        _snapshots.Add(snapshot);
+        if (_snapshots.Count > MaxSnapshots)
+        {
+            _snapshots.RemoveAt(0);
+        }
+
         StateHasChanged();
     }
+
+    private static string GetAgentCssClass(string agentName) => agentName switch
+    {
+        "Pricing" => "pricing",
+        "Inventory" => "inventory",
+        "Market Intel" => "market",
+        "Orchestrator" => "orchestrator",
+        _ => "default"
+    };
 
     public void Dispose()
     {
         _timer?.Dispose();
+    }
+
+    private sealed class MetricSnapshot
+    {
+        public DateTime Timestamp { get; init; }
+        public int InvocationCount { get; init; }
+        public double AvgLatency { get; init; }
+        public Dictionary<string, double> AgentLatencies { get; init; } = new();
     }
 }
