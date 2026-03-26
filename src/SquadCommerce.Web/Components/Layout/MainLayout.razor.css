@@ -142,6 +142,28 @@ main {
     transform: scale(0.93);
 }
 
+/* ── Settings Button ─────────────────── */
+.settings-btn {
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.95rem;
+    padding: 0.35rem 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s, color 0.15s;
+    line-height: 1;
+}
+
+.settings-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.settings-btn:active {
+    transform: scale(0.93);
+}
+
 /* ── Fleet Hidden (toggled off) ────────── */
 .fleet-hidden {
     display: none !important;

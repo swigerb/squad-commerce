@@ -60,21 +60,21 @@ Squad Commerce enforces **generative UI** — no raw markdown tables for complex
 
 ## 🛠️ Technology Stack
 
-| Layer | Technology |
-|-------|-----------|
-| **Runtime** | .NET 10 |
-| **Web Framework** | ASP.NET Core |
-| **Real-time** | SignalR |
-| **Frontend** | Blazor (A2UI components) |
-| **Agent Framework** | Microsoft Agent Framework (MAF) |
-| **Orchestration** | MAF Graph-based Workflows |
-| **Tool Protocol** | Model Context Protocol (MCP) |
-| **Agent Communication** | Agent-to-Agent (A2A) |
-| **UI Streaming** | Agent-to-UI (AG-UI) |
-| **Generative UI** | A2UI JSON payloads → Blazor components |
-| **Observability** | OpenTelemetry + .NET Aspire Dashboard |
-| **Identity** | Microsoft Entra ID |
-| **Database** | SQL Server (via MCP tools) |
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| **Runtime** | .NET 10 | 10.0 |
+| **Web Framework** | ASP.NET Core | 10.0 |
+| **Real-time** | SignalR | 10.0 |
+| **Frontend** | Blazor Server + Fluent UI Blazor | v4.14 |
+| **Agent Framework** | Microsoft Agent Framework (MAF) | 1.0.0-rc4 |
+| **Orchestration** | MAF `WorkflowBuilder` Graph-based Workflows | 1.0.0-rc4 |
+| **Tool Protocol** | Model Context Protocol (MCP) — Official C# SDK | 1.1.0 |
+| **Agent Communication** | Agent-to-Agent (A2A) | MAF A2A |
+| **UI Streaming** | Agent-to-UI (AG-UI) via SSE | Custom |
+| **Generative UI** | A2UI JSON payloads → Blazor components | Custom |
+| **Observability** | OpenTelemetry + .NET Aspire Dashboard | Aspire 13.2.0 |
+| **Identity** | Microsoft Entra ID (scope-based) | — |
+| **Database** | SQLite (via EF Core + MCP tools) | EF Core 10.0 |
 
 ---
 
@@ -84,7 +84,7 @@ Squad Commerce enforces **generative UI** — no raw markdown tables for complex
 
 - [.NET 10 SDK](https://dotnet.microsoft.com/download)
 - [.NET Aspire workload](https://learn.microsoft.com/dotnet/aspire)
-- [Docker Desktop](https://www.docker.com/products/docker-desktop) (required for Aspire Dashboard)
+- Docker Desktop is **optional** — Aspire Dashboard runs natively
 
 ### Quick Start
 
@@ -211,17 +211,45 @@ If an executive asks: "How did we decide to lower the price of TVs?"
 ### Agent Policy Enforcement
 
 ```csharp
-var commercePolicy = new AgentPolicy {
-    EnforceA2UI = true,
-    RequireTelemetryTrace = true,
-    PreferredProtocol = "AG-UI",
-    AllowedTools = new[] { "MCP_Inventory_Server", "A2A_Market_Intel" }
-};
+// Real MAF Executor wrapping a domain agent
+public sealed class InventoryExecutor(InventoryAgent agent) 
+    : Executor<CompetitorPriceDropRequest, AgentResult>("InventoryExecutor")
+{
+    public override async ValueTask<AgentResult> HandleAsync(
+        CompetitorPriceDropRequest request,
+        IWorkflowContext context,
+        CancellationToken ct = default)
+    {
+        return await agent.ExecuteAsync(request.Sku, ct);
+    }
+}
 
-builder.Services.AddAgent<ChiefSoftwareArchitect>(options => {
-    options.SystemPrompt = "Directive: Project Squad-Commerce Orchestration...";
-    options.Policy = commercePolicy;
-});
+// Real MAF WorkflowBuilder graph
+var workflow = new WorkflowBuilder(marketIntelExecutor)
+    .AddEdge(marketIntelExecutor, inventoryExecutor)
+    .AddEdge(inventoryExecutor, pricingExecutor)
+    .AddEdge(pricingExecutor, synthesisExecutor)
+    .WithOutputFrom(synthesisExecutor)
+    .Build();
+```
+
+### MCP Tools (Official SDK)
+
+```csharp
+[McpServerToolType]
+public sealed class GetInventoryLevelsTool(IInventoryRepository repo)
+{
+    [McpServerTool(Name = "GetInventoryLevels")]
+    [Description("Query inventory levels across stores")]
+    public async Task<object> ExecuteAsync(
+        [Description("Product SKU")] string? sku = null,
+        [Description("Store ID")] string? storeId = null,
+        CancellationToken ct = default)
+    {
+        var levels = await repo.GetInventoryLevelsAsync(sku!, ct);
+        return new { Success = true, Stores = levels };
+    }
+}
 ```
 
 ---
@@ -257,14 +285,14 @@ squad-commerce/
 │   ├── SquadCommerce.ServiceDefaults/  # Shared service configuration
 │   ├── SquadCommerce.Web/              # Blazor frontend (A2UI)
 │   ├── SquadCommerce.Agents/           # MAF agent definitions
-│   ├── SquadCommerce.MCP/              # MCP server tools
+│   ├── SquadCommerce.Mcp/              # MCP server tools (ModelContextProtocol 1.1.0)
 │   ├── SquadCommerce.A2A/              # A2A protocol handlers
-│   └── SquadCommerce.Shared/           # Shared models and contracts
+│   └── SquadCommerce.Contracts/        # Shared models, interfaces, A2UI payloads
 ├── tests/
 │   ├── SquadCommerce.Agents.Tests/     # Agent unit & integration tests
-│   ├── SquadCommerce.MCP.Tests/        # MCP tool tests
+│   ├── SquadCommerce.Mcp.Tests/        # MCP tool tests
 │   ├── SquadCommerce.A2A.Tests/        # A2A protocol tests
-│   └── SquadCommerce.Web.Tests/        # Blazor component tests
+│   └── SquadCommerce.Web.Tests/        # Blazor bUnit component tests
 ├── .squad/                             # Squad AI team configuration
 ├── .github/                            # GitHub workflows
 └── README.md

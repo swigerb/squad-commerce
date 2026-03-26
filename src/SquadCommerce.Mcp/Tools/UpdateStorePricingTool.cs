@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Server;
 using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Contracts.Models;
 using SquadCommerce.Observability;
@@ -8,7 +10,7 @@ namespace SquadCommerce.Mcp.Tools;
 
 /// <summary>
 /// MCP tool for updating store pricing.
-/// Exposed to agents with write permissions via the Model Context Protocol.
+/// Exposed to agents with write permissions via the Model Context Protocol using the official ModelContextProtocol SDK.
 /// </summary>
 /// <remarks>
 /// This tool:
@@ -17,8 +19,11 @@ namespace SquadCommerce.Mcp.Tools;
 /// - Returns structured success/failure results
 /// - Requires SquadCommerce.Pricing.ReadWrite scope
 /// </remarks>
+[McpServerToolType]
 public sealed class UpdateStorePricingTool
 {
+    private const string ToolName = "UpdateStorePricing";
+    
     private readonly IPricingRepository _repository;
     private readonly ILogger<UpdateStorePricingTool> _logger;
 
@@ -31,38 +36,33 @@ public sealed class UpdateStorePricingTool
     }
 
     /// <summary>
-    /// Tool name as registered with MCP server.
-    /// </summary>
-    public string Name => "UpdateStorePricing";
-
-    /// <summary>
-    /// Tool description for MCP discovery.
-    /// </summary>
-    public string Description => "Updates the price of a SKU at a specific store. Requires storeId, sku, and newPrice parameters.";
-
-    /// <summary>
-    /// Executes the tool with the provided parameters.
+    /// Updates the price of a SKU at a specific store.
     /// </summary>
     /// <param name="storeId">Store ID where price will be updated</param>
     /// <param name="sku">Product SKU to update</param>
     /// <param name="newPrice">New price to set</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Success/failure result with updated pricing info</returns>
-    public async Task<object> ExecuteAsync(string storeId, string sku, decimal newPrice, CancellationToken cancellationToken = default)
+    [McpServerTool(Name = "UpdateStorePricing"), Description("Updates the price of a SKU at a specific store. Requires storeId, sku, and newPrice parameters.")]
+    public async Task<object> ExecuteAsync(
+        [Description("Store ID where price will be updated (e.g. SEA-001)")] string storeId,
+        [Description("Product SKU to update (e.g. SKU-1001)")] string sku,
+        [Description("New price to set (must be > 0)")] decimal newPrice,
+        CancellationToken cancellationToken = default)
     {
         var startTime = DateTimeOffset.UtcNow;
         
         // Create MCP tool span
         var parameters = new { storeId, sku, newPrice };
-        using var activity = SquadCommerceTelemetry.StartToolSpan(Name, parameters);
-        activity?.SetTag("mcp.tool.name", Name);
+        using var activity = SquadCommerceTelemetry.StartToolSpan(ToolName, parameters);
+        activity?.SetTag("mcp.tool.name", ToolName);
         activity?.SetTag("mcp.store_id", storeId);
         activity?.SetTag("mcp.sku", sku);
         activity?.SetTag("mcp.new_price", newPrice);
         
         // Record tool call count
         SquadCommerceTelemetry.McpToolCallCount.Add(1,
-            new KeyValuePair<string, object?>("mcp.tool.name", Name));
+            new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
 
         try
         {
@@ -80,7 +80,7 @@ public sealed class UpdateStorePricingTool
                 // Record duration
                 var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
                 SquadCommerceTelemetry.McpToolCallDuration.Record(duration,
-                    new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                    new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
                 
                 return new { Success = false, Error = "storeId is required" };
             }
@@ -92,7 +92,7 @@ public sealed class UpdateStorePricingTool
                 // Record duration
                 var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
                 SquadCommerceTelemetry.McpToolCallDuration.Record(duration,
-                    new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                    new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
                 
                 return new { Success = false, Error = "sku is required" };
             }
@@ -104,7 +104,7 @@ public sealed class UpdateStorePricingTool
                 // Record duration
                 var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
                 SquadCommerceTelemetry.McpToolCallDuration.Record(duration,
-                    new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                    new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
                 
                 return new { Success = false, Error = "newPrice must be greater than zero" };
             }
@@ -164,7 +164,7 @@ public sealed class UpdateStorePricingTool
             // Record duration
             var successDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
             SquadCommerceTelemetry.McpToolCallDuration.Record(successDuration,
-                new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
 
             return new
             {
@@ -190,7 +190,7 @@ public sealed class UpdateStorePricingTool
             // Record duration even on error
             var errorDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
             SquadCommerceTelemetry.McpToolCallDuration.Record(errorDuration,
-                new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
             
             return new
             {

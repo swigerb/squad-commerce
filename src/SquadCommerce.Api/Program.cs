@@ -9,6 +9,7 @@ using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Mcp;
 using SquadCommerce.A2A;
 using SquadCommerce.Observability;
+using ModelContextProtocol.AspNetCore;
 using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -96,6 +97,9 @@ app.UseMiddleware<EntraIdScopeMiddleware>();
 
 // SignalR Hub for background state updates
 app.MapHub<AgentHub>("/hubs/agent");
+
+// MCP protocol endpoint — real ModelContextProtocol SDK
+app.MapMcp("/mcp");
 
 // AG-UI SSE streaming endpoint
 app.MapGet("/api/agui", async (string sessionId, IAgUiStreamWriter streamWriter, SquadCommerceMetrics metrics, HttpContext context, CancellationToken cancellationToken) =>

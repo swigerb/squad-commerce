@@ -1,16 +1,36 @@
+using Moq;
 using Xunit;
 using FluentAssertions;
+using Microsoft.Extensions.Logging;
 using SquadCommerce.A2A;
+using SquadCommerce.Contracts.Interfaces;
+using SquadCommerce.Contracts.Models;
 
 namespace SquadCommerce.A2A.Tests;
 
 public class A2AServerTests
 {
     private readonly A2AServer _server;
+    private readonly Mock<IInventoryRepository> _inventoryRepo;
+    private readonly Mock<IPricingRepository> _pricingRepo;
 
     public A2AServerTests()
     {
-        _server = new A2AServer();
+        _inventoryRepo = new Mock<IInventoryRepository>();
+        _pricingRepo = new Mock<IPricingRepository>();
+
+        // Default: return empty results so handlers don't throw
+        _inventoryRepo
+            .Setup(r => r.GetInventoryLevelsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Array.Empty<InventorySnapshot>());
+        _pricingRepo
+            .Setup(r => r.GetCurrentPriceAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((decimal?)null);
+
+        _server = new A2AServer(
+            _inventoryRepo.Object,
+            _pricingRepo.Object,
+            Mock.Of<ILogger<A2AServer>>());
     }
 
     [Fact]

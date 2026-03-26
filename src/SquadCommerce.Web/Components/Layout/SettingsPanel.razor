@@ -1,0 +1,201 @@
+@inject SquadCommerce.Web.Services.SettingsService Settings
+
+@if (IsOpen)
+{
+    <div class="settings-backdrop" @onclick="Close" @onkeydown="HandleKeyDown" tabindex="-1"></div>
+    <aside class="settings-panel @(IsOpen ? "open" : "")" role="dialog" aria-modal="true" aria-label="Settings">
+        <div class="settings-header">
+            <span class="settings-title">⚙️ Settings</span>
+            <button class="settings-close" @onclick="Close" aria-label="Close settings">✕</button>
+        </div>
+
+        <div class="settings-body">
+            @* ── AI Configuration ── *@
+            <details class="settings-section" open>
+                <summary class="section-header">🤖 AI Configuration</summary>
+                <div class="section-content">
+                    <div class="field-group">
+                        <label class="field-label">Azure OpenAI Endpoint</label>
+                        <FluentTextField @bind-Value="Settings.AzureOpenAiEndpoint"
+                                         Placeholder="https://your-resource.openai.azure.com"
+                                         Style="width: 100%;" />
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Deployment Name</label>
+                        <FluentTextField @bind-Value="Settings.AzureOpenAiDeployment"
+                                         Placeholder="gpt-4o-mini"
+                                         Style="width: 100%;" />
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">API Key</label>
+                        <FluentTextField @bind-Value="Settings.AzureOpenAiApiKey"
+                                         TextFieldType="TextFieldType.Password"
+                                         Placeholder="sk-..."
+                                         Style="width: 100%;" />
+                    </div>
+                </div>
+            </details>
+
+            @* ── Agent Fleet ── *@
+            <details class="settings-section" open>
+                <summary class="section-header">🚀 Agent Fleet</summary>
+                <div class="section-content">
+                    <div class="agent-toggle-row">
+                        <span class="agent-dot" style="background: #3fb950;"></span>
+                        <span class="agent-label">Inventory Agent</span>
+                        <FluentSwitch @bind-Value="Settings.InventoryAgentEnabled" />
+                    </div>
+                    <div class="agent-toggle-row">
+                        <span class="agent-dot" style="background: #58a6ff;"></span>
+                        <span class="agent-label">Pricing Agent</span>
+                        <FluentSwitch @bind-Value="Settings.PricingAgentEnabled" />
+                    </div>
+                    <div class="agent-toggle-row">
+                        <span class="agent-dot" style="background: #d29922;"></span>
+                        <span class="agent-label">Market Intel Agent</span>
+                        <FluentSwitch @bind-Value="Settings.MarketIntelAgentEnabled" />
+                    </div>
+                    <div class="agent-toggle-row">
+                        <span class="agent-dot" style="background: #f85149;"></span>
+                        <span class="agent-label">Compliance Agent</span>
+                        <FluentSwitch @bind-Value="Settings.ComplianceAgentEnabled" />
+                    </div>
+                </div>
+            </details>
+
+            @* ── A2A Protocol ── *@
+            <details class="settings-section">
+                <summary class="section-header">🔗 A2A Protocol</summary>
+                <div class="section-content">
+                    <div class="field-group">
+                        <label class="field-label">Competitor Agent Endpoint</label>
+                        <FluentTextField @bind-Value="Settings.CompetitorAgentEndpoint"
+                                         Placeholder="https://competitor-agent.example.com"
+                                         Style="width: 100%;" />
+                    </div>
+                    <div class="agent-toggle-row">
+                        <span class="agent-dot" style="background: #d29922;"></span>
+                        <span class="agent-label">Demo Mode</span>
+                        <FluentSwitch @bind-Value="Settings.DemoMode" />
+                    </div>
+                </div>
+            </details>
+
+            @* ── MCP Server ── *@
+            <details class="settings-section">
+                <summary class="section-header">🔌 MCP Server</summary>
+                <div class="section-content">
+                    <div class="field-group">
+                        <label class="field-label">MCP Endpoint</label>
+                        <FluentTextField @bind-Value="Settings.McpEndpoint"
+                                         Placeholder="/mcp"
+                                         Style="width: 100%;" />
+                    </div>
+                </div>
+            </details>
+
+            @* ── UI Preferences ── *@
+            <details class="settings-section" open>
+                <summary class="section-header">🎨 UI Preferences</summary>
+                <div class="section-content">
+                    <div class="agent-toggle-row">
+                        <span class="agent-label">Audio Cues</span>
+                        <FluentSwitch @bind-Value="Settings.AudioCuesEnabled" />
+                    </div>
+                    <div class="agent-toggle-row">
+                        <span class="agent-label">Reasoning Trace</span>
+                        <FluentSwitch @bind-Value="Settings.ShowReasoningTrace" />
+                    </div>
+                    <div class="agent-toggle-row">
+                        <span class="agent-label">Pipeline View</span>
+                        <FluentSwitch @bind-Value="Settings.ShowPipelineView" />
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Theme</label>
+                        <FluentSelect TOption="string" @bind-Value="Settings.Theme" Style="width: 100%;">
+                            <FluentOption TOption="string" Value="@("dark")">Dark</FluentOption>
+                            <FluentOption TOption="string" Value="@("light")">Light</FluentOption>
+                        </FluentSelect>
+                    </div>
+                </div>
+            </details>
+
+            @* ── Telemetry ── *@
+            <details class="settings-section">
+                <summary class="section-header">📊 Telemetry</summary>
+                <div class="section-content">
+                    <div class="agent-toggle-row">
+                        <span class="agent-label">Telemetry Dashboard</span>
+                        <FluentSwitch @bind-Value="Settings.ShowTelemetryDashboard" />
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Refresh Interval: @(Settings.TelemetryRefreshIntervalMs)ms</label>
+                        <FluentSlider @bind-Value="Settings.TelemetryRefreshIntervalMs"
+                                      Min="500" Max="10000" Step="500"
+                                      Style="width: 100%;" />
+                    </div>
+                </div>
+            </details>
+
+            @* ── System Info ── *@
+            <details class="settings-section">
+                <summary class="section-header">ℹ️ System Info</summary>
+                <div class="section-content">
+                    <div class="info-row">
+                        <span class="info-label">Version</span>
+                        <span class="info-value">1.0.0</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">MAF Version</span>
+                        <span class="info-value">0.1.0-preview</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">MCP SDK</span>
+                        <span class="info-value">0.1.0-preview.9</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Fluent UI Blazor</span>
+                        <span class="info-value">4.14.0</span>
+                    </div>
+                </div>
+            </details>
+        </div>
+
+        <div class="settings-footer">
+            <button class="reset-link" @onclick="ResetDefaults">Reset to Defaults</button>
+            <FluentButton Appearance="Appearance.Accent" @onclick="Save" Style="width: 100%;">
+                Save Settings
+            </FluentButton>
+        </div>
+    </aside>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private async Task Close()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    private async Task HandleKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Escape")
+        {
+            await Close();
+        }
+    }
+
+    private async Task Save()
+    {
+        Settings.NotifySettingsChanged();
+        await Close();
+    }
+
+    private async Task ResetDefaults()
+    {
+        Settings.ResetToDefaults();
+        await InvokeAsync(StateHasChanged);
+    }
+}

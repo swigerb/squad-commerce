@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using SquadCommerce.A2A.Validation;
 using SquadCommerce.Agents.Domain;
 using SquadCommerce.Agents.Orchestrator;
+using SquadCommerce.Agents.Orchestrator.Executors;
 using SquadCommerce.Agents.Policies;
 
 namespace SquadCommerce.Agents.Registration;
@@ -12,7 +13,7 @@ namespace SquadCommerce.Agents.Registration;
 public static class AgentServiceExtensions
 {
     /// <summary>
-    /// Registers all Squad-Commerce agents, policies, and dependencies.
+    /// Registers all Squad-Commerce agents, policies, executors, and workflow.
     /// Call this after AddSquadCommerceMcp() to ensure MCP infrastructure is available.
     /// </summary>
     /// <param name="services">The service collection</param>
@@ -33,23 +34,14 @@ public static class AgentServiceExtensions
         services.AddScoped<PricingAgent>();
         services.AddScoped<MarketIntelAgent>();
 
-        // Register workflow definitions
-        services.AddSingleton<RetailWorkflow>();
+        // Register MAF executor wrappers
+        services.AddScoped<MarketIntelExecutor>();
+        services.AddScoped<InventoryExecutor>();
+        services.AddScoped<PricingExecutor>();
+        services.AddScoped<SynthesisExecutor>();
 
-        // Note: In production, this is where MAF infrastructure would be registered:
-        // services.AddMicrosoftAgentFramework(options =>
-        // {
-        //     options.UseGraphBasedWorkflow();
-        //     options.UseOpenTelemetry();
-        //     options.UsePolicyEnforcement<PolicyEnforcementFilter>();
-        // });
-
-        // Note: Agent policies from AgentPolicyRegistry would be registered here:
-        // foreach (var policy in AgentPolicyRegistry.GetAllPolicies())
-        // {
-        //     services.Configure<AgentRuntimeOptions>(opts =>
-        //         opts.RegisterPolicy(policy.AgentName, policy));
-        // }
+        // Register MAF workflow (depends on executors)
+        services.AddScoped<RetailWorkflow>();
 
         return services;
     }

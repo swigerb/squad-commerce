@@ -88,7 +88,8 @@ public class A2AClientTests
 
         // Assert
         result.Should().NotBeEmpty();
-        result.Should().AllSatisfy(p => p.Verified.Should().BeTrue());
+        result.Should().AllSatisfy(p => p.Verified.Should().BeFalse("demo simulation data is not verified"));
+        result.Should().AllSatisfy(p => p.Source.Should().StartWith("DEMO-SIMULATION:"));
     }
 
     [Fact]

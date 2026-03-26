@@ -1,161 +1,72 @@
 @using SquadCommerce.Contracts.A2UI
 @using System.Text.Json
 
-<CommandCard>
-<div class="retail-stock-heatmap" role="region" aria-label="Retail Stock Heatmap">
-    <div class="component-header">
-        <h3>📦 Retail Stock Levels</h3>
-        @if (_data != null)
+<div class="heatmap-wrapper" role="region" aria-label="Retail Stock Heatmap">
+    @if (_data != null)
+    {
+        <div class="heatmap-title-bar">
+            <h3 class="heatmap-title">📦 Inventory Heatmap — <span class="sku-accent">@_data.Sku</span></h3>
+            <span class="heatmap-ts">@_data.Timestamp.ToString("g")</span>
+        </div>
+
+        @if (_data.Stores != null && _data.Stores.Any())
         {
-            <div class="timestamp">
-                <span class="timestamp-label">SKU:</span>
-                <span class="timestamp-value">@_data.Sku</span>
-                <span class="timestamp-label ms-3">Generated:</span>
-                <span class="timestamp-value">@_data.Timestamp.ToString("g")</span>
+            <div class="store-grid">
+                @{ var idx = 0; }
+                @foreach (var store in GetSortedStores())
+                {
+                    var fillPct = GetFillPercent(store);
+                    var sClass = GetStoreStatusClass(store);
+                    var isCritical = store.StockStatus.Equals("Critical", StringComparison.OrdinalIgnoreCase);
+                    <div class="store-card @sClass @(isCritical ? "critical-pulse" : "")"
+                         style="animation-delay: @(idx * 0.06)s"
+                         role="article" aria-label="@store.StoreName: @store.UnitsOnHand units">
+                        <div class="store-name-row">
+                            <span class="loc-icon">📍</span>
+                            <span>@store.StoreName</span>
+                        </div>
+                        <div class="unit-display">
+                            <span class="unit-number">@store.UnitsOnHand</span>
+                            <span class="unit-label">units</span>
+                        </div>
+                        <div class="fill-track">
+                            <div class="fill-progress" style="width: @(Math.Min(fillPct, 100))%"></div>
+                            <div class="reorder-marker" style="left: 33.3%" title="Reorder Point: @store.ReorderPoint"></div>
+                        </div>
+                        <div class="card-footer-row">
+                            <span class="status-text">@GetStatusIndicator(store.StockStatus)</span>
+                            <span class="rop-badge">ROP @store.ReorderPoint</span>
+                        </div>
+                    </div>
+                    idx++;
+                }
+            </div>
+
+            <div class="heatmap-footer">
+                <div class="footer-stat">
+                    <span class="footer-val">@GetTotalUnits().ToString("N0")</span>
+                    <span class="footer-label">Total Units</span>
+                </div>
+                <div class="footer-stat footer-danger">
+                    <span class="footer-val">@GetStoresAtRisk()</span>
+                    <span class="footer-label">Stores at Risk</span>
+                </div>
+                <div class="footer-stat">
+                    <span class="footer-val">@GetAverageFill()%</span>
+                    <span class="footer-label">Avg Fill</span>
+                </div>
             </div>
         }
-    </div>
-
-    @if (_data?.Stores != null && _data.Stores.Any())
-    {
-        <div class="heatmap-container">
-            <table class="table table-bordered heatmap-table" aria-label="Inventory levels by store">
-                <thead>
-                    <tr>
-                        <th scope="col" class="store-col sortable" @onclick="ToggleSort">
-                            Store @GetSortIndicator()
-                        </th>
-                        <th scope="col" class="numeric-col">Units on Hand</th>
-                        <th scope="col" class="numeric-col">Reorder Point</th>
-                        <th scope="col" class="status-col">Stock Status</th>
-                        <th scope="col" class="percent-col">% of Target</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var store in GetSortedStores())
-                    {
-                        var percent = GetPercentOfTarget(store);
-                        var cssClass = GetCellCssClass(percent);
-                        <tr class="@cssClass">
-                            <th scope="row">@store.StoreName</th>
-                            <td class="numeric-col @GetQuantityCssClass(percent)" aria-label="@store.UnitsOnHand units">
-                                <span class="quantity-value">@store.UnitsOnHand</span>
-                            </td>
-                            <td class="numeric-col" aria-label="@store.ReorderPoint reorder point">@store.ReorderPoint</td>
-                            <td class="status-col">
-                                <span class="stock-status-indicator status-@store.StockStatus.ToLowerInvariant()">
-                                    @GetStatusIndicator(store.StockStatus)
-                                </span>
-                            </td>
-                            <td class="percent-col" aria-label="@percent percent of target">
-                                <div class="percent-bar-container">
-                                    <div class="percent-bar @GetPercentBarClass(percent)" style="width: @(Math.Min(percent, 100))%"></div>
-                                    <span class="percent-text">@percent%</span>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-            <div class="heatmap-legend" role="img" aria-label="Heatmap color legend">
-                <span class="legend-item">
-                    <span class="legend-color legend-critical"></span> 🔴 Critical (&lt; 10% of target)
-                </span>
-                <span class="legend-item">
-                    <span class="legend-color legend-low"></span> 🟡 Low (10-30% of target)
-                </span>
-                <span class="legend-item">
-                    <span class="legend-color legend-good"></span> 🟢 Good (≥ 30% of target)
-                </span>
-            </div>
-        </div>
+        else
+        {
+            <div class="no-data">No inventory data available</div>
+        }
     }
     else
     {
-        <div class="alert alert-info">No inventory data available</div>
+        <div class="no-data">Loading inventory data…</div>
     }
 </div>
-</CommandCard>
-
-<style>
-    .quantity-value {
-        font-weight: 700;
-        font-family: 'Consolas', 'Courier New', monospace;
-        font-size: 1rem;
-    }
-
-    .quantity-critical {
-        color: #ef4444 !important;
-    }
-
-    .quantity-critical .quantity-value {
-        text-shadow: 0 0 6px rgba(239, 68, 68, 0.3);
-    }
-
-    .quantity-low {
-        color: #f59e0b !important;
-    }
-
-    .quantity-good {
-        color: #10b981 !important;
-    }
-
-    .stock-status-indicator {
-        font-weight: 600;
-        padding: 0.2rem 0.6rem;
-        border-radius: 12px;
-        font-size: 0.85rem;
-        display: inline-block;
-    }
-
-    .stock-status-indicator.status-critical {
-        background: rgba(239, 68, 68, 0.15);
-        color: #ef4444;
-        border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .stock-status-indicator.status-low {
-        background: rgba(245, 158, 11, 0.15);
-        color: #f59e0b;
-        border: 1px solid rgba(245, 158, 11, 0.3);
-    }
-
-    .stock-status-indicator.status-adequate {
-        background: rgba(16, 185, 129, 0.15);
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .stock-status-indicator.status-overstocked {
-        background: rgba(96, 165, 250, 0.15);
-        color: #60a5fa;
-        border: 1px solid rgba(96, 165, 250, 0.3);
-    }
-
-    .percent-bar.bar-critical {
-        background: linear-gradient(90deg, #ef4444, #dc2626) !important;
-    }
-
-    .percent-bar.bar-low {
-        background: linear-gradient(90deg, #f59e0b, #d97706) !important;
-    }
-
-    .percent-bar.bar-good {
-        background: linear-gradient(90deg, #10b981, #059669) !important;
-    }
-
-    .legend-critical {
-        background-color: #ef4444 !important;
-    }
-
-    .legend-low {
-        background-color: #f59e0b !important;
-    }
-
-    .legend-good {
-        background-color: #10b981 !important;
-    }
-</style>
 
 @code {
     [Parameter]
@@ -191,34 +102,19 @@
             : _data.Stores.OrderByDescending(s => s.StoreName);
     }
 
-    private void ToggleSort()
+    private int GetFillPercent(StoreStockLevel store)
     {
-        _sortAscending = !_sortAscending;
+        if (store.ReorderPoint == 0) return 0;
+        return (int)(store.UnitsOnHand / (store.ReorderPoint * 3.0) * 100);
     }
 
-    private string GetSortIndicator() => _sortAscending ? "↑" : "↓";
-
-    private int GetPercentOfTarget(StoreStockLevel store)
+    private string GetStoreStatusClass(StoreStockLevel store) => store.StockStatus.ToLowerInvariant() switch
     {
-        if (store.ReorderPoint == 0)
-            return 0;
-        return (int)((store.UnitsOnHand / (double)store.ReorderPoint) * 100);
-    }
-
-    private string GetCellCssClass(int percent)
-    {
-        if (percent < 10) return "row-critical";
-        if (percent < 30) return "row-low";
-        return "row-good";
-    }
-
-    private string GetStatusIcon(string status) => status.ToLowerInvariant() switch
-    {
-        "critical" => "🔴",
-        "low" => "🟡",
-        "adequate" => "🟢",
-        "overstocked" => "🔵",
-        _ => "⚪"
+        "critical" => "sc-critical",
+        "low" => "sc-low",
+        "adequate" => "sc-adequate",
+        "overstocked" => "sc-overstocked",
+        _ => "sc-adequate"
     };
 
     private string GetStatusIndicator(string status) => status.ToLowerInvariant() switch
@@ -230,17 +126,16 @@
         _ => "⚪ Unknown"
     };
 
-    private string GetQuantityCssClass(int percent)
-    {
-        if (percent < 10) return "quantity-critical";
-        if (percent < 30) return "quantity-low";
-        return "quantity-good";
-    }
+    private int GetTotalUnits() => _data?.Stores?.Sum(s => s.UnitsOnHand) ?? 0;
 
-    private string GetPercentBarClass(int percent)
+    private int GetStoresAtRisk() => _data?.Stores?.Count(s =>
+        s.StockStatus.Equals("Critical", StringComparison.OrdinalIgnoreCase) ||
+        s.StockStatus.Equals("Low", StringComparison.OrdinalIgnoreCase)) ?? 0;
+
+    private int GetAverageFill()
     {
-        if (percent < 10) return "bar-critical";
-        if (percent < 30) return "bar-low";
-        return "bar-good";
+        if (_data?.Stores == null || !_data.Stores.Any()) return 0;
+        return (int)_data.Stores.Average(s =>
+            s.ReorderPoint == 0 ? 0 : s.UnitsOnHand / (s.ReorderPoint * 3.0) * 100);
     }
 }

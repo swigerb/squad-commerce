@@ -1,5 +1,7 @@
+using System.ComponentModel;
 using System.Diagnostics;
 using Microsoft.Extensions.Logging;
+using ModelContextProtocol.Server;
 using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Observability;
 
@@ -7,7 +9,7 @@ namespace SquadCommerce.Mcp.Tools;
 
 /// <summary>
 /// MCP tool for querying inventory levels across stores.
-/// Exposed to agents via the Model Context Protocol.
+/// Exposed to agents via the Model Context Protocol using the official ModelContextProtocol SDK.
 /// </summary>
 /// <remarks>
 /// This tool:
@@ -16,8 +18,11 @@ namespace SquadCommerce.Mcp.Tools;
 /// - Returns all inventory if no filter specified
 /// - Validates parameters and returns structured errors
 /// </remarks>
+[McpServerToolType]
 public sealed class GetInventoryLevelsTool
 {
+    private const string ToolName = "GetInventoryLevels";
+    
     private readonly IInventoryRepository _repository;
     private readonly ILogger<GetInventoryLevelsTool> _logger;
 
@@ -30,34 +35,28 @@ public sealed class GetInventoryLevelsTool
     }
 
     /// <summary>
-    /// Tool name as registered with MCP server.
-    /// </summary>
-    public string Name => "GetInventoryLevels";
-
-    /// <summary>
-    /// Tool description for MCP discovery.
-    /// </summary>
-    public string Description => "Queries inventory levels for stores. Accepts optional 'sku' or 'storeId' parameters.";
-
-    /// <summary>
-    /// Executes the tool with the provided parameters.
+    /// Queries inventory levels for stores. Accepts optional 'sku' or 'storeId' parameters.
     /// </summary>
     /// <param name="sku">Optional: Filter by SKU</param>
     /// <param name="storeId">Optional: Filter by store ID</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>JSON-serializable inventory data with structured errors on failure</returns>
-    public async Task<object> ExecuteAsync(string? sku = null, string? storeId = null, CancellationToken cancellationToken = default)
+    [McpServerTool(Name = "GetInventoryLevels"), Description("Queries inventory levels for stores. Accepts optional 'sku' or 'storeId' parameters.")]
+    public async Task<object> ExecuteAsync(
+        [Description("Optional: Filter by product SKU (e.g. SKU-1001)")] string? sku = null,
+        [Description("Optional: Filter by store ID (e.g. SEA-001)")] string? storeId = null,
+        CancellationToken cancellationToken = default)
     {
         var startTime = DateTimeOffset.UtcNow;
         
         // Create MCP tool span
         var parameters = new { sku, storeId };
-        using var activity = SquadCommerceTelemetry.StartToolSpan(Name, parameters);
-        activity?.SetTag("mcp.tool.name", Name);
+        using var activity = SquadCommerceTelemetry.StartToolSpan(ToolName, parameters);
+        activity?.SetTag("mcp.tool.name", ToolName);
         
         // Record tool call count
         SquadCommerceTelemetry.McpToolCallCount.Add(1,
-            new KeyValuePair<string, object?>("mcp.tool.name", Name));
+            new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
 
         try
         {
@@ -78,7 +77,7 @@ public sealed class GetInventoryLevelsTool
                     // Record duration
                     var emptyDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
                     SquadCommerceTelemetry.McpToolCallDuration.Record(emptyDuration,
-                        new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                        new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
                     
                     activity?.SetTag("mcp.result.count", 0);
                     
@@ -96,7 +95,7 @@ public sealed class GetInventoryLevelsTool
                 // Record duration
                 var skuDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
                 SquadCommerceTelemetry.McpToolCallDuration.Record(skuDuration,
-                    new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                    new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
                 
                 activity?.SetTag("mcp.result.count", levels.Count);
                 
@@ -152,7 +151,7 @@ public sealed class GetInventoryLevelsTool
                     // Record duration
                     var storeDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
                     SquadCommerceTelemetry.McpToolCallDuration.Record(storeDuration,
-                        new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                        new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
                     
                     activity?.SetTag("mcp.result.count", 0);
                     
@@ -170,7 +169,7 @@ public sealed class GetInventoryLevelsTool
                 // Record duration
                 var storeFoundDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
                 SquadCommerceTelemetry.McpToolCallDuration.Record(storeFoundDuration,
-                    new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                    new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
                 
                 activity?.SetTag("mcp.result.count", storeInventory.Count);
                 
@@ -189,7 +188,7 @@ public sealed class GetInventoryLevelsTool
             // Record duration
             var noFilterDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
             SquadCommerceTelemetry.McpToolCallDuration.Record(noFilterDuration,
-                new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
             
             return new
             {
@@ -210,7 +209,7 @@ public sealed class GetInventoryLevelsTool
             // Record duration even on error
             var errorDuration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
             SquadCommerceTelemetry.McpToolCallDuration.Record(errorDuration,
-                new KeyValuePair<string, object?>("mcp.tool.name", Name));
+                new KeyValuePair<string, object?>("mcp.tool.name", ToolName));
             
             return new
             {

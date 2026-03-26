@@ -1,150 +1,118 @@
 @using SquadCommerce.Contracts.A2UI
 @using System.Text.Json
 
-<CommandCard>
-<div class="market-comparison-grid" role="region" aria-label="Market Comparison Grid">
-    <div class="component-header">
-        <h3>📊 Competitive Price Comparison</h3>
-        @if (_data != null)
+<div class="market-wrapper" role="region" aria-label="Market Comparison">
+    @if (_data != null)
+    {
+        <div class="market-title-bar">
+            <h3 class="market-title">🔍 Market Intelligence — <span class="product-accent">@_data.ProductName</span></h3>
+            <span class="market-ts">@_data.Timestamp.ToString("g")</span>
+        </div>
+
+        <div class="our-price-hero">
+            <span class="our-label">Our Price</span>
+            <span class="our-amount">@_data.OurPrice.ToString("C")</span>
+            <span class="our-sku">@_data.Sku</span>
+        </div>
+
+        @if (_data.Competitors != null && _data.Competitors.Any())
         {
-            <div class="timestamp">
-                <span class="timestamp-label">Product:</span>
-                <span class="timestamp-value">@_data.ProductName (@_data.Sku)</span>
-                <span class="timestamp-label ms-3">Our Price:</span>
-                <span class="our-price-badge">@_data.OurPrice.ToString("C")</span>
-                <span class="timestamp-label ms-3">Updated:</span>
-                <span class="timestamp-value">@_data.Timestamp.ToString("g")</span>
+            <div class="competitor-list">
+                @{ var cIdx = 0; }
+                @foreach (var comp in GetSortedCompetitors())
+                {
+                    var delta = CalculateDelta(comp.Price);
+                    var deltaPct = CalculateDeltaPercent(comp.Price);
+                    var color = GetCompetitorColor(cIdx);
+                    <div class="competitor-card" style="animation-delay: @(cIdx * 0.08)s"
+                         role="article" aria-label="@comp.CompetitorName: @comp.Price.ToString("C")">
+                        <div class="comp-left">
+                            <div class="comp-avatar" style="background: @color">
+                                @GetInitial(comp.CompetitorName)
+                            </div>
+                            <div class="comp-info">
+                                <div class="comp-name-row">
+                                    <span class="comp-name">@comp.CompetitorName</span>
+                                    @if (comp.Verified)
+                                    {
+                                        <span class="verify-badge verified">✅ Verified</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="verify-badge unverified">⚠️ Unverified</span>
+                                    }
+                                </div>
+                                <div class="comp-meta">
+                                    <span class="source-badge">
+                                        <span class="source-dot"></span>
+                                        @TruncateSource(comp.Source)
+                                    </span>
+                                    <span class="updated-text">@GetRelativeTime(comp.LastUpdated)</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="comp-right">
+                            <div class="comp-price">@comp.Price.ToString("C")</div>
+                            @if (delta > 0)
+                            {
+                                <span class="delta-pill pill-green" title="Our advantage">
+                                    We're @Math.Abs(delta).ToString("C") cheaper
+                                </span>
+                            }
+                            else if (delta < 0)
+                            {
+                                <span class="delta-pill pill-red" title="Competitor advantage">
+                                    They're @Math.Abs(delta).ToString("C") cheaper
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="delta-pill pill-yellow" title="Equal pricing">
+                                    Same price
+                                </span>
+                            }
+                        </div>
+                        <div class="confidence-row">
+                            <span class="conf-label">Confidence</span>
+                            <div class="conf-track">
+                                <div class="conf-fill @GetConfidenceClass(comp)"
+                                     style="width: @GetConfidencePercent(comp)%; animation-delay: @(cIdx * 0.08 + 0.3)s"></div>
+                            </div>
+                            <span class="conf-level">@GetConfidenceLabel(comp)</span>
+                        </div>
+                    </div>
+                    cIdx++;
+                }
+            </div>
+
+            <div class="market-summary">
+                <div class="summary-card rank-card">
+                    <span class="summary-icon">🏆</span>
+                    <span class="summary-val">@GetRankText()</span>
+                    <span class="summary-label">Our Position</span>
+                </div>
+                <div class="summary-card">
+                    <span class="summary-icon">📊</span>
+                    <span class="summary-val">@GetAveragePrice().ToString("C")</span>
+                    <span class="summary-label">Market Average</span>
+                </div>
+                <div class="summary-card insight-card">
+                    <span class="summary-icon">💡</span>
+                    <span class="summary-val insight-text">@GetMarketInsight()</span>
+                    <span class="summary-label">Market Opportunity</span>
+                </div>
             </div>
         }
-    </div>
-
-    @if (_data?.Competitors != null && _data.Competitors.Any())
-    {
-        <div class="comparison-table-container">
-            <table class="table table-hover comparison-table" aria-label="Competitor price comparison">
-                <thead>
-                    <tr>
-                        <th scope="col" class="sortable" @onclick="() => SortBy(nameof(CompetitorPrice.CompetitorName))">
-                            Competitor @GetSortIndicator(nameof(CompetitorPrice.CompetitorName))
-                        </th>
-                        <th scope="col" class="sortable numeric-col" @onclick="() => SortBy(nameof(CompetitorPrice.Price))">
-                            Their Price @GetSortIndicator(nameof(CompetitorPrice.Price))
-                        </th>
-                        <th scope="col" class="numeric-col">Delta from Ours</th>
-                        <th scope="col" class="status-col">Verification</th>
-                        <th scope="col" class="source-col">Source</th>
-                        <th scope="col" class="sortable" @onclick="() => SortBy(nameof(CompetitorPrice.LastUpdated))">
-                            Last Updated @GetSortIndicator(nameof(CompetitorPrice.LastUpdated))
-                        </th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var competitor in GetSortedCompetitors())
-                    {
-                        var delta = CalculateDelta(competitor.Price);
-                        var deltaPercent = CalculateDeltaPercent(competitor.Price);
-                        <tr class="@GetRowCssClass(competitor)">
-                            <th scope="row">@competitor.CompetitorName</th>
-                            <td class="numeric-col price-cell">@competitor.Price.ToString("C")</td>
-                            <td class="numeric-col delta-cell">
-                                @if (delta > 0)
-                                {
-                                    <FluentBadge Class="delta-badge delta-badge-positive" title="Our advantage: competitor is more expensive">
-                                        ▲ @delta.ToString("+$0.00;-$0.00;$0.00") (@deltaPercent.ToString("+0.0%;-0.0%;0.0%"))
-                                    </FluentBadge>
-                                }
-                                else if (delta < 0)
-                                {
-                                    <FluentBadge Class="delta-badge delta-badge-negative" title="Competitor advantage: competitor is cheaper">
-                                        ▼ @delta.ToString("+$0.00;-$0.00;$0.00") (@deltaPercent.ToString("+0.0%;-0.0%;0.0%"))
-                                    </FluentBadge>
-                                }
-                                else
-                                {
-                                    <FluentBadge Class="delta-badge delta-badge-neutral" title="Equal pricing">
-                                        – $0.00 (0.0%)
-                                    </FluentBadge>
-                                }
-                            </td>
-                            <td class="status-col">
-                                @if (competitor.Verified)
-                                {
-                                    <span class="verification-badge verified" aria-label="Verified via A2A">
-                                        ✅ Verified
-                                    </span>
-                                }
-                                else
-                                {
-                                    <span class="verification-badge unverified" aria-label="Unverified">
-                                        ⚠️ Unverified
-                                    </span>
-                                }
-                            </td>
-                            <td class="source-col" title="@competitor.Source">
-                                @TruncateSource(competitor.Source)
-                            </td>
-                            <td class="updated-col">
-                                @GetRelativeTime(competitor.LastUpdated)
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
-        </div>
-
-        <div class="comparison-summary">
-            <div class="summary-card">
-                <div class="summary-label">Lowest Competitor Price</div>
-                <div class="summary-value">@GetLowestPrice().ToString("C")</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">Highest Competitor Price</div>
-                <div class="summary-value">@GetHighestPrice().ToString("C")</div>
-            </div>
-            <div class="summary-card">
-                <div class="summary-label">Average Competitor Price</div>
-                <div class="summary-value">@GetAveragePrice().ToString("C")</div>
-            </div>
-            <div class="summary-card @GetPositionCssClass()">
-                <div class="summary-label">Our Position</div>
-                <div class="summary-value">@GetOurPosition()</div>
-            </div>
-        </div>
+        else
+        {
+            <div class="no-data">No competitor data available</div>
+        }
     }
     else
     {
-        <div class="alert alert-info">No competitor data available</div>
+        <div class="no-data">Loading market data…</div>
     }
 </div>
-</CommandCard>
-
-<style>
-    .delta-badge {
-        font-weight: 600;
-        font-size: 0.85rem;
-        padding: 0.25rem 0.6rem;
-        border-radius: 4px;
-        display: inline-block;
-    }
-
-    .delta-badge-positive {
-        background: rgba(16, 185, 129, 0.15) !important;
-        color: #10b981 !important;
-        border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .delta-badge-negative {
-        background: rgba(239, 68, 68, 0.15) !important;
-        color: #ef4444 !important;
-        border: 1px solid rgba(239, 68, 68, 0.3);
-    }
-
-    .delta-badge-neutral {
-        background: rgba(107, 114, 128, 0.15) !important;
-        color: #9ca3af !important;
-        border: 1px solid rgba(107, 114, 128, 0.3);
-    }
-</style>
 
 @code {
     [Parameter]
@@ -153,6 +121,9 @@
     private MarketComparisonGridData? _data;
     private string? _sortColumn;
     private bool _sortAscending = true;
+
+    private static readonly string[] CompetitorColors =
+        ["#f85149", "#d29922", "#58a6ff", "#bc8cff", "#3fb950", "#ff7b72", "#79c0ff", "#ffa657"];
 
     protected override void OnParametersSet()
     {
@@ -198,117 +169,75 @@
         return competitors;
     }
 
-    private void SortBy(string column)
-    {
-        if (_sortColumn == column)
-        {
-            _sortAscending = !_sortAscending;
-        }
-        else
-        {
-            _sortColumn = column;
-            _sortAscending = true;
-        }
-    }
-
-    private string GetSortIndicator(string column)
-    {
-        if (_sortColumn != column)
-            return "⇅";
-        return _sortAscending ? "↑" : "↓";
-    }
-
-    private decimal CalculateDelta(decimal competitorPrice)
-    {
-        return competitorPrice - (_data?.OurPrice ?? 0);
-    }
+    private decimal CalculateDelta(decimal competitorPrice) =>
+        competitorPrice - (_data?.OurPrice ?? 0);
 
     private decimal CalculateDeltaPercent(decimal competitorPrice)
     {
-        if (_data?.OurPrice == 0 || _data == null)
-            return 0;
+        if (_data?.OurPrice == 0 || _data == null) return 0;
         return (competitorPrice - _data.OurPrice) / _data.OurPrice;
     }
 
-    private string GetDeltaCssClass(decimal delta)
-    {
-        if (delta < 0) return "delta-negative"; // They're cheaper
-        if (delta > 0) return "delta-positive"; // We're cheaper
-        return "delta-neutral";
-    }
-
-    private string GetRowCssClass(CompetitorPrice competitor)
-    {
-        if (!competitor.Verified)
-            return "row-unverified";
-        return string.Empty;
-    }
-
-    private string TruncateSource(string source)
-    {
-        if (source.Length > 30)
-            return source.Substring(0, 27) + "...";
-        return source;
-    }
+    private string TruncateSource(string source) =>
+        source.Length > 30 ? source.Substring(0, 27) + "..." : source;
 
     private string GetRelativeTime(DateTimeOffset lastUpdated)
     {
         var diff = DateTimeOffset.Now - lastUpdated;
-        if (diff.TotalMinutes < 60)
-            return $"{(int)diff.TotalMinutes}m ago";
-        if (diff.TotalHours < 24)
-            return $"{(int)diff.TotalHours}h ago";
+        if (diff.TotalMinutes < 60) return $"{(int)diff.TotalMinutes}m ago";
+        if (diff.TotalHours < 24) return $"{(int)diff.TotalHours}h ago";
         return $"{(int)diff.TotalDays}d ago";
     }
 
-    private decimal GetLowestPrice()
-    {
-        if (_data?.Competitors == null || !_data.Competitors.Any())
-            return 0;
-        return _data.Competitors.Min(c => c.Price);
-    }
+    private char GetInitial(string name) =>
+        string.IsNullOrEmpty(name) ? '?' : char.ToUpper(name[0]);
 
-    private decimal GetHighestPrice()
-    {
-        if (_data?.Competitors == null || !_data.Competitors.Any())
-            return 0;
-        return _data.Competitors.Max(c => c.Price);
-    }
+    private string GetCompetitorColor(int index) =>
+        CompetitorColors[index % CompetitorColors.Length];
 
     private decimal GetAveragePrice()
     {
-        if (_data?.Competitors == null || !_data.Competitors.Any())
-            return 0;
+        if (_data?.Competitors == null || !_data.Competitors.Any()) return 0;
         return _data.Competitors.Average(c => c.Price);
     }
 
-    private string GetOurPosition()
+    private string GetRankText()
     {
-        if (_data == null)
-            return "Unknown";
-        
-        var lowestPrice = GetLowestPrice();
-        var highestPrice = GetHighestPrice();
-        
-        if (_data.OurPrice < lowestPrice)
-            return "Lowest 🏆";
-        if (_data.OurPrice > highestPrice)
-            return "Highest ⚠️";
-        return "Middle Range";
+        if (_data?.Competitors == null || !_data.Competitors.Any()) return "N/A";
+        var allPrices = _data.Competitors.Select(c => c.Price).Append(_data.OurPrice).OrderBy(p => p).ToList();
+        var rank = allPrices.IndexOf(_data.OurPrice) + 1;
+        return $"#{rank} of {allPrices.Count}";
     }
 
-    private string GetPositionCssClass()
+    private string GetConfidenceClass(CompetitorPrice comp)
     {
-        if (_data == null)
-            return string.Empty;
-        
-        var lowestPrice = GetLowestPrice();
-        var highestPrice = GetHighestPrice();
-        
-        if (_data.OurPrice < lowestPrice)
-            return "position-lowest";
-        if (_data.OurPrice > highestPrice)
-            return "position-highest";
-        return "position-middle";
+        if (comp.Verified && (DateTimeOffset.Now - comp.LastUpdated).TotalHours < 24) return "conf-high";
+        if (comp.Verified) return "conf-medium";
+        return "conf-low";
+    }
+
+    private int GetConfidencePercent(CompetitorPrice comp)
+    {
+        if (comp.Verified && (DateTimeOffset.Now - comp.LastUpdated).TotalHours < 24) return 95;
+        if (comp.Verified) return 70;
+        return 40;
+    }
+
+    private string GetConfidenceLabel(CompetitorPrice comp)
+    {
+        if (comp.Verified && (DateTimeOffset.Now - comp.LastUpdated).TotalHours < 24) return "High";
+        if (comp.Verified) return "Medium";
+        return "Low";
+    }
+
+    private string GetMarketInsight()
+    {
+        if (_data == null) return "Insufficient data";
+        var avg = GetAveragePrice();
+        if (_data.OurPrice < avg * 0.9m)
+            return "Strong competitive position — consider selective price increases";
+        if (_data.OurPrice > avg * 1.1m)
+            return "Premium positioning — monitor for volume impact";
+        return "Aligned with market — differentiate on value";
     }
 }

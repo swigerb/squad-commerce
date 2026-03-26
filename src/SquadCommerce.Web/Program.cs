@@ -33,6 +33,9 @@ builder.Services.AddSingleton<SignalRStateService>();
 // Register chat command service for action card → chat integration
 builder.Services.AddSingleton<ChatCommandService>();
 
+// Register runtime settings service
+builder.Services.AddSingleton<SettingsService>();
+
 // Add logging
 builder.Services.AddLogging(logging =>
 {

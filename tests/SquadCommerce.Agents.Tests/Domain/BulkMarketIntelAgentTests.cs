@@ -199,8 +199,8 @@ public class BulkMarketIntelAgentTests
         
         marketData.Competitors.Should().AllSatisfy(competitor =>
         {
-            competitor.Source.Should().NotBeNullOrEmpty("should have A2A source");
-            competitor.Source.Should().Contain("A2A:", "source should indicate A2A protocol");
+            competitor.Source.Should().NotBeNullOrEmpty("should have a data source");
+            competitor.Source.Should().Contain("DEMO-SIMULATION:", "source should indicate demo simulation");
         });
     }
 

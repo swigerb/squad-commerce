@@ -1,66 +1,41 @@
+using Microsoft.Agents.AI.Workflows;
+using SquadCommerce.Agents.Orchestrator.Executors;
+
 namespace SquadCommerce.Agents.Orchestrator;
 
 /// <summary>
 /// MAF Graph-based Workflow definition for retail supply chain orchestration.
-/// Defines the state machine and agent handoff logic for Squad-Commerce workflows.
+/// Builds a linear pipeline: MarketIntel → Inventory → Pricing → Synthesis.
 /// </summary>
-/// <remarks>
-/// This is a stub implementation. In a real MAF integration, this would:
-/// - Define workflow nodes (each representing an agent or decision point)
-/// - Define edges (transitions between nodes based on conditions)
-/// - Define state persistence (for long-running workflows)
-/// - Define error handling and compensation logic
-/// 
-/// Example workflow: Competitor Price Response
-/// 1. Start → ValidateCompetitorClaim (MarketIntelAgent)
-/// 2. ValidateCompetitorClaim → GetInventory (InventoryAgent)
-/// 3. GetInventory → CalculateMarginImpact (PricingAgent)
-/// 4. CalculateMarginImpact → SynthesizeProposal (Orchestrator)
-/// 5. SynthesizeProposal → End (return A2UI payload to user)
-/// </remarks>
 public sealed class RetailWorkflow
 {
-    /// <summary>
-    /// Workflow name for telemetry and logging.
-    /// </summary>
-    public string Name => "RetailSupplyChainWorkflow";
+    private readonly MarketIntelExecutor _marketIntel;
+    private readonly InventoryExecutor _inventory;
+    private readonly PricingExecutor _pricing;
+    private readonly SynthesisExecutor _synthesis;
 
-    /// <summary>
-    /// Workflow version for schema evolution.
-    /// </summary>
-    public string Version => "1.0";
-
-    /// <summary>
-    /// Defines the workflow graph (nodes and edges).
-    /// </summary>
-    /// <remarks>
-    /// TODO: Replace with actual MAF workflow builder when packages are available.
-    /// Expected pattern:
-    /// - WorkflowBuilder.CreateGraph()
-    /// - .AddNode("ValidateCompetitorClaim", ctx => MarketIntelAgent.Execute(ctx))
-    /// - .AddNode("GetInventory", ctx => InventoryAgent.Execute(ctx))
-    /// - .AddEdge("ValidateCompetitorClaim", "GetInventory", condition: ctx => ctx.IsValid)
-    /// - .Build()
-    /// </remarks>
-    public void ConfigureWorkflow(/* MAF IWorkflowBuilder builder */)
+    public RetailWorkflow(
+        MarketIntelExecutor marketIntel,
+        InventoryExecutor inventory,
+        PricingExecutor pricing,
+        SynthesisExecutor synthesis)
     {
-        // Stub: Actual workflow configuration happens here
-        // Nodes represent agent invocations
-        // Edges represent conditional transitions
-        // State is persisted between nodes for long-running workflows
+        _marketIntel = marketIntel;
+        _inventory = inventory;
+        _pricing = pricing;
+        _synthesis = synthesis;
     }
 
     /// <summary>
-    /// Defines workflow compensation logic for rollback scenarios.
+    /// Builds the MAF workflow graph for the competitor price response pipeline.
     /// </summary>
-    /// <remarks>
-    /// If PricingAgent fails after MarketIntelAgent succeeds, we may need to:
-    /// - Log the failure for audit
-    /// - Notify the user of partial completion
-    /// - Retry with different parameters
-    /// </remarks>
-    public void ConfigureCompensation(/* MAF ICompensationBuilder builder */)
+    public Workflow Build()
     {
-        // Stub: Compensation logic for workflow rollback
+        var builder = new WorkflowBuilder(_marketIntel);
+        builder.AddEdge(_marketIntel, _inventory);
+        builder.AddEdge(_inventory, _pricing);
+        builder.AddEdge(_pricing, _synthesis);
+        builder.WithOutputFrom(_synthesis);
+        return builder.Build();
     }
 }

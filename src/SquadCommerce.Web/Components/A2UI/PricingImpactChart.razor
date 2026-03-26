@@ -1,149 +1,115 @@
 @using SquadCommerce.Contracts.A2UI
 @using System.Text.Json
 
-<CommandCard>
-<div class="pricing-impact-chart" role="region" aria-label="Pricing Impact Analysis">
-    <div class="component-header">
-        <h3>💰 Pricing Impact Analysis</h3>
-        @if (_data != null)
-        {
-            <div class="timestamp">
-                <span class="timestamp-label">SKU:</span>
-                <span class="timestamp-value">@_data.Sku</span>
-                <span class="timestamp-label ms-3">Generated:</span>
-                <span class="timestamp-value">@_data.Timestamp.ToString("g")</span>
-            </div>
-        }
-    </div>
-
-    @if (_data?.Scenarios != null && _data.Scenarios.Any())
+<div class="pricing-wrapper" role="region" aria-label="Pricing Impact Analysis">
+    @if (_data != null)
     {
-        <div class="price-comparison-section mb-4">
-            <div class="price-flow-header">
-                <div class="price-box current">
-                    <div class="price-label">Current Price</div>
-                    <div class="price-value">@_data.CurrentPrice.ToString("C")</div>
-                </div>
-                <div class="price-arrow">→</div>
-                <div class="price-box proposed">
-                    <div class="price-label">Proposed Price</div>
-                    <div class="price-value">@_data.ProposedPrice.ToString("C")</div>
-                </div>
-                <div class="price-delta @GetPriceDeltaCssClass()">
-                    @GetPriceDelta().ToString("+0.0%;-0.0%;0.0%")
-                </div>
-            </div>
+        <div class="pricing-title-bar">
+            <h3 class="pricing-title">💰 Pricing Impact Analysis — <span class="sku-accent">@_data.Sku</span></h3>
+            <span class="pricing-ts">@_data.Timestamp.ToString("g")</span>
         </div>
 
-        <div class="scenarios-grid">
-            @foreach (var scenario in _data.Scenarios)
-            {
-                var marginPercent = scenario.EstimatedMargin * 100;
-                var marginDelta = scenario.EstimatedMargin - GetBaselineMargin();
-                <div class="scenario-card" role="article" aria-label="Scenario: @scenario.ScenarioName">
-                    <div class="scenario-header">
-                        <h4 class="scenario-name">@scenario.ScenarioName</h4>
-                        <div class="scenario-price">@scenario.Price.ToString("C")</div>
+        @if (_data.Scenarios != null && _data.Scenarios.Any())
+        {
+            <div class="price-hero">
+                <div class="price-current">
+                    <span class="price-label">Current</span>
+                    <span class="price-amount">@_data.CurrentPrice.ToString("C")</span>
+                </div>
+                <div class="price-arrow-container">
+                    <div class="price-arrow">→</div>
+                    <div class="price-delta @GetPriceDeltaCssClass()">
+                        @GetPriceDelta().ToString("+0.0%;-0.0%;0.0%")
                     </div>
-                    <div class="scenario-body">
-                        <div class="metric-row">
-                            <span class="metric-label">💹 Estimated Margin:</span>
-                            <span class="metric-value-highlight @GetMarginCssClass(scenario.EstimatedMargin)">
-                                @marginPercent.ToString("0.0")%
-                                @if (marginDelta != 0)
-                                {
-                                    <span class="margin-delta @(marginDelta > 0 ? "positive" : "negative")">
-                                        @(marginDelta > 0 ? "▲" : "▼") @Math.Abs(marginDelta * 100).ToString("0.0")pp
-                                    </span>
-                                }
-                            </span>
+                </div>
+                <div class="price-proposed">
+                    <span class="price-label">Proposed</span>
+                    <span class="price-amount">@_data.ProposedPrice.ToString("C")</span>
+                </div>
+            </div>
+
+            <div class="scenarios-scroll">
+                @{ var sIdx = 0; }
+                @foreach (var scenario in _data.Scenarios)
+                {
+                    var isRec = IsRecommended(scenario);
+                    var marginPct = scenario.EstimatedMargin * 100;
+                    var marginDelta = scenario.EstimatedMargin - GetBaselineMargin();
+                    <div class="scenario-card @(isRec ? "recommended" : "")"
+                         style="animation-delay: @(sIdx * 0.1)s"
+                         role="article" aria-label="Scenario: @scenario.ScenarioName">
+                        @if (isRec)
+                        {
+                            <div class="rec-badge">⭐ Recommended</div>
+                        }
+                        <div class="scenario-name">@scenario.ScenarioName</div>
+                        <div class="scenario-price-display">@scenario.Price.ToString("C")</div>
+
+                        <div class="metric-block">
+                            <div class="metric-header">
+                                <span class="metric-title">Margin</span>
+                                <span class="metric-val @GetMarginColorClass(scenario.EstimatedMargin)">@marginPct.ToString("0.0")%</span>
+                            </div>
+                            <div class="margin-bar-track">
+                                <div class="margin-bar-fill @GetMarginColorClass(scenario.EstimatedMargin)"
+                                     style="width: @(Math.Min(marginPct * 2, 100))%"></div>
+                            </div>
+                            @if (marginDelta != 0)
+                            {
+                                <span class="margin-delta @(marginDelta > 0 ? "delta-pos" : "delta-neg")">
+                                    @(marginDelta > 0 ? "▲" : "▼") @Math.Abs(marginDelta * 100).ToString("0.0")pp
+                                </span>
+                            }
                         </div>
-                        <div class="metric-row">
-                            <span class="metric-label">💵 Estimated Revenue:</span>
-                            <span class="metric-value-highlight @GetRevenueCssClass(scenario.EstimatedRevenue)">
-                                @scenario.EstimatedRevenue.ToString("C0")
-                            </span>
+
+                        <div class="metric-block">
+                            <div class="metric-header">
+                                <span class="metric-title">Revenue</span>
+                                <span class="metric-val revenue-val">@scenario.EstimatedRevenue.ToString("C0")</span>
+                            </div>
                         </div>
-                        <div class="metric-row">
-                            <span class="metric-label">📦 Projected Units Sold:</span>
-                            <span class="metric-value-highlight units">
-                                @scenario.ProjectedUnitsSold.ToString("N0")
-                            </span>
+
+                        <div class="metric-block">
+                            <div class="metric-header">
+                                <span class="metric-title">Units Sold</span>
+                                <span class="metric-val units-val">@scenario.ProjectedUnitsSold.ToString("N0")</span>
+                            </div>
                         </div>
-                    </div>
-                    <div class="scenario-footer">
-                        <button class="btn btn-sm btn-outline-primary" 
-                                @onclick="() => SelectScenario(scenario)"
+
+                        <button class="select-btn" @onclick="() => SelectScenario(scenario)"
                                 aria-label="Select @scenario.ScenarioName">
-                            Select
+                            Select Scenario
                         </button>
                     </div>
-                </div>
-            }
-        </div>
-
-        <div class="approval-section mt-4">
-            <div class="alert alert-info">
-                <strong>💡 Tip:</strong> Review each scenario's margin and revenue impact before making a decision.
+                    sIdx++;
+                }
             </div>
-        </div>
+
+            <div class="pricing-summary">
+                <div class="summary-insight">
+                    <div class="insight-header">
+                        <span class="insight-icon">🤖</span>
+                        <span class="insight-title">Recommended Action</span>
+                        <span class="confidence-badge">High Confidence</span>
+                    </div>
+                    <p class="insight-text">
+                        Based on margin analysis and projected volume,
+                        <strong>@GetRecommendedScenarioName()</strong> offers the best balance
+                        of profitability and competitiveness.
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="no-data">No pricing scenarios available</div>
+        }
     }
     else
     {
-        <div class="alert alert-info">No pricing scenarios available</div>
+        <div class="no-data">Loading pricing data…</div>
     }
 </div>
-</CommandCard>
-
-<style>
-    .metric-value-highlight {
-        font-weight: 700;
-        font-size: 1.1rem;
-        font-family: 'Consolas', 'Courier New', monospace;
-    }
-
-    .metric-value-highlight.text-success {
-        color: #10b981 !important;
-        text-shadow: 0 0 6px rgba(16, 185, 129, 0.2);
-    }
-
-    .metric-value-highlight.text-danger {
-        color: #ef4444 !important;
-        text-shadow: 0 0 6px rgba(239, 68, 68, 0.2);
-    }
-
-    .metric-value-highlight.text-warning {
-        color: #f59e0b !important;
-        text-shadow: 0 0 6px rgba(245, 158, 11, 0.2);
-    }
-
-    .metric-value-highlight.units {
-        color: #60a5fa;
-    }
-
-    .margin-delta {
-        font-size: 0.8rem;
-        margin-left: 0.5rem;
-        padding: 0.1rem 0.4rem;
-        border-radius: 4px;
-        font-weight: 600;
-    }
-
-    .margin-delta.positive {
-        color: #10b981;
-        background: rgba(16, 185, 129, 0.12);
-    }
-
-    .margin-delta.negative {
-        color: #ef4444;
-        background: rgba(239, 68, 68, 0.12);
-    }
-
-    .price-delta {
-        font-weight: 700;
-        font-size: 1.1rem;
-    }
-</style>
 
 @code {
     [Parameter]
@@ -174,44 +140,52 @@
     private decimal GetBaselineMargin()
     {
         if (_data == null || _data.CurrentPrice == 0) return 0;
-        // Use the first scenario's margin as baseline, or 0 if none
         return _data.Scenarios?.FirstOrDefault()?.EstimatedMargin ?? 0;
     }
 
     private async Task SelectScenario(PriceScenario scenario)
     {
         if (OnScenarioSelected.HasDelegate)
-        {
             await OnScenarioSelected.InvokeAsync(scenario);
-        }
     }
 
     private decimal GetPriceDelta()
     {
-        if (_data == null || _data.CurrentPrice == 0)
-            return 0;
+        if (_data == null || _data.CurrentPrice == 0) return 0;
         return (_data.ProposedPrice - _data.CurrentPrice) / _data.CurrentPrice;
     }
 
     private string GetPriceDeltaCssClass()
     {
         var delta = GetPriceDelta();
-        if (delta < 0) return "delta-negative";
-        if (delta > 0) return "delta-positive";
+        if (delta < 0) return "delta-neg";
+        if (delta > 0) return "delta-pos";
         return "delta-neutral";
     }
 
-    private string GetMarginCssClass(decimal margin)
+    private string GetMarginColorClass(decimal margin)
     {
-        if (margin < 0.10m) return "text-danger";
-        if (margin < 0.20m) return "text-warning";
-        return "text-success";
+        if (margin < 0.10m) return "color-danger";
+        if (margin < 0.20m) return "color-warn";
+        return "color-success";
     }
 
-    private string GetRevenueCssClass(decimal revenue)
+    private bool IsRecommended(PriceScenario scenario)
     {
-        if (revenue < 0) return "text-danger";
-        if (revenue > 0) return "text-success";
-        return "text-muted";
+        if (_data?.Scenarios == null || !_data.Scenarios.Any()) return false;
+        var best = _data.Scenarios
+            .OrderByDescending(s => s.EstimatedRevenue)
+            .ThenByDescending(s => s.EstimatedMargin)
+            .First();
+        return scenario.ScenarioName == best.ScenarioName;
+    }
+
+    private string GetRecommendedScenarioName()
+    {
+        if (_data?.Scenarios == null || !_data.Scenarios.Any()) return "N/A";
+        return _data.Scenarios
+            .OrderByDescending(s => s.EstimatedRevenue)
+            .ThenByDescending(s => s.EstimatedMargin)
+            .First().ScenarioName;
     }
 }

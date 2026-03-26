@@ -34,7 +34,7 @@ public class MarketIntelAgentCoverageTests
         
         // All returned prices should be validated (High or Medium confidence)
         grid.Competitors.Should().NotBeEmpty();
-        grid.Competitors.All(c => c.Verified).Should().BeTrue("all should be validated");
+        grid.Competitors.All(c => !c.Verified).Should().BeTrue("demo simulation data is not pre-verified");
     }
 
     [Fact]

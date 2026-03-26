@@ -133,22 +133,41 @@
 
     .welcome-header {
         text-align: center;
-        padding: 2rem;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 3rem 2rem;
+        background: linear-gradient(135deg, rgba(88, 166, 255, 0.15) 0%, rgba(63, 185, 80, 0.08) 50%, rgba(188, 140, 255, 0.1) 100%);
+        border: 1px solid rgba(88, 166, 255, 0.15);
         color: white;
-        border-radius: 12px;
+        border-radius: 16px;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .welcome-header::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse at 30% 50%, rgba(88, 166, 255, 0.12), transparent 60%),
+                    radial-gradient(ellipse at 70% 50%, rgba(63, 185, 80, 0.08), transparent 60%);
+        z-index: 0;
+    }
+
+    .welcome-header > * {
+        position: relative;
+        z-index: 1;
     }
 
     .welcome-header h1 {
         margin: 0 0 1rem 0;
         font-size: 2.5rem;
+        text-shadow: 0 0 40px rgba(88, 166, 255, 0.25);
     }
 
     .lead {
         font-size: 1.125rem;
-        opacity: 0.95;
+        opacity: 0.85;
         max-width: 800px;
         margin: 0 auto;
+        color: #8b949e;
     }
 
     .action-cards {
@@ -158,48 +177,86 @@
     }
 
     .action-card {
-        background: rgba(255, 255, 255, 0.04);
-        padding: 1.5rem;
-        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.03);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        padding: 1.75rem;
+        border-radius: 14px;
         border: 1px solid rgba(255, 255, 255, 0.08);
-        transition: all 0.2s;
+        transition: all 0.3s ease;
         cursor: pointer;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .action-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transition: opacity 0.3s;
+        border-radius: 14px;
+    }
+
+    .action-card:nth-child(1)::after {
+        background: radial-gradient(circle at 50% 0%, rgba(88, 166, 255, 0.1), transparent 70%);
+    }
+
+    .action-card:nth-child(2)::after {
+        background: radial-gradient(circle at 50% 0%, rgba(63, 185, 80, 0.1), transparent 70%);
+    }
+
+    .action-card:nth-child(3)::after {
+        background: radial-gradient(circle at 50% 0%, rgba(188, 140, 255, 0.1), transparent 70%);
     }
 
     .action-card:hover {
-        transform: translateY(-4px);
-        background: rgba(102, 126, 234, 0.1);
-        border-color: rgba(102, 126, 234, 0.3);
-        box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+        transform: translateY(-6px);
+        border-color: rgba(88, 166, 255, 0.3);
+        box-shadow: 0 8px 32px rgba(88, 166, 255, 0.12), 0 0 0 1px rgba(88, 166, 255, 0.1);
+    }
+
+    .action-card:hover::after {
+        opacity: 1;
     }
 
     .action-icon {
         font-size: 3rem;
         margin-bottom: 1rem;
+        position: relative;
+        z-index: 1;
     }
 
     .action-card h3 {
         margin: 0 0 0.5rem 0;
         font-size: 1.25rem;
-        color: rgba(255, 255, 255, 0.9);
+        color: #e6edf3;
+        position: relative;
+        z-index: 1;
     }
 
     .action-card p {
-        color: rgba(255, 255, 255, 0.5);
+        color: #8b949e;
         font-style: italic;
         margin-bottom: 1rem;
         font-size: 0.875rem;
+        position: relative;
+        z-index: 1;
     }
 
     .action-badge {
         display: inline-block;
-        padding: 0.25rem 0.75rem;
-        background: rgba(102, 126, 234, 0.15);
-        border: 1px solid rgba(102, 126, 234, 0.3);
-        border-radius: 12px;
-        font-size: 0.75rem;
-        font-weight: 600;
-        color: #667eea;
+        padding: 0.3rem 0.8rem;
+        background: rgba(88, 166, 255, 0.1);
+        border: 1px solid rgba(88, 166, 255, 0.25);
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 700;
+        color: #58a6ff;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        position: relative;
+        z-index: 1;
     }
 
     .feature-grid {
@@ -213,15 +270,16 @@
         align-items: start;
         gap: 1rem;
         padding: 1rem;
-        background: rgba(255, 255, 255, 0.03);
-        border-radius: 8px;
-        border: 1px solid rgba(255, 255, 255, 0.06);
-        transition: all 0.2s;
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        transition: all 0.25s;
     }
 
     .feature-item:hover {
-        background: rgba(255, 255, 255, 0.06);
-        border-color: rgba(255, 255, 255, 0.12);
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(88, 166, 255, 0.15);
+        transform: translateX(4px);
     }
 
     .feature-icon {
@@ -232,13 +290,13 @@
     .feature-text h4 {
         margin: 0 0 0.5rem 0;
         font-size: 1rem;
-        color: rgba(255, 255, 255, 0.9);
+        color: #e6edf3;
     }
 
     .feature-text p {
         margin: 0;
         font-size: 0.875rem;
-        color: rgba(255, 255, 255, 0.5);
+        color: #8b949e;
     }
 
     .tech-stack-card {
@@ -247,7 +305,7 @@
 
     .tech-stack-card h2 {
         margin: 0 0 1.5rem 0;
-        color: rgba(255, 255, 255, 0.9);
+        color: #e6edf3;
     }
 
     .tech-badges {
@@ -259,18 +317,20 @@
 
     .tech-badge {
         padding: 0.5rem 1rem;
-        background: rgba(102, 126, 234, 0.08);
-        border: 1px solid rgba(102, 126, 234, 0.3);
-        color: #667eea;
+        background: rgba(88, 166, 255, 0.06);
+        border: 1px solid rgba(88, 166, 255, 0.2);
+        color: #58a6ff;
         border-radius: 20px;
-        font-size: 0.875rem;
+        font-size: 0.85rem;
         font-weight: 600;
-        transition: all 0.2s;
+        transition: all 0.25s;
     }
 
     .tech-badge:hover {
-        background: rgba(102, 126, 234, 0.15);
-        border-color: rgba(102, 126, 234, 0.5);
+        background: rgba(88, 166, 255, 0.12);
+        border-color: rgba(88, 166, 255, 0.4);
+        box-shadow: 0 0 12px rgba(88, 166, 255, 0.1);
+        transform: translateY(-2px);
     }
 
     .section-header {
@@ -283,7 +343,7 @@
     .section-header h2 {
         margin: 0;
         font-size: 1.25rem;
-        color: rgba(255, 255, 255, 0.9);
+        color: #e6edf3;
     }
 
     .section-status {
@@ -306,6 +366,16 @@
 
     @@media (max-width: 1024px) {
         .reasoning-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @@media (max-width: 640px) {
+        .welcome-header h1 {
+            font-size: 1.75rem;
+        }
+
+        .action-cards {
             grid-template-columns: 1fr;
         }
     }

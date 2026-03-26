@@ -232,25 +232,25 @@ public sealed class A2AClient : IA2AClient
     }
 
     /// <summary>
-    /// Mock implementation: simulates external vendor A2A responses with realistic competitor data.
-    /// In production, this would be replaced with real A2A protocol calls.
+    /// DEMO SIMULATION: Returns synthetic competitor pricing for demonstration purposes.
+    /// This does NOT connect to real external vendor agents.
+    /// In production, replace with actual A2A protocol calls to discovered agent endpoints.
     /// </summary>
     private async Task<IReadOnlyList<CompetitorPricing>> GetMockCompetitorDataAsync(string sku, CancellationToken cancellationToken)
     {
-        // Simulate network latency
+        // Simulate network latency (demo only)
         await Task.Delay(250, cancellationToken);
 
-        // Mock competitor pricing based on SKU
         var basePrice = sku switch
         {
-            "SKU-1001" => 28.99m, // Wireless Mouse
-            "SKU-1002" => 11.99m, // USB-C Cable
-            "SKU-1003" => 46.99m, // Laptop Stand
-            "SKU-1004" => 74.99m, // Webcam
-            "SKU-1005" => 112.99m, // Keyboard
-            "SKU-1006" => 189.99m, // Headphones
-            "SKU-1007" => 84.99m, // SSD
-            "SKU-1008" => 329.99m, // Monitor
+            "SKU-1001" => 28.99m,
+            "SKU-1002" => 11.99m,
+            "SKU-1003" => 46.99m,
+            "SKU-1004" => 74.99m,
+            "SKU-1005" => 112.99m,
+            "SKU-1006" => 189.99m,
+            "SKU-1007" => 84.99m,
+            "SKU-1008" => 329.99m,
             _ => 29.99m
         };
 
@@ -260,31 +260,31 @@ public sealed class A2AClient : IA2AClient
             {
                 Sku = sku,
                 CompetitorName = "TechMart",
-                Price = Math.Round(basePrice * 0.92m, 2), // 8% lower
-                Source = "A2A:TechMart Agent",
-                Verified = true,
+                Price = Math.Round(basePrice * 0.92m, 2),
+                Source = "DEMO-SIMULATION:TechMart",
+                Verified = false,
                 LastUpdated = DateTimeOffset.UtcNow.AddHours(-2),
-                ValidationNotes = "Verified via A2A protocol"
+                ValidationNotes = "Demo simulation — not from a live A2A agent"
             },
             new CompetitorPricing
             {
                 Sku = sku,
                 CompetitorName = "ElectroWorld",
-                Price = Math.Round(basePrice * 0.95m, 2), // 5% lower
-                Source = "A2A:ElectroWorld Agent",
-                Verified = true,
+                Price = Math.Round(basePrice * 0.95m, 2),
+                Source = "DEMO-SIMULATION:ElectroWorld",
+                Verified = false,
                 LastUpdated = DateTimeOffset.UtcNow.AddHours(-1),
-                ValidationNotes = "Verified via A2A protocol"
+                ValidationNotes = "Demo simulation — not from a live A2A agent"
             },
             new CompetitorPricing
             {
                 Sku = sku,
                 CompetitorName = "GadgetZone",
-                Price = Math.Round(basePrice * 1.03m, 2), // 3% higher
-                Source = "A2A:GadgetZone Agent",
-                Verified = true,
+                Price = Math.Round(basePrice * 1.03m, 2),
+                Source = "DEMO-SIMULATION:GadgetZone",
+                Verified = false,
                 LastUpdated = DateTimeOffset.UtcNow.AddMinutes(-30),
-                ValidationNotes = "Verified via A2A protocol"
+                ValidationNotes = "Demo simulation — not from a live A2A agent"
             }
         };
 
