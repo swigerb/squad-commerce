@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using SquadCommerce.A2A.Validation;
 using SquadCommerce.Contracts.A2UI;
 using SquadCommerce.Contracts.Interfaces;
+using SquadCommerce.Mcp.Data;
 using SquadCommerce.Observability;
 
 namespace SquadCommerce.Agents.Domain;
@@ -23,6 +25,7 @@ public sealed class MarketIntelAgent : IDomainAgent
 {
     private readonly IA2AClient _a2aClient;
     private readonly ExternalDataValidator _validator;
+    private readonly SquadCommerceDbContext _dbContext;
     private readonly ILogger<MarketIntelAgent> _logger;
 
     public string AgentName => "MarketIntelAgent";
@@ -30,10 +33,12 @@ public sealed class MarketIntelAgent : IDomainAgent
     public MarketIntelAgent(
         IA2AClient a2aClient,
         ExternalDataValidator validator,
+        SquadCommerceDbContext dbContext,
         ILogger<MarketIntelAgent> logger)
     {
         _a2aClient = a2aClient ?? throw new ArgumentNullException(nameof(a2aClient));
         _validator = validator ?? throw new ArgumentNullException(nameof(validator));
+        _dbContext = dbContext ?? throw new ArgumentNullException(nameof(dbContext));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -317,6 +322,124 @@ public sealed class MarketIntelAgent : IDomainAgent
             return new AgentResult
             {
                 TextSummary = $"Error retrieving bulk competitor pricing for {items.Count} SKUs",
+                Success = false,
+                ErrorMessage = ex.Message,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+    }
+
+    /// <summary>
+    /// Analyzes social media sentiment for a SKU in a specific region.
+    /// Queries SocialSentimentEntity from DbContext and builds SocialSentimentGraphData A2UI payload.
+    /// </summary>
+    /// <param name="sku">Product SKU</param>
+    /// <param name="region">Target region</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Agent result with SocialSentimentGraph A2UI payload</returns>
+    public async Task<AgentResult> AnalyzeSocialSentimentAsync(
+        string sku, string region, CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+
+        using var activity = SquadCommerceTelemetry.StartAgentSpan(AgentName, "AnalyzeSocialSentiment");
+        activity?.SetTag("agent.name", AgentName);
+        activity?.SetTag("agent.protocol", "Internal");
+        activity?.SetTag("agent.sku", sku);
+        activity?.SetTag("agent.region", region);
+
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", AgentName));
+
+        _logger.LogInformation(
+            "MarketIntelAgent analyzing social sentiment: SKU {Sku}, Region {Region}", sku, region);
+
+        try
+        {
+            var sentimentData = await _dbContext.SocialSentiment
+                .Where(s => s.Sku == sku)
+                .OrderByDescending(s => s.DetectedAt)
+                .ToListAsync(cancellationToken);
+
+            if (sentimentData.Count == 0)
+            {
+                _logger.LogWarning("No social sentiment data found for SKU {Sku}", sku);
+                return new AgentResult
+                {
+                    TextSummary = $"No social sentiment data found for SKU {sku}",
+                    Success = false,
+                    ErrorMessage = $"No sentiment data available for SKU {sku}",
+                    Timestamp = DateTimeOffset.UtcNow
+                };
+            }
+
+            var dataPoints = sentimentData.Select(s => new SentimentDataPoint
+            {
+                Platform = s.Platform,
+                Score = s.SentimentScore,
+                Velocity = s.Velocity,
+                MeasuredAt = s.DetectedAt
+            }).ToList();
+
+            var avgVelocity = sentimentData.Average(s => s.Velocity);
+            var trendDirection = avgVelocity > 3.0 ? "surging" :
+                                 avgVelocity > 1.5 ? "rising" :
+                                 avgVelocity > 0 ? "stable" : "declining";
+            var demandMultiplier = (decimal)Math.Max(1.0, avgVelocity);
+
+            var a2uiPayload = new SocialSentimentGraphData
+            {
+                Sku = sku,
+                ProductName = GetProductName(sku),
+                DataPoints = dataPoints,
+                TrendDirection = trendDirection,
+                DemandMultiplier = demandMultiplier,
+                Region = region,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+
+            var avgScore = sentimentData.Average(s => s.SentimentScore);
+            var platforms = string.Join(", ", sentimentData.Select(s => s.Platform).Distinct());
+
+            var textSummary = $"Social sentiment for {GetProductName(sku)} ({sku}): " +
+                             $"Trend is {trendDirection} with avg velocity {avgVelocity:F1}x. " +
+                             $"Avg sentiment score: {avgScore:F2}. " +
+                             $"Platforms: {platforms}. Demand multiplier: {demandMultiplier:F1}x.";
+
+            _logger.LogInformation(
+                "MarketIntelAgent sentiment analysis completed: Trend {Trend}, Velocity {Velocity}, Score {Score}",
+                trendDirection, avgVelocity, avgScore);
+
+            SquadCommerceTelemetry.A2UIPayloadCount.Add(1,
+                new KeyValuePair<string, object?>("a2ui.component", "SocialSentimentGraph"));
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+
+            return new AgentResult
+            {
+                TextSummary = textSummary,
+                A2UIPayload = a2uiPayload,
+                Success = true,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "MarketIntelAgent sentiment analysis failed for SKU {Sku}", sku);
+
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+
+            return new AgentResult
+            {
+                TextSummary = $"Error analyzing social sentiment for SKU {sku}",
                 Success = false,
                 ErrorMessage = ex.Message,
                 Timestamp = DateTimeOffset.UtcNow

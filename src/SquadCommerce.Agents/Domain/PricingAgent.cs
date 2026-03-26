@@ -341,6 +341,175 @@ public sealed class PricingAgent : IDomainAgent
         }
     }
 
+    /// <summary>
+    /// Calculates flash sale pricing for complementary SKUs during a viral spike.
+    /// Finds items in the same category and applies 15-25% discounts to increase AOV.
+    /// </summary>
+    /// <param name="sku">Viral product SKU</param>
+    /// <param name="demandMultiplier">Current demand multiplier</param>
+    /// <param name="region">Target region</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Agent result with PricingImpactChart A2UI payload for flash sale scenarios</returns>
+    public async Task<AgentResult> CalculateFlashSalePricingAsync(
+        string sku, decimal demandMultiplier, string region, CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+
+        using var activity = SquadCommerceTelemetry.StartAgentSpan(AgentName, "CalculateFlashSalePricing");
+        activity?.SetTag("agent.name", AgentName);
+        activity?.SetTag("agent.protocol", "MCP");
+        activity?.SetTag("agent.sku", sku);
+        activity?.SetTag("agent.demand_multiplier", (double)demandMultiplier);
+        activity?.SetTag("agent.region", region);
+
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", AgentName));
+
+        _logger.LogInformation(
+            "PricingAgent calculating flash sale pricing: SKU {Sku}, DemandMultiplier {Multiplier}x, Region {Region}",
+            sku, demandMultiplier, region);
+
+        try
+        {
+            // Find complementary SKUs in the same category
+            var complementarySkus = GetComplementarySkus(sku);
+            var allSkus = new[] { sku }.Concat(complementarySkus).ToArray();
+
+            var storeIds = new[] { "SEA-001", "PDX-002", "SFO-003", "LAX-004", "DEN-005" };
+            var scenarios = new List<PriceScenario>();
+
+            foreach (var flashSku in allSkus)
+            {
+                var currentPrices = new List<decimal>();
+                decimal totalCost = 0;
+                int storeCount = 0;
+
+                foreach (var storeId in storeIds)
+                {
+                    var price = await _pricingRepository.GetCurrentPriceAsync(storeId, flashSku, cancellationToken);
+                    if (price.HasValue)
+                    {
+                        currentPrices.Add(price.Value);
+                        storeCount++;
+
+                        if (_pricingRepository is Mcp.Data.IPricingRepositoryInternal repoInternal)
+                        {
+                            var cost = await repoInternal.GetCostAsync(storeId, flashSku, cancellationToken);
+                            if (cost.HasValue) totalCost += cost.Value;
+                        }
+                    }
+                }
+
+                if (currentPrices.Count == 0) continue;
+
+                var avgPrice = currentPrices.Average();
+                var avgCost = storeCount > 0 ? totalCost / storeCount : avgPrice * 0.5m;
+
+                var inventory = await _inventoryRepository.GetInventoryLevelsAsync(flashSku, cancellationToken);
+                var totalUnits = inventory.Sum(i => i.UnitsOnHand);
+
+                // For viral SKU, show current pricing; for complementary items, show flash sale
+                if (flashSku == sku)
+                {
+                    scenarios.Add(CalculateScenario($"{flashSku} (Viral — Hold Price)", avgPrice, avgCost, totalUnits, (int)(100 * (double)demandMultiplier)));
+                }
+                else
+                {
+                    // 15-25% flash sale discount on complementary items
+                    var discount = demandMultiplier >= 4.0m ? 0.15m : demandMultiplier >= 2.0m ? 0.20m : 0.25m;
+                    var flashPrice = Math.Round(avgPrice * (1 - discount), 2);
+                    scenarios.Add(CalculateScenario($"{flashSku} (Flash Sale {discount * 100:F0}% off)", flashPrice, avgCost, totalUnits, 130));
+                }
+            }
+
+            if (scenarios.Count == 0)
+            {
+                _logger.LogWarning("No pricing data found for SKU {Sku} and complementary items", sku);
+                return new AgentResult
+                {
+                    TextSummary = $"No pricing data found for SKU {sku}",
+                    Success = false,
+                    ErrorMessage = $"SKU {sku} not found in pricing system",
+                    Timestamp = DateTimeOffset.UtcNow
+                };
+            }
+
+            var viralScenario = scenarios.FirstOrDefault();
+            var a2uiPayload = new PricingImpactChartData
+            {
+                Sku = string.Join(", ", allSkus),
+                CurrentPrice = viralScenario?.Price ?? 0,
+                ProposedPrice = viralScenario?.Price ?? 0,
+                Scenarios = scenarios,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+
+            var totalRevenue = scenarios.Sum(s => s.EstimatedRevenue);
+            var textSummary = $"Flash sale pricing for {sku} viral spike ({demandMultiplier:F1}x demand): " +
+                             $"{complementarySkus.Length} complementary items discounted 15-25%. " +
+                             $"Estimated total revenue: ${totalRevenue:F2} across {scenarios.Count} SKUs.";
+
+            _logger.LogInformation(
+                "PricingAgent flash sale completed: {SkuCount} SKUs, TotalRevenue ${Revenue:F2}",
+                scenarios.Count, totalRevenue);
+
+            SquadCommerceTelemetry.A2UIPayloadCount.Add(1,
+                new KeyValuePair<string, object?>("a2ui.component", "PricingImpactChart"));
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+
+            return new AgentResult
+            {
+                TextSummary = textSummary,
+                A2UIPayload = a2uiPayload,
+                Success = true,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "PricingAgent flash sale pricing failed for SKU {Sku}", sku);
+
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", AgentName));
+
+            return new AgentResult
+            {
+                TextSummary = $"Error calculating flash sale pricing for SKU {sku}",
+                Success = false,
+                ErrorMessage = ex.Message,
+                Timestamp = DateTimeOffset.UtcNow
+            };
+        }
+    }
+
+    /// <summary>
+    /// Returns complementary SKUs in the same product category.
+    /// </summary>
+    private static string[] GetComplementarySkus(string sku)
+    {
+        // Denim category: SKU-3001 through SKU-3004
+        if (sku.StartsWith("SKU-300"))
+            return new[] { "SKU-3001", "SKU-3002", "SKU-3003", "SKU-3004" }.Where(s => s != sku).ToArray();
+
+        // Tech peripherals: SKU-1001 through SKU-1008
+        if (sku.StartsWith("SKU-100"))
+            return new[] { "SKU-1001", "SKU-1002", "SKU-1003", "SKU-1004" }.Where(s => s != sku).ToArray();
+
+        // Grocery: SKU-2001 through SKU-2004
+        if (sku.StartsWith("SKU-200"))
+            return new[] { "SKU-2001", "SKU-2002", "SKU-2003", "SKU-2004" }.Where(s => s != sku).ToArray();
+
+        return Array.Empty<string>();
+    }
+
     private static PriceScenario CalculateScenario(
         string name,
         decimal price,

@@ -60,9 +60,11 @@ public class ErrorHandlingScenarioTests
             inventoryRepo,
             NullLogger<ExternalDataValidator>.Instance);
 
+        var dbContext = CreateInMemoryDbContext();
         var marketIntelAgent = new MarketIntelAgent(
             mockA2AClient.Object,
             validator,
+            dbContext,
             NullLogger<MarketIntelAgent>.Instance);
 
         // Act - MarketIntelAgent should handle A2A failure
@@ -118,16 +120,20 @@ public class ErrorHandlingScenarioTests
             inventoryRepo,
             NullLogger<ExternalDataValidator>.Instance);
 
+        var dbContext = CreateInMemoryDbContext();
         var marketIntelAgent = new MarketIntelAgent(
             mockA2AClient.Object,
             validator,
+            dbContext,
             NullLogger<MarketIntelAgent>.Instance);
 
+        var marketingAgent = new MarketingAgent(dbContext, pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             failingInventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -256,6 +262,14 @@ public class ErrorHandlingScenarioTests
         var stillOriginalPrice = await pricingRepo.GetCurrentPriceAsync(storeId, sku, CancellationToken.None);
         stillOriginalPrice.Should().Be(currentPrice.Value);
     }
+    private static SquadCommerceDbContext CreateInMemoryDbContext()
+    {
+        var options = new DbContextOptionsBuilder<SquadCommerceDbContext>()
+            .UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}")
+            .Options;
+        return new SquadCommerceDbContext(options);
+    }
+
     private static AuditRepository CreateInMemoryAuditRepository()
     {
         var options = new DbContextOptionsBuilder<SquadCommerceDbContext>()

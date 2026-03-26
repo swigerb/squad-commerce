@@ -126,13 +126,16 @@ public class OpenTelemetryTraceIntegrationTests
 
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var dbContext = CreateInMemoryDbContext();
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, dbContext, NullLogger<MarketIntelAgent>.Instance);
 
+        var marketingAgent = new MarketingAgent(dbContext, pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -173,6 +176,14 @@ public class OpenTelemetryTraceIntegrationTests
         mcpSource.Name.Should().Be("SquadCommerce.Mcp");
         a2aSource.Name.Should().Be("SquadCommerce.A2A");
         aguiSource.Name.Should().Be("SquadCommerce.AgUi");
+    }
+
+    private static SquadCommerceDbContext CreateInMemoryDbContext()
+    {
+        var options = new DbContextOptionsBuilder<SquadCommerceDbContext>()
+            .UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}")
+            .Options;
+        return new SquadCommerceDbContext(options);
     }
 
     private static AuditRepository CreateInMemoryAuditRepository()

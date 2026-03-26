@@ -28,6 +28,7 @@ public sealed class ChiefSoftwareArchitectAgent
     private readonly InventoryAgent _inventoryAgent;
     private readonly PricingAgent _pricingAgent;
     private readonly MarketIntelAgent _marketIntelAgent;
+    private readonly MarketingAgent _marketingAgent;
     private readonly AuditRepository _auditRepository;
     private readonly IThinkingStateNotifier _thinkingNotifier;
     private readonly IReasoningTraceEmitter _reasoningTraceEmitter;
@@ -37,6 +38,7 @@ public sealed class ChiefSoftwareArchitectAgent
         InventoryAgent inventoryAgent,
         PricingAgent pricingAgent,
         MarketIntelAgent marketIntelAgent,
+        MarketingAgent marketingAgent,
         AuditRepository auditRepository,
         IThinkingStateNotifier thinkingNotifier,
         IReasoningTraceEmitter reasoningTraceEmitter,
@@ -45,6 +47,7 @@ public sealed class ChiefSoftwareArchitectAgent
         _inventoryAgent = inventoryAgent ?? throw new ArgumentNullException(nameof(inventoryAgent));
         _pricingAgent = pricingAgent ?? throw new ArgumentNullException(nameof(pricingAgent));
         _marketIntelAgent = marketIntelAgent ?? throw new ArgumentNullException(nameof(marketIntelAgent));
+        _marketingAgent = marketingAgent ?? throw new ArgumentNullException(nameof(marketingAgent));
         _auditRepository = auditRepository ?? throw new ArgumentNullException(nameof(auditRepository));
         _thinkingNotifier = thinkingNotifier ?? throw new ArgumentNullException(nameof(thinkingNotifier));
         _reasoningTraceEmitter = reasoningTraceEmitter ?? throw new ArgumentNullException(nameof(reasoningTraceEmitter));
@@ -604,6 +607,284 @@ public sealed class ChiefSoftwareArchitectAgent
         }
     }
 
+    /// <summary>
+    /// Orchestrates a viral spike response workflow: Sentiment → Pricing → Marketing → Synthesis.
+    /// </summary>
+    /// <param name="sku">Viral product SKU</param>
+    /// <param name="demandMultiplier">Current demand multiplier (e.g. 4.0 for 400%)</param>
+    /// <param name="region">Target region (e.g. Northeast)</param>
+    /// <param name="source">Source platform (e.g. TikTok)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Orchestrated result with all A2UI payloads and executive summary</returns>
+    public async Task<OrchestratorResult> ProcessViralSpikeAsync(
+        string sku,
+        decimal demandMultiplier,
+        string region,
+        string source,
+        CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+        var sessionId = $"session-{Guid.NewGuid():N}";
+
+        using var activity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "OrchestrateViralSpike");
+        activity?.SetTag("agent.name", "ChiefSoftwareArchitect");
+        activity?.SetTag("agent.protocol", "AGUI");
+        activity?.SetTag("agent.sku", sku);
+        activity?.SetTag("agent.demand_multiplier", (double)demandMultiplier);
+        activity?.SetTag("agent.region", region);
+        activity?.SetTag("agent.source", source);
+        activity?.SetTag("agent.session_id", sessionId);
+
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+        _logger.LogInformation(
+            "Orchestrator starting viral spike workflow: SKU {Sku}, DemandMultiplier {Multiplier}x, Region {Region}, Source {Source}, SessionId {SessionId}",
+            sku, demandMultiplier, region, source, sessionId);
+
+        var results = new List<AgentResult>();
+        var pipelineStages = new List<PipelineStage>();
+
+        var rootStepId = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+            $"Analyzing viral spike for {sku}: {demandMultiplier}x demand surge in {region} via {source}",
+            cancellationToken: cancellationToken);
+
+        await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Initiated viral spike response workflow",
+            "AGUI", startTime, TimeSpan.Zero, "Success",
+            $"Viral spike for SKU {sku} at {demandMultiplier}x demand in {region} from {source}",
+            activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
+
+        try
+        {
+            // Step 1: Analyze social sentiment (MarketIntelAgent)
+            _logger.LogInformation("Step 1: Delegating to MarketIntelAgent for social sentiment analysis");
+
+            var step1Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to MarketIntelAgent for social sentiment analysis", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "MarketIntelAgent", ReasoningStepType.ToolCall,
+                $"Querying social sentiment data for {sku} in {region}", step1Id, cancellationToken: cancellationToken);
+
+            var stage1Start = DateTimeOffset.UtcNow;
+            var step1Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 1,
+                AgentName = "MarketIntelAgent",
+                StageName = "Social Sentiment Analysis",
+                Status = "Running",
+                Protocol = "Internal",
+                StartedAt = stage1Start,
+                ToolsUsed = new[] { "GetSocialSentiment" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketIntelAgent", true, cancellationToken);
+            var sentimentResult = await _marketIntelAgent.AnalyzeSocialSentimentAsync(sku, region, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketIntelAgent", false, cancellationToken);
+            step1Sw.Stop();
+            results.Add(sentimentResult);
+
+            await EmitTraceAsync(sessionId, "MarketIntelAgent", ReasoningStepType.Observation,
+                $"Received {(sentimentResult.Success ? "sentiment analysis" : "analysis failure")} from MarketIntelAgent",
+                step1Id, step1Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
+            await RecordAuditEntryAsync(sessionId, "MarketIntelAgent", "Analyzed social sentiment",
+                "Internal", stage1Start, stage1Duration, sentimentResult.Success ? "Success" : "Failed",
+                sentimentResult.TextSummary, activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
+
+            pipelineStages[0] = pipelineStages[0] with
+            {
+                Status = sentimentResult.Success ? "Completed" : "Failed",
+                Duration = stage1Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = sentimentResult.A2UIPayload != null ? new[] { "SocialSentimentGraph" } : null,
+                ErrorMessage = sentimentResult.ErrorMessage
+            };
+
+            if (!sentimentResult.Success)
+            {
+                _logger.LogWarning("MarketIntelAgent sentiment analysis failed - aborting workflow");
+                return await BuildViralSpikeFailureResultAsync(sessionId, results, pipelineStages,
+                    "Failed to analyze social sentiment", startTime, cancellationToken);
+            }
+
+            // Step 2: Calculate flash sale pricing (PricingAgent)
+            _logger.LogInformation("Step 2: Delegating to PricingAgent for flash sale pricing");
+
+            var step2Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to PricingAgent for flash sale pricing on complementary items", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "PricingAgent", ReasoningStepType.ToolCall,
+                $"Calculating flash sale prices for {sku} and complementary items", step2Id, cancellationToken: cancellationToken);
+
+            var stage2Start = DateTimeOffset.UtcNow;
+            var step2Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 2,
+                AgentName = "PricingAgent",
+                StageName = "Flash Sale Pricing",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage2Start,
+                ToolsUsed = new[] { "GetInventoryLevels" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "PricingAgent", true, cancellationToken);
+            var pricingResult = await _pricingAgent.CalculateFlashSalePricingAsync(sku, demandMultiplier, region, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "PricingAgent", false, cancellationToken);
+            step2Sw.Stop();
+            results.Add(pricingResult);
+
+            await EmitTraceAsync(sessionId, "PricingAgent", ReasoningStepType.Observation,
+                $"Received {(pricingResult.Success ? "flash sale pricing" : "pricing failure")} from PricingAgent",
+                step2Id, step2Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage2Duration = DateTimeOffset.UtcNow - stage2Start;
+            await RecordAuditEntryAsync(sessionId, "PricingAgent", "Calculated flash sale pricing",
+                "MCP", stage2Start, stage2Duration, pricingResult.Success ? "Success" : "Failed",
+                pricingResult.TextSummary, activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
+
+            pipelineStages[1] = pipelineStages[1] with
+            {
+                Status = pricingResult.Success ? "Completed" : "Failed",
+                Duration = stage2Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = pricingResult.A2UIPayload != null ? new[] { "PricingImpactChart" } : null,
+                ErrorMessage = pricingResult.ErrorMessage
+            };
+
+            if (!pricingResult.Success)
+            {
+                _logger.LogWarning("PricingAgent flash sale failed - aborting workflow");
+                return await BuildViralSpikeFailureResultAsync(sessionId, results, pipelineStages,
+                    "Failed to calculate flash sale pricing", startTime, cancellationToken);
+            }
+
+            // Step 3: Build campaign preview (MarketingAgent)
+            _logger.LogInformation("Step 3: Delegating to MarketingAgent for campaign preview");
+
+            var step3Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to MarketingAgent for campaign preview", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "MarketingAgent", ReasoningStepType.ToolCall,
+                $"Building campaign preview for {sku} targeting {region}", step3Id, cancellationToken: cancellationToken);
+
+            var stage3Start = DateTimeOffset.UtcNow;
+            var step3Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 3,
+                AgentName = "MarketingAgent",
+                StageName = "Campaign Preview",
+                Status = "Running",
+                Protocol = "Internal",
+                StartedAt = stage3Start
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketingAgent", true, cancellationToken);
+            var marketingResult = await _marketingAgent.ExecuteAsync(sku, demandMultiplier, region, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "MarketingAgent", false, cancellationToken);
+            step3Sw.Stop();
+            results.Add(marketingResult);
+
+            await EmitTraceAsync(sessionId, "MarketingAgent", ReasoningStepType.Observation,
+                $"Received {(marketingResult.Success ? "campaign preview" : "campaign failure")} from MarketingAgent",
+                step3Id, step3Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage3Duration = DateTimeOffset.UtcNow - stage3Start;
+            await RecordAuditEntryAsync(sessionId, "MarketingAgent", "Built campaign preview",
+                "Internal", stage3Start, stage3Duration, marketingResult.Success ? "Success" : "Failed",
+                marketingResult.TextSummary, activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
+
+            pipelineStages[2] = pipelineStages[2] with
+            {
+                Status = marketingResult.Success ? "Completed" : "Failed",
+                Duration = stage3Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = marketingResult.A2UIPayload != null ? new[] { "CampaignPreview" } : null,
+                ErrorMessage = marketingResult.ErrorMessage
+            };
+
+            if (!marketingResult.Success)
+            {
+                _logger.LogWarning("MarketingAgent failed - continuing with partial data");
+            }
+
+            // Step 4: Synthesize final response
+            _logger.LogInformation("Step 4: Synthesizing viral spike orchestrator response");
+
+            using var synthesizeActivity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "Synthesize");
+            synthesizeActivity?.SetTag("agent.result_count", results.Count);
+
+            var synthesizeStart = DateTimeOffset.UtcNow;
+            var executiveSummary = BuildViralSpikeExecutiveSummary(sku, demandMultiplier, region, source, results);
+            var synthesizeDuration = DateTimeOffset.UtcNow - synthesizeStart;
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Decision,
+                $"Recommending flash sale campaign for {sku} in {region} to capitalize on {source} viral spike",
+                rootStepId, (long)(DateTimeOffset.UtcNow - startTime).TotalMilliseconds, cancellationToken: cancellationToken);
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Synthesized viral spike response",
+                "AGUI", synthesizeStart, synthesizeDuration, "Success",
+                $"Generated executive summary with {results.Count} A2UI payloads",
+                activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            var duration = DateTimeOffset.UtcNow - startTime;
+
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration.TotalMilliseconds,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+            _logger.LogInformation(
+                "Orchestrator viral spike workflow completed successfully in {Duration}ms",
+                duration.TotalMilliseconds);
+
+            var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+            var pipelineData = new AgentPipelineData
+            {
+                SessionId = sessionId,
+                WorkflowName = "ViralSpikeWorkflow",
+                Stages = pipelineStages,
+                OverallStatus = "Completed",
+                TotalDuration = duration,
+                StartedAt = startTime,
+                CompletedAt = DateTimeOffset.UtcNow
+            };
+
+            return new OrchestratorResult
+            {
+                Success = true,
+                ExecutiveSummary = executiveSummary,
+                AgentResults = results,
+                AuditTrailData = auditTrailData,
+                PipelineData = pipelineData,
+                InsightCards = BuildViralSpikeInsightCards(sku, demandMultiplier, region, source, results),
+                Timestamp = DateTimeOffset.UtcNow,
+                WorkflowDuration = duration
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Orchestrator viral spike workflow failed");
+
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Error,
+                $"Viral spike workflow failed: {ex.Message}", rootStepId, cancellationToken: cancellationToken);
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Viral spike workflow execution failed",
+                "AGUI", DateTimeOffset.UtcNow, TimeSpan.Zero, "Failed",
+                ex.Message, activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+            return await BuildViralSpikeFailureResultAsync(sessionId, results, pipelineStages,
+                $"Viral spike orchestration error: {ex.Message}", startTime, cancellationToken);
+        }
+    }
+
     private static string BuildExecutiveSummary(string sku, decimal competitorPrice, List<AgentResult> results)
     {
         var summary = $"## Competitor Price Response Analysis for {sku}\n\n";
@@ -856,6 +1137,113 @@ public sealed class ChiefSoftwareArchitectAgent
             SessionId = sessionId,
             Entries = entries,
             GeneratedAt = DateTimeOffset.UtcNow
+        };
+    }
+
+    private static string BuildViralSpikeExecutiveSummary(
+        string sku, decimal demandMultiplier, string region, string source, List<AgentResult> results)
+    {
+        var summary = $"## Viral Spike Response Analysis for {sku}\n\n";
+        summary += $"**Source:** {source}\n";
+        summary += $"**Region:** {region}\n";
+        summary += $"**Demand Multiplier:** {demandMultiplier:F1}x\n\n";
+
+        foreach (var result in results)
+        {
+            summary += $"{result.TextSummary}\n\n";
+        }
+
+        summary += $"**Recommendation:** Capitalize on the {source} viral spike by launching the flash sale campaign " +
+                   $"targeting {region}. Monitor sentiment velocity to adjust pricing and inventory replenishment in real-time.";
+
+        return summary;
+    }
+
+    private static IReadOnlyList<InsightCardData> BuildViralSpikeInsightCards(
+        string sku, decimal demandMultiplier, string region, string source, List<AgentResult> results)
+    {
+        try
+        {
+            var cards = new List<InsightCardData>();
+
+            cards.Add(new InsightCardData
+            {
+                Title = "Demand Surge",
+                KeyMetric = $"{demandMultiplier:F0}x",
+                MetricLabel = $"demand spike from {source}",
+                TrendDirection = "up",
+                Summary = $"Social sentiment for {sku} is surging {demandMultiplier:F0}x in {region} driven by {source}. Immediate action recommended to capitalize on viral momentum.",
+                Severity = demandMultiplier > 5 ? "critical" : demandMultiplier > 3 ? "warning" : "info"
+            });
+
+            var pricingResult = results.FirstOrDefault(r => r.TextSummary.Contains("flash sale", StringComparison.OrdinalIgnoreCase)
+                                                          || r.TextSummary.Contains("pricing", StringComparison.OrdinalIgnoreCase));
+            var revenueMatch = pricingResult != null
+                ? System.Text.RegularExpressions.Regex.Match(pricingResult.TextSummary, @"\$([\d,]+\.?\d*)")
+                : System.Text.RegularExpressions.Regex.Match("", @".");
+            var revenueStr = revenueMatch.Success ? $"${revenueMatch.Groups[1].Value}" : "projected";
+
+            cards.Add(new InsightCardData
+            {
+                Title = "Flash Sale Opportunity",
+                KeyMetric = revenueStr,
+                MetricLabel = "estimated revenue from complementary items",
+                TrendDirection = "up",
+                Summary = $"Flash sale pricing on complementary items (15-25% off) can increase average order value while the viral SKU drives traffic to {region} stores.",
+                Severity = "success"
+            });
+
+            var allSucceeded = results.All(r => r.Success);
+            cards.Add(new InsightCardData
+            {
+                Title = "Campaign Readiness",
+                KeyMetric = allSucceeded ? "Ready" : "Partial",
+                MetricLabel = "campaign launch status",
+                TrendDirection = "up",
+                Summary = $"Campaign assets generated with {(allSucceeded ? "full" : "partial")} data from {results.Count} agents. Email, hero banner, and flash sale pricing ready for {region} deployment.",
+                ActionLabel = "Launch Campaign",
+                Severity = allSucceeded ? "success" : "warning"
+            });
+
+            return cards;
+        }
+        catch
+        {
+            return Array.Empty<InsightCardData>();
+        }
+    }
+
+    private async Task<OrchestratorResult> BuildViralSpikeFailureResultAsync(
+        string sessionId,
+        List<AgentResult> results,
+        List<PipelineStage> stages,
+        string errorMessage,
+        DateTimeOffset startTime,
+        CancellationToken cancellationToken)
+    {
+        var duration = DateTimeOffset.UtcNow - startTime;
+        var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+        var pipelineData = new AgentPipelineData
+        {
+            SessionId = sessionId,
+            WorkflowName = "ViralSpikeWorkflow",
+            Stages = stages,
+            OverallStatus = "Failed",
+            TotalDuration = duration,
+            StartedAt = startTime,
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+
+        return new OrchestratorResult
+        {
+            Success = false,
+            ExecutiveSummary = $"Viral spike workflow failed: {errorMessage}",
+            AgentResults = results,
+            AuditTrailData = auditTrailData,
+            PipelineData = pipelineData,
+            ErrorMessage = errorMessage,
+            Timestamp = DateTimeOffset.UtcNow,
+            WorkflowDuration = duration
         };
     }
 

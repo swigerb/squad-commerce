@@ -40,6 +40,8 @@ public static class McpServerSetup
         // These are also discovered by the MCP SDK via [McpServerToolType] attributes
         services.AddScoped<GetInventoryLevelsTool>();
         services.AddScoped<UpdateStorePricingTool>();
+        services.AddScoped<GetSocialSentimentTool>();
+        services.AddScoped<GetDemandForecastTool>();
 
         // Register the official MCP server with HTTP transport
         // Tools are auto-discovered from the SquadCommerce.Mcp assembly via [McpServerToolType] attributes

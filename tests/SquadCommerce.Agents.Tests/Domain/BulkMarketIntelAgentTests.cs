@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using SquadCommerce.A2A;
 using SquadCommerce.A2A.Validation;
@@ -23,7 +24,8 @@ public class BulkMarketIntelAgentTests
         var pricingRepo = new InMemoryPricingRepository();
         var inventoryRepo = new InMemoryInventoryRepository();
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var dbContext = CreateInMemoryDbContext();
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act - Bulk query for 3 SKUs
         var items = new List<(string Sku, decimal OurPrice)>
@@ -56,7 +58,8 @@ public class BulkMarketIntelAgentTests
         var pricingRepo = new InMemoryPricingRepository();
         var inventoryRepo = new InMemoryInventoryRepository();
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var dbContext = CreateInMemoryDbContext();
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act - Include extreme price deltas
         var items = new List<(string Sku, decimal OurPrice)>
@@ -88,7 +91,8 @@ public class BulkMarketIntelAgentTests
         var pricingRepo = new InMemoryPricingRepository();
         var inventoryRepo = new InMemoryInventoryRepository();
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var dbContext = CreateInMemoryDbContext();
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act - Query multiple SKUs (A2A returns 3 competitors per SKU)
         var items = new List<(string Sku, decimal OurPrice)>
@@ -122,7 +126,8 @@ public class BulkMarketIntelAgentTests
         var pricingRepo = new InMemoryPricingRepository();
         var inventoryRepo = new InMemoryInventoryRepository();
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var dbContext = CreateInMemoryDbContext();
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act - Query with realistic prices (validator should accept)
         var items = new List<(string Sku, decimal OurPrice)>
@@ -156,7 +161,8 @@ public class BulkMarketIntelAgentTests
         var pricingRepo = new InMemoryPricingRepository();
         var inventoryRepo = new InMemoryInventoryRepository();
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var dbContext = CreateInMemoryDbContext();
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act
         var items = new List<(string Sku, decimal OurPrice)>
@@ -183,7 +189,8 @@ public class BulkMarketIntelAgentTests
         var pricingRepo = new InMemoryPricingRepository();
         var inventoryRepo = new InMemoryInventoryRepository();
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var dbContext = CreateInMemoryDbContext();
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act
         var items = new List<(string Sku, decimal OurPrice)>
@@ -212,7 +219,8 @@ public class BulkMarketIntelAgentTests
         var pricingRepo = new InMemoryPricingRepository();
         var inventoryRepo = new InMemoryInventoryRepository();
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var dbContext = CreateInMemoryDbContext();
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act
         var items = new List<(string Sku, decimal OurPrice)>
@@ -233,5 +241,13 @@ public class BulkMarketIntelAgentTests
         var marketData = (MarketComparisonGridData)result.A2UIPayload!;
         marketData.Timestamp.Should().BeOnOrAfter(before);
         marketData.Timestamp.Should().BeOnOrBefore(after);
+    }
+
+    private static SquadCommerceDbContext CreateInMemoryDbContext()
+    {
+        var options = new DbContextOptionsBuilder<SquadCommerceDbContext>()
+            .UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}")
+            .Options;
+        return new SquadCommerceDbContext(options);
     }
 }

@@ -30,13 +30,14 @@ public class ChiefSoftwareArchitectAgentCoverageTests
 
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
 
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            null!,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -67,13 +68,14 @@ public class ChiefSoftwareArchitectAgentCoverageTests
 
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
 
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            null!,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -102,13 +104,14 @@ public class ChiefSoftwareArchitectAgentCoverageTests
 
         var inventoryAgent = new InventoryAgent(inventoryRepo, NullLogger<InventoryAgent>.Instance);
         var pricingAgent = new PricingAgent(pricingRepo, inventoryRepo, NullLogger<PricingAgent>.Instance);
-        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var marketIntelAgent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
 
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            null!,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),

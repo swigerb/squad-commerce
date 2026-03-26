@@ -23,7 +23,7 @@ public class MarketIntelAgentCoverageTests
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act
         var result = await agent.ExecuteAsync("SKU-1001", 29.99m, CancellationToken.None);
@@ -46,7 +46,7 @@ public class MarketIntelAgentCoverageTests
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         var ourPrice = 49.99m;
 
@@ -71,7 +71,7 @@ public class MarketIntelAgentCoverageTests
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act
         var result = await agent.ExecuteAsync("SKU-1005", 119.99m, CancellationToken.None);
@@ -97,7 +97,7 @@ public class MarketIntelAgentCoverageTests
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act
         var result = await agent.ExecuteAsync(sku, 99.99m, CancellationToken.None);
@@ -117,7 +117,7 @@ public class MarketIntelAgentCoverageTests
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act
         var result = await agent.ExecuteAsync("SKU-1006", 199.99m, CancellationToken.None);
@@ -143,7 +143,7 @@ public class MarketIntelAgentCoverageTests
         var a2aClient = new A2AClient(new HttpClient(), NullLogger<A2AClient>.Instance);
         var validator = new ExternalDataValidator(pricingRepo, inventoryRepo, NullLogger<ExternalDataValidator>.Instance);
         
-        var agent = new MarketIntelAgent(a2aClient, validator, NullLogger<MarketIntelAgent>.Instance);
+        var agent = new MarketIntelAgent(a2aClient, validator, null!, NullLogger<MarketIntelAgent>.Instance);
 
         // Act
         var result = await agent.ExecuteAsync("SKU-1007", 89.99m, CancellationToken.None);

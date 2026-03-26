@@ -41,16 +41,20 @@ public class CompetitorPriceDropScenarioTests
             inventoryRepo,
             NullLogger<PricingAgent>.Instance);
 
+        var dbContext = CreateInMemoryDbContext();
         var marketIntelAgent = new MarketIntelAgent(
             a2aClient,
             validator,
+            dbContext,
             NullLogger<MarketIntelAgent>.Instance);
 
+        var marketingAgent = new MarketingAgent(dbContext, pricingRepo, NullLogger<MarketingAgent>.Instance);
         var auditRepo = CreateInMemoryAuditRepository();
         var orchestrator = new ChiefSoftwareArchitectAgent(
             inventoryAgent,
             pricingAgent,
             marketIntelAgent,
+            marketingAgent,
             auditRepo,
             Mock.Of<IThinkingStateNotifier>(),
             Mock.Of<IReasoningTraceEmitter>(),
@@ -209,9 +213,11 @@ public class CompetitorPriceDropScenarioTests
             inventoryRepo,
             NullLogger<InventoryAgent>.Instance);
 
+        var dbContext = CreateInMemoryDbContext();
         var marketIntelAgent = new MarketIntelAgent(
             a2aClient,
             validator,
+            dbContext,
             NullLogger<MarketIntelAgent>.Instance);
 
         var sku = "SKU-1005"; // Mechanical Keyboard
@@ -234,6 +240,14 @@ public class CompetitorPriceDropScenarioTests
         var marketGrid = (MarketComparisonGridData)marketIntelResult.A2UIPayload!;
         marketGrid.Competitors.Should().NotBeEmpty();
         marketGrid.Competitors.All(c => c.Price > 0).Should().BeTrue("all competitor prices should be valid");
+    }
+
+    private static SquadCommerceDbContext CreateInMemoryDbContext()
+    {
+        var options = new DbContextOptionsBuilder<SquadCommerceDbContext>()
+            .UseInMemoryDatabase($"TestDb_{Guid.NewGuid()}")
+            .Options;
+        return new SquadCommerceDbContext(options);
     }
 
     private static AuditRepository CreateInMemoryAuditRepository()

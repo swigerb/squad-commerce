@@ -188,7 +188,30 @@ app.MapPost("/api/agui/chat", async (ChatRequest chatRequest, IAgUiStreamWriter 
 
             await streamWriter.WriteStatusUpdateAsync(sessionId, $"Analyzing: {sku} vs {competitorName} at ${competitorPrice:F2}...", bgCts.Token);
 
-            var result = await orchestrator.ProcessCompetitorPriceDropAsync(sku, competitorPrice, bgCts.Token);
+            OrchestratorResult result;
+            if (scenarioType == "ViralSpike")
+            {
+                // Extract demand multiplier from message (default 4.0x for viral spikes)
+                var multiplierMatch = Regex.Match(message, @"(\d+(?:\.\d+)?)\s*[x%]", RegexOptions.IgnoreCase);
+                var demandMultiplier = multiplierMatch.Success && decimal.TryParse(multiplierMatch.Groups[1].Value, out var mult)
+                    ? (mult > 10 ? mult / 100m : mult)  // "400%" → 4.0, "4x" → 4.0
+                    : 4.0m;
+
+                // Extract region from message (default "Northeast")
+                var regionPattern = Regex.Match(message, @"\b(Northeast|Southeast|Midwest|Southwest|Northwest|West\s*Coast|East\s*Coast)\b", RegexOptions.IgnoreCase);
+                var viralRegion = regionPattern.Success ? regionPattern.Value : "Northeast";
+
+                // Extract platform source
+                var platformPattern = Regex.Match(message, @"\b(TikTok|Instagram|Twitter|YouTube|Reddit)\b", RegexOptions.IgnoreCase);
+                var viralSource = platformPattern.Success ? platformPattern.Value : "TikTok";
+
+                await streamWriter.WriteStatusUpdateAsync(sessionId, $"Analyzing viral spike: {sku} — {demandMultiplier}x demand in {viralRegion} via {viralSource}...", bgCts.Token);
+                result = await orchestrator.ProcessViralSpikeAsync(sku, demandMultiplier, viralRegion, viralSource, bgCts.Token);
+            }
+            else
+            {
+                result = await orchestrator.ProcessCompetitorPriceDropAsync(sku, competitorPrice, bgCts.Token);
+            }
 
             if (!result.Success)
             {

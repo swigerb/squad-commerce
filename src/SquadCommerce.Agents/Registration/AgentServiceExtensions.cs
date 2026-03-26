@@ -33,15 +33,23 @@ public static class AgentServiceExtensions
         services.AddScoped<InventoryAgent>();
         services.AddScoped<PricingAgent>();
         services.AddScoped<MarketIntelAgent>();
+        services.AddScoped<MarketingAgent>();
 
-        // Register MAF executor wrappers
+        // Register MAF executor wrappers (Competitor Price Drop workflow)
         services.AddScoped<MarketIntelExecutor>();
         services.AddScoped<InventoryExecutor>();
         services.AddScoped<PricingExecutor>();
         services.AddScoped<SynthesisExecutor>();
 
-        // Register MAF workflow (depends on executors)
+        // Register MAF executor wrappers (Viral Spike workflow)
+        services.AddScoped<ViralSpikeSentimentExecutor>();
+        services.AddScoped<ViralSpikePricingExecutor>();
+        services.AddScoped<ViralSpikeMarketingExecutor>();
+        services.AddScoped<ViralSpikeSynthesisExecutor>();
+
+        // Register MAF workflows (depend on executors)
         services.AddScoped<RetailWorkflow>();
+        services.AddScoped<ViralSpikeWorkflow>();
 
         return services;
     }
