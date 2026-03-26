@@ -482,3 +482,36 @@ In .NET 10 Blazor with per-page/component render modes, ANY interactive componen
 - `src/SquadCommerce.Web/Components/Pages/Home.razor` — Added System Health section + TelemetryDashboard
 - `src/SquadCommerce.Web/Components/_Imports.razor` — Added Icons alias
 - `src/SquadCommerce.Web/SquadCommerce.Web.csproj` — Added Fluent UI Icons package
+
+### 2026-03-24: Agent Fleet Pulse Sidebar Panel (Phase 2, Item 2.1)
+
+**What was done:**
+- Created `Components/Chat/AgentFleetPanel.razor` — Rich sidebar panel showing 4 agent cards with real-time status
+- Created `Components/Chat/AgentFleetPanel.razor.css` — Scoped CSS with glassmorphism, pulse/glow animations, dark theme
+- Integrated panel into `MainLayout.razor` as a right sidebar alongside chat and dashboard
+- Added `.sidebar-right` styles to `wwwroot/app.css`
+
+**Component features:**
+- 4 agent cards: ChiefSoftwareArchitect (🏗️ Orchestrator), InventoryAgent (📦), PricingAgent (💰), MarketIntelAgent (📊)
+- Real-time status: 🟢 Idle, 🔵 Thinking (pulse), 🔴 Error — driven by SignalR `ThinkingState` events
+- Last-action text updated from `ReasoningStep` events and `StatusUpdate` heuristics
+- Protocol badges (MCP, A2A, AG-UI) with color-coded pill styling
+- CSS `@keyframes` pulse/glow animations on active agents
+- Each card wrapped in `CommandCard` (glassmorphism) with status-colored borders
+- SignalR connection indicator in panel header
+
+**Key patterns:**
+- Reuses `ResolveAgentKey()` pattern from AgentStatusBar for normalizing agent names
+- Subscribes to `OnThinkingState`, `OnReasoningStep`, and `OnStatusUpdate` from `SignalRStateService`
+- Truncates last-action text to 60 chars with ellipsis
+- `::deep` selectors used to style `CommandCard` children from scoped CSS
+
+**Build status:** ✅ 0 warnings, 0 errors
+
+**Files created:**
+- `src/SquadCommerce.Web/Components/Chat/AgentFleetPanel.razor`
+- `src/SquadCommerce.Web/Components/Chat/AgentFleetPanel.razor.css`
+
+**Files modified:**
+- `src/SquadCommerce.Web/Components/Layout/MainLayout.razor` — Added right sidebar with `<AgentFleetPanel />`
+- `src/SquadCommerce.Web/wwwroot/app.css` — Added `.sidebar-right` layout styles

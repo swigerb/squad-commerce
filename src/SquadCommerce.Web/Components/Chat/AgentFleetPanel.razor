@@ -1,0 +1,177 @@
+@using SquadCommerce.Contracts
+@inject Services.SignalRStateService StateService
+@implements IDisposable
+
+<div class="agent-fleet-panel" role="region" aria-label="Agent Fleet Status">
+    <div class="fleet-header">
+        <span class="fleet-icon">🚀</span>
+        <span class="fleet-title">Agent Fleet</span>
+        <span class="fleet-connection @_connectionClass" title="SignalR: @_connectionLabel">
+            <span class="conn-dot"></span>
+            @_connectionLabel
+        </span>
+    </div>
+
+    <div class="fleet-cards">
+        @foreach (var agent in _agents)
+        {
+            var status = GetAgentStatus(agent.Key);
+            var lastAction = GetLastAction(agent.Key);
+
+            <CommandCard CssClass="@($"fleet-card fleet-card-{status.CssClass}")">
+                <div class="agent-card-inner">
+                    <div class="agent-card-top">
+                        <div class="agent-identity">
+                            <span class="agent-icon @(status.IsActive ? "pulse-glow" : "")" aria-hidden="true">@agent.Icon</span>
+                            <div class="agent-name-role">
+                                <span class="agent-name">@agent.Name</span>
+                                <span class="agent-role">@agent.Role</span>
+                            </div>
+                        </div>
+                        <div class="status-indicator" title="@status.Label" aria-label="Status: @status.Label">
+                            <span class="status-dot @(status.IsActive ? "status-pulse" : "")">@status.Emoji</span>
+                            <span class="status-label">@status.Label</span>
+                        </div>
+                    </div>
+
+                    <div class="agent-card-bottom">
+                        <div class="last-action" title="@lastAction">
+                            <span class="action-icon">📝</span>
+                            <span class="action-text">@lastAction</span>
+                        </div>
+                        <div class="protocol-badges">
+                            @foreach (var proto in agent.Protocols)
+                            {
+                                <span class="protocol-badge protocol-@proto.ToLowerInvariant()">@proto</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </CommandCard>
+        }
+    </div>
+</div>
+
+@code {
+    private string _connectionClass = "disconnected";
+    private string _connectionLabel = "Disconnected";
+    private readonly HashSet<string> _thinkingAgents = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _errorAgents = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _lastActions = new(StringComparer.OrdinalIgnoreCase);
+
+    private sealed record AgentInfo(string Key, string Icon, string Name, string Role, string[] Protocols);
+
+    private sealed record AgentStatus(string Emoji, string Label, string CssClass, bool IsActive);
+
+    private readonly AgentInfo[] _agents =
+    [
+        new("ChiefSoftwareArchitect", "🏗️", "Chief Architect", "Orchestrator", ["MCP", "A2A", "AG-UI"]),
+        new("InventoryAgent", "📦", "Inventory Agent", "Inventory", ["MCP", "A2A"]),
+        new("PricingAgent", "💰", "Pricing Agent", "Pricing", ["MCP", "A2A"]),
+        new("MarketIntelAgent", "📊", "Market Intel Agent", "Market Intel", ["MCP", "A2A"])
+    ];
+
+    private AgentStatus GetAgentStatus(string agentKey)
+    {
+        if (_errorAgents.Contains(agentKey))
+            return new("🔴", "Error", "error", true);
+        if (_thinkingAgents.Contains(agentKey))
+            return new("🔵", "Thinking", "thinking", true);
+        return new("🟢", "Idle", "idle", false);
+    }
+
+    private string GetLastAction(string agentKey)
+    {
+        return _lastActions.TryGetValue(agentKey, out var action) ? action : "Idle";
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        StateService.OnThinkingState += HandleThinkingState;
+        StateService.OnReasoningStep += HandleReasoningStep;
+        StateService.OnStatusUpdate += HandleStatusUpdate;
+
+        try
+        {
+            await StateService.StartAsync();
+            _connectionClass = "connected";
+            _connectionLabel = "Live";
+        }
+        catch
+        {
+            _connectionClass = "error";
+            _connectionLabel = "Error";
+        }
+
+        await base.OnInitializedAsync();
+    }
+
+    private void HandleThinkingState(string sessionId, string agentName, bool isThinking)
+    {
+        var key = ResolveAgentKey(agentName);
+
+        if (isThinking)
+        {
+            _thinkingAgents.Add(key);
+            _errorAgents.Remove(key);
+        }
+        else
+        {
+            _thinkingAgents.Remove(key);
+        }
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleReasoningStep(ReasoningStep step)
+    {
+        var key = ResolveAgentKey(step.AgentName);
+        var summary = step.Content.Length > 60 ? step.Content[..57] + "..." : step.Content;
+        _lastActions[key] = summary;
+
+        if (step.StepType == ReasoningStepType.Error)
+            _errorAgents.Add(key);
+        else
+            _errorAgents.Remove(key);
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleStatusUpdate(string status)
+    {
+        // Detect executing states from status text and update last-action for matched agents
+        var lower = status.ToLowerInvariant();
+        if (lower.Contains("inventory") || lower.Contains("stock"))
+            _lastActions["InventoryAgent"] = Truncate(status);
+        else if (lower.Contains("pricing") || lower.Contains("margin") || lower.Contains("price"))
+            _lastActions["PricingAgent"] = Truncate(status);
+        else if (lower.Contains("market") || lower.Contains("competitor"))
+            _lastActions["MarketIntelAgent"] = Truncate(status);
+        else if (lower.Contains("orchestrat") || lower.Contains("routing") || lower.Contains("delegat"))
+            _lastActions["ChiefSoftwareArchitect"] = Truncate(status);
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private string ResolveAgentKey(string agentName)
+    {
+        foreach (var a in _agents)
+        {
+            if (a.Key.Equals(agentName, StringComparison.OrdinalIgnoreCase) ||
+                agentName.Contains(a.Key, StringComparison.OrdinalIgnoreCase) ||
+                a.Key.Contains(agentName.Replace("Agent", ""), StringComparison.OrdinalIgnoreCase))
+                return a.Key;
+        }
+        return agentName;
+    }
+
+    private static string Truncate(string text) =>
+        text.Length > 60 ? text[..57] + "..." : text;
+
+    public void Dispose()
+    {
+        StateService.OnThinkingState -= HandleThinkingState;
+        StateService.OnReasoningStep -= HandleReasoningStep;
+        StateService.OnStatusUpdate -= HandleStatusUpdate;
+    }
+}

@@ -151,6 +151,16 @@ h1:focus {
     background: #0d1117;
 }
 
+/* ── Agent Fleet Right Sidebar ─────────── */
+.sidebar-right {
+    width: 280px;
+    border-left: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    flex-direction: column;
+    background: #161b22;
+    overflow: hidden;
+}
+
 /* Additional custom styles from squad-commerce CSS file */
 
 .form-floating > .form-control-plaintext::placeholder, .form-floating > .form-control::placeholder {
