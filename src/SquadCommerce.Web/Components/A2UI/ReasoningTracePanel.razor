@@ -1,0 +1,384 @@
+@* ReasoningTracePanel.razor — Chain of Thought vertical timeline for agent reasoning traces *@
+@using SquadCommerce.Contracts
+@implements IDisposable
+@inject Services.SignalRStateService SignalR
+
+<CommandCard Title="🧠 Chain of Thought" CssClass="reasoning-trace-panel">
+    <div class="trace-controls">
+        <span class="trace-count">@_steps.Count steps</span>
+        @if (_steps.Count > 0)
+        {
+            <button class="trace-clear-btn" @onclick="ClearSteps" aria-label="Clear reasoning trace">Clear</button>
+        }
+    </div>
+
+    @if (_steps.Count == 0)
+    {
+        <div class="trace-empty">
+            <div class="trace-empty-icon">💭</div>
+            <p>Waiting for agent reasoning traces…</p>
+            <p class="trace-empty-hint">Start a conversation to see the agent's thought process.</p>
+        </div>
+    }
+    else
+    {
+        <div class="trace-timeline" role="log" aria-label="Agent reasoning trace timeline">
+            @foreach (var step in _steps)
+            {
+                var isNested = step.ParentStepId != null;
+                var isExpanded = _expandedSteps.Contains(step.StepId);
+                var isLongContent = step.Content.Length > 200;
+                var agentColor = GetAgentColor(step.AgentName);
+
+                <div class="trace-step @(isNested ? "trace-step-nested" : "") trace-step-enter"
+                     style="border-left-color: @agentColor;"
+                     role="listitem"
+                     aria-label="@step.StepType step by @step.AgentName">
+                    <div class="trace-step-header">
+                        <span class="trace-step-icon" aria-hidden="true">@GetStepIcon(step.StepType)</span>
+                        <span class="trace-agent-badge" style="background: @(agentColor)22; color: @agentColor; border-color: @(agentColor)44;">
+                            @step.AgentName
+                        </span>
+                        <span class="trace-step-type">@step.StepType</span>
+                        @if (step.DurationMs > 0)
+                        {
+                            <span class="trace-duration-badge">@FormatDuration(step.DurationMs)</span>
+                        }
+                        <span class="trace-timestamp">@step.Timestamp.ToString("HH:mm:ss.fff")</span>
+                    </div>
+                    <div class="trace-step-content @(isLongContent && !isExpanded ? "trace-content-collapsed" : "")">
+                        @step.Content
+                    </div>
+                    @if (isLongContent)
+                    {
+                        <button class="trace-expand-btn" @onclick="() => ToggleExpand(step.StepId)">
+                            @(isExpanded ? "▲ Show less" : "▼ Show more")
+                        </button>
+                    }
+                </div>
+            }
+        </div>
+    }
+</CommandCard>
+
+@code {
+    private readonly List<ReasoningStep> _steps = new();
+    private readonly HashSet<string> _expandedSteps = new();
+    private string? _currentSessionId;
+
+    // Agent color palette for visual differentiation
+    private static readonly string[] AgentColors = [
+        "#667eea", // Periwinkle
+        "#10b981", // Emerald
+        "#f59e0b", // Amber
+        "#ef4444", // Red
+        "#8b5cf6", // Violet
+        "#06b6d4", // Cyan
+        "#ec4899", // Pink
+        "#14b8a6", // Teal
+    ];
+    private readonly Dictionary<string, string> _agentColorMap = new();
+
+    protected override void OnInitialized()
+    {
+        SignalR.OnReasoningStep += HandleReasoningStep;
+    }
+
+    private async void HandleReasoningStep(ReasoningStep step)
+    {
+        // Clear on new session
+        if (_currentSessionId != null && _currentSessionId != step.SessionId)
+        {
+            _steps.Clear();
+            _expandedSteps.Clear();
+            _agentColorMap.Clear();
+        }
+        _currentSessionId = step.SessionId;
+
+        // Insert nested steps after their parent; top-level steps append to end
+        if (step.ParentStepId != null)
+        {
+            var parentIndex = _steps.FindIndex(s => s.StepId == step.ParentStepId);
+            if (parentIndex >= 0)
+            {
+                // Find last child of this parent
+                var insertAt = parentIndex + 1;
+                while (insertAt < _steps.Count && _steps[insertAt].ParentStepId == step.ParentStepId)
+                    insertAt++;
+                _steps.Insert(insertAt, step);
+            }
+            else
+            {
+                _steps.Add(step);
+            }
+        }
+        else
+        {
+            _steps.Add(step);
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void ClearSteps()
+    {
+        _steps.Clear();
+        _expandedSteps.Clear();
+        _currentSessionId = null;
+        StateHasChanged();
+    }
+
+    private void ToggleExpand(string stepId)
+    {
+        if (!_expandedSteps.Remove(stepId))
+            _expandedSteps.Add(stepId);
+    }
+
+    private string GetAgentColor(string agentName)
+    {
+        if (!_agentColorMap.TryGetValue(agentName, out var color))
+        {
+            color = AgentColors[_agentColorMap.Count % AgentColors.Length];
+            _agentColorMap[agentName] = color;
+        }
+        return color;
+    }
+
+    private static string GetStepIcon(ReasoningStepType stepType) => stepType switch
+    {
+        ReasoningStepType.Thinking => "💭",
+        ReasoningStepType.ToolCall => "🔧",
+        ReasoningStepType.A2AHandshake => "🤝",
+        ReasoningStepType.Observation => "👁️",
+        ReasoningStepType.Decision => "✅",
+        ReasoningStepType.Error => "❌",
+        _ => "•"
+    };
+
+    private static string FormatDuration(long ms) => ms switch
+    {
+        < 1000 => $"{ms}ms",
+        < 60_000 => $"{ms / 1000.0:F1}s",
+        _ => $"{ms / 60_000.0:F1}m"
+    };
+
+    public void Dispose()
+    {
+        SignalR.OnReasoningStep -= HandleReasoningStep;
+    }
+}
+
+<style>
+    .reasoning-trace-panel {
+        max-height: 600px;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .trace-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .trace-count {
+        font-size: 0.8rem;
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 600;
+    }
+
+    .trace-clear-btn {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.3);
+        color: #ef4444;
+        padding: 0.25rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .trace-clear-btn:hover {
+        background: rgba(239, 68, 68, 0.2);
+        border-color: rgba(239, 68, 68, 0.5);
+    }
+
+    .trace-empty {
+        text-align: center;
+        padding: 3rem 1rem;
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .trace-empty-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        opacity: 0.5;
+    }
+
+    .trace-empty p {
+        margin: 0.25rem 0;
+        font-size: 0.9rem;
+    }
+
+    .trace-empty-hint {
+        font-size: 0.8rem !important;
+        color: rgba(255, 255, 255, 0.3);
+    }
+
+    .trace-timeline {
+        overflow-y: auto;
+        max-height: 480px;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+        padding-right: 0.5rem;
+    }
+
+    /* Custom scrollbar for dark theme */
+    .trace-timeline::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .trace-timeline::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.03);
+        border-radius: 3px;
+    }
+
+    .trace-timeline::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.15);
+        border-radius: 3px;
+    }
+
+    .trace-timeline::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.25);
+    }
+
+    .trace-step {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-left: 3px solid #667eea;
+        border-radius: 0 8px 8px 0;
+        padding: 0.75rem 1rem;
+        transition: all 0.2s;
+    }
+
+    .trace-step:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .trace-step-nested {
+        margin-left: 1.5rem;
+        border-left-width: 2px;
+        background: rgba(255, 255, 255, 0.02);
+    }
+
+    .trace-step-enter {
+        animation: traceSlideIn 0.3s ease-out;
+    }
+
+    @@keyframes traceSlideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-12px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .trace-step-header {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-wrap: wrap;
+        margin-bottom: 0.5rem;
+    }
+
+    .trace-step-icon {
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    .trace-agent-badge {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        border: 1px solid;
+        border-radius: 10px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+        white-space: nowrap;
+    }
+
+    .trace-step-type {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.4);
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+
+    .trace-duration-badge {
+        display: inline-block;
+        padding: 0.1rem 0.4rem;
+        background: rgba(16, 185, 129, 0.12);
+        border: 1px solid rgba(16, 185, 129, 0.3);
+        border-radius: 6px;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: #10b981;
+        font-family: 'Cascadia Code', 'Fira Code', monospace;
+    }
+
+    .trace-timestamp {
+        font-size: 0.65rem;
+        color: rgba(255, 255, 255, 0.3);
+        margin-left: auto;
+        font-family: 'Cascadia Code', 'Fira Code', monospace;
+        white-space: nowrap;
+    }
+
+    .trace-step-content {
+        font-size: 0.85rem;
+        color: rgba(255, 255, 255, 0.75);
+        line-height: 1.5;
+        word-break: break-word;
+    }
+
+    .trace-content-collapsed {
+        max-height: 3.2em;
+        overflow: hidden;
+        position: relative;
+    }
+
+    .trace-content-collapsed::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 1.5em;
+        background: linear-gradient(transparent, rgba(13, 17, 23, 0.95));
+    }
+
+    .trace-expand-btn {
+        background: none;
+        border: none;
+        color: #667eea;
+        font-size: 0.75rem;
+        cursor: pointer;
+        padding: 0.25rem 0;
+        font-weight: 600;
+        transition: color 0.2s;
+    }
+
+    .trace-expand-btn:hover {
+        color: #8b9cf7;
+    }
+</style>

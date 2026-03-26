@@ -654,3 +654,31 @@ Backend developer for squad-commerce. Responsible for ASP.NET Core infrastructur
 **Build Status:** ✅ Contracts, Api, and Web projects all build with 0 errors, 0 warnings. Pre-existing test failures (unrelated `ChiefSoftwareArchitectAgent` constructor mismatch) not introduced by this change.
 
 **Unblocks:** Items 2.3 (CoT panel — Clippy), 2.4 (Tool call timeline — Clippy), 2.8 (Orchestrator instrumentation — Satya)
+
+### 2026-03-24: Phase 2, Item 2.9 — A2A Handshake Status Tracking
+
+Extended the Agent Fleet Panel to show real-time A2A connection state between agents via SignalR.
+
+**Files Created:**
+1. **`src/SquadCommerce.Contracts/Interfaces/IA2AStatusNotifier.cs`** — Interface following the `IThinkingStateNotifier` pattern. Single method `SendA2AHandshakeStatusAsync(sessionId, sourceAgent, targetAgent, status, details)`. Status values: "negotiating", "connected", "completed", "failed".
+
+2. **`src/SquadCommerce.Api/Services/SignalRA2AStatusNotifier.cs`** — Implementation that broadcasts via `IHubContext<AgentHub>.Clients.All.SendAsync("A2AHandshakeStatus", ...)`. Follows the same pattern as `SignalRThinkingStateNotifier`.
+
+**Files Modified:**
+3. **`src/SquadCommerce.Api/Hubs/AgentHub.cs`** — Added `SendA2AHandshakeStatus(sessionId, sourceAgent, targetAgent, status, details)` hub method. Broadcasts to all clients.
+
+4. **`src/SquadCommerce.Api/Program.cs`** — Registered `IA2AStatusNotifier` → `SignalRA2AStatusNotifier` as singleton in DI.
+
+5. **`src/SquadCommerce.Web/Services/SignalRStateService.cs`** — Added `OnA2AHandshakeStatus` event (`Action<string, string, string, string, string>?`). Subscribed to `"A2AHandshakeStatus"` SignalR event in hub connection setup.
+
+6. **`src/SquadCommerce.A2A/A2AClient.cs`** — Injected optional `IA2AStatusNotifier?` (default null for backward compat). Emits "negotiating" before A2A calls, "completed" on success, "failed" on error. Added `NotifyStatusAsync` helper that swallows exceptions to never break A2A flow. Applied to both `GetCompetitorPricingAsync` and `GetBulkCompetitorPricingAsync`.
+
+7. **`src/SquadCommerce.Web/Components/Chat/AgentFleetPanel.razor`** — Added `A2AConnectionInfo` record with status-to-emoji/label mapping. Tracks `_a2aConnections` dictionary keyed by agent. Subscribes to `OnA2AHandshakeStatus`, renders A2A status badges (⏳ Negotiating / ✅ Completed / ❌ Failed) in the protocol badge area of agent cards.
+
+**Architecture Decisions:**
+- **Optional notifier injection** — `IA2AStatusNotifier? statusNotifier = null` keeps A2AClient backward-compatible. All existing tests pass without changes.
+- **Fire-and-forget notification** — `NotifyStatusAsync` wraps the call in try/catch so notification failures never disrupt A2A operations.
+- **Broadcast to All clients** — Same pattern as ReasoningStep. UI can filter by sessionId client-side.
+- **Session ID from Activity** — Uses `Activity.Current?.TraceId` to correlate with existing OpenTelemetry traces, falls back to GUID.
+
+**Build Status:** ✅ All 7 projects build with 0 errors, 0 warnings. 191 unit/integration tests pass. Playwright E2E tests excluded (require running server).

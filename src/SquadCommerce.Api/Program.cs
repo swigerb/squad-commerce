@@ -45,6 +45,9 @@ builder.Services.AddSingleton<IThinkingStateNotifier, SignalRThinkingStateNotifi
 // Reasoning trace emitter (broadcasts chain of thought steps over SignalR)
 builder.Services.AddSingleton<IReasoningTraceEmitter, SignalRReasoningTraceEmitter>();
 
+// A2A status notifier (broadcasts handshake state between agents over SignalR)
+builder.Services.AddSingleton<IA2AStatusNotifier, SignalRA2AStatusNotifier>();
+
 // CORS for Blazor frontend
 builder.Services.AddCors(options =>
 {

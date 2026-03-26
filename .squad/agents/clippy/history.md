@@ -515,3 +515,35 @@ In .NET 10 Blazor with per-page/component render modes, ANY interactive componen
 **Files modified:**
 - `src/SquadCommerce.Web/Components/Layout/MainLayout.razor` — Added right sidebar with `<AgentFleetPanel />`
 - `src/SquadCommerce.Web/wwwroot/app.css` — Added `.sidebar-right` layout styles
+
+### 2026-03-25: Phase 2 Items 2.3 + 2.4 — Chain of Thought Panel & Tool Call Timeline
+
+**What was done:**
+- **Created `ReasoningTracePanel.razor`** (Item 2.3) — Vertical timeline showing agent reasoning process:
+  - Subscribes to `SignalRStateService.OnReasoningStep` for real-time streaming
+  - Icon-coded steps: 💭 Thinking, 🔧 ToolCall, 🤝 A2AHandshake, 👁️ Observation, ✅ Decision, ❌ Error
+  - Agent name badges with per-agent color coding (8-color palette)
+  - Duration badges (ms/s/m format), timestamps in HH:mm:ss.fff
+  - Nested steps (via ParentStepId) indented under parents
+  - Collapsible long content with gradient fade
+  - Slide-down animation on new steps, auto-clears on session change
+  - Custom scrollbar styling for dark theme
+- **Created `ToolCallTimeline.razor`** (Item 2.4) — Horizontal Gantt-style bar chart:
+  - Filters ReasoningStep to only ToolCall and A2AHandshake types
+  - Groups bars by agent name, one row per agent
+  - Bar width proportional to DurationMs, minimum 60px visible width
+  - Color-coded: green for ToolCall, blue for A2AHandshake
+  - Hover tooltips with tool name, duration, timestamp
+  - Legend, horizontal scroll, bar scale-in animations
+  - Pure CSS (no JS charting libraries)
+- **Integrated into Home.razor** — 2-column grid layout below System Health section
+  - Responsive: stacks to single column under 1024px
+  - Section header with "● Live" pulse indicator
+
+**Key patterns:**
+- First A2UI components to use **direct SignalR event subscription** (all prior components used Parameter/A2UIPayload binding)
+- `IDisposable` pattern to unsubscribe from SignalR events on component teardown
+- `InvokeAsync(StateHasChanged)` required because SignalR callbacks arrive on non-UI thread
+- Session-aware: auto-clear lists when `SessionId` changes across steps
+
+**Build status:** ✅ Successful — 0 warnings, 0 errors

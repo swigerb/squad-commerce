@@ -41,6 +41,19 @@
     </div>
     <TelemetryDashboard />
 
+    <div class="section-header">
+        <h2>🧠 Agent Reasoning</h2>
+        <span class="section-status">● Live</span>
+    </div>
+    <div class="reasoning-layout">
+        <div class="reasoning-main">
+            <ReasoningTracePanel />
+        </div>
+        <div class="reasoning-timeline">
+            <ToolCallTimeline />
+        </div>
+    </div>
+
     <CommandCard Title="✨ What You Can Do" CssClass="features-card">
         <div class="feature-grid">
             <div class="feature-item">
@@ -272,6 +285,23 @@
         font-weight: 600;
         color: #3fb950;
         animation: status-pulse 2s infinite;
+    }
+
+    .reasoning-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+    }
+
+    .reasoning-main,
+    .reasoning-timeline {
+        min-width: 0;
+    }
+
+    @@media (max-width: 1024px) {
+        .reasoning-layout {
+            grid-template-columns: 1fr;
+        }
     }
 
     @@keyframes status-pulse {

@@ -15,6 +15,7 @@ public class SignalRStateService : IAsyncDisposable
     public event Action<string>? OnNotification;
     public event Action<string, string, bool>? OnThinkingState;
     public event Action<ReasoningStep>? OnReasoningStep;
+    public event Action<string, string, string, string, string>? OnA2AHandshakeStatus;
 
     public bool IsConnected=> _hubConnection?.State == HubConnectionState.Connected;
     public HubConnectionState ConnectionState => _hubConnection?.State ?? HubConnectionState.Disconnected;
@@ -121,6 +122,13 @@ public class SignalRStateService : IAsyncDisposable
             _logger.LogDebug("Received ReasoningStep: StepId={StepId}, Agent={AgentName}, Type={StepType}, Session={SessionId}",
                 step.StepId, step.AgentName, step.StepType, step.SessionId);
             OnReasoningStep?.Invoke(step);
+        });
+
+        _hubConnection.On<string, string, string, string, string>("A2AHandshakeStatus", (sessionId, sourceAgent, targetAgent, status, details) =>
+        {
+            _logger.LogDebug("Received A2AHandshakeStatus: Source={SourceAgent}, Target={TargetAgent}, Status={Status}, Session={SessionId}",
+                sourceAgent, targetAgent, status, sessionId);
+            OnA2AHandshakeStatus?.Invoke(sessionId, sourceAgent, targetAgent, status, details);
         });
 
         try

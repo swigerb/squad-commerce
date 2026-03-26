@@ -88,4 +88,15 @@ public sealed class AgentHub : Hub
         _logger.LogDebug("ReasoningStep sent: StepId={StepId}, Agent={AgentName}, Type={StepType}, Session={SessionId}",
             step.StepId, step.AgentName, step.StepType, step.SessionId);
     }
+
+    /// <summary>
+    /// Broadcasts A2A handshake status between agents to all connected clients.
+    /// Status values: "negotiating", "connected", "completed", "failed".
+    /// </summary>
+    public async Task SendA2AHandshakeStatus(string sessionId, string sourceAgent, string targetAgent, string status, string details)
+    {
+        await Clients.All.SendAsync("A2AHandshakeStatus", sessionId, sourceAgent, targetAgent, status, details);
+        _logger.LogDebug("A2AHandshakeStatus sent: Source={SourceAgent}, Target={TargetAgent}, Status={Status}, Session={SessionId}",
+            sourceAgent, targetAgent, status, sessionId);
+    }
 }

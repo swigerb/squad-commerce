@@ -44,6 +44,15 @@
                             {
                                 <span class="protocol-badge protocol-@proto.ToLowerInvariant()">@proto</span>
                             }
+                            @{
+                                var a2aStatus = GetA2AStatus(agent.Key);
+                            }
+                            @if (a2aStatus != null)
+                            {
+                                <span class="protocol-badge a2a-status a2a-@a2aStatus.CssClass" title="@a2aStatus.Details">
+                                    @a2aStatus.Emoji @a2aStatus.Label
+                                </span>
+                            }
                         </div>
                     </div>
                 </div>
@@ -58,10 +67,39 @@
     private readonly HashSet<string> _thinkingAgents = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _errorAgents = new(StringComparer.OrdinalIgnoreCase);
     private readonly Dictionary<string, string> _lastActions = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, A2AConnectionInfo> _a2aConnections = new(StringComparer.OrdinalIgnoreCase);
 
     private sealed record AgentInfo(string Key, string Icon, string Name, string Role, string[] Protocols);
 
     private sealed record AgentStatus(string Emoji, string Label, string CssClass, bool IsActive);
+
+    private sealed record A2AConnectionInfo(string TargetAgent, string Status, string Details)
+    {
+        public string Emoji => Status switch
+        {
+            "negotiating" => "⏳",
+            "connected" => "🤝",
+            "completed" => "✅",
+            "failed" => "❌",
+            _ => "❓"
+        };
+        public string Label => Status switch
+        {
+            "negotiating" => "Negotiating",
+            "connected" => "Connected",
+            "completed" => "Completed",
+            "failed" => "Failed",
+            _ => Status
+        };
+        public string CssClass => Status switch
+        {
+            "negotiating" => "negotiating",
+            "connected" => "connected",
+            "completed" => "completed",
+            "failed" => "failed",
+            _ => "unknown"
+        };
+    }
 
     private readonly AgentInfo[] _agents =
     [
@@ -85,11 +123,17 @@
         return _lastActions.TryGetValue(agentKey, out var action) ? action : "Idle";
     }
 
+    private A2AConnectionInfo? GetA2AStatus(string agentKey)
+    {
+        return _a2aConnections.TryGetValue(agentKey, out var info) ? info : null;
+    }
+
     protected override async Task OnInitializedAsync()
     {
         StateService.OnThinkingState += HandleThinkingState;
         StateService.OnReasoningStep += HandleReasoningStep;
         StateService.OnStatusUpdate += HandleStatusUpdate;
+        StateService.OnA2AHandshakeStatus += HandleA2AHandshakeStatus;
 
         try
         {
@@ -153,6 +197,13 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private void HandleA2AHandshakeStatus(string sessionId, string sourceAgent, string targetAgent, string status, string details)
+    {
+        var key = ResolveAgentKey(sourceAgent);
+        _a2aConnections[key] = new A2AConnectionInfo(targetAgent, status, details);
+        InvokeAsync(StateHasChanged);
+    }
+
     private string ResolveAgentKey(string agentName)
     {
         foreach (var a in _agents)
@@ -173,5 +224,6 @@
         StateService.OnThinkingState -= HandleThinkingState;
         StateService.OnReasoningStep -= HandleReasoningStep;
         StateService.OnStatusUpdate -= HandleStatusUpdate;
+        StateService.OnA2AHandshakeStatus -= HandleA2AHandshakeStatus;
     }
 }

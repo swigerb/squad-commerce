@@ -24,13 +24,15 @@ public sealed class A2AClient : IA2AClient
 {
     private readonly HttpClient _httpClient;
     private readonly ILogger<A2AClient> _logger;
+    private readonly IA2AStatusNotifier? _statusNotifier;
     private const int MaxRetries = 3;
     private static readonly TimeSpan RetryDelay = TimeSpan.FromSeconds(1);
 
-    public A2AClient(HttpClient httpClient, ILogger<A2AClient> logger)
+    public A2AClient(HttpClient httpClient, ILogger<A2AClient> logger, IA2AStatusNotifier? statusNotifier = null)
     {
         _httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _statusNotifier = statusNotifier;
 
         // Configure HttpClient with reasonable defaults
         _httpClient.Timeout = TimeSpan.FromSeconds(30);
@@ -42,6 +44,7 @@ public sealed class A2AClient : IA2AClient
     public async Task<IReadOnlyList<CompetitorPricing>> GetCompetitorPricingAsync(string sku, CancellationToken cancellationToken = default)
     {
         var startTime = DateTimeOffset.UtcNow;
+        var sessionId = Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString();
         
         // Create A2A handshake span
         using var activity = SquadCommerceTelemetry.StartA2ASpan("ExternalVendor", "Handshake");
@@ -54,6 +57,10 @@ public sealed class A2AClient : IA2AClient
             new KeyValuePair<string, object?>("a2a.target.agent", "ExternalVendor"));
 
         _logger.LogInformation("A2AClient querying competitor pricing for SKU {Sku}", sku);
+
+        // Emit negotiating status
+        await NotifyStatusAsync(sessionId, "MarketIntelAgent", "ExternalVendor", "negotiating",
+            $"Initiating A2A handshake for SKU {sku}", cancellationToken);
 
         try
         {
@@ -70,6 +77,10 @@ public sealed class A2AClient : IA2AClient
             
             activity?.SetTag("a2a.response.status", "success");
             activity?.SetTag("a2a.response.count", mockCompetitors.Count);
+
+            // Emit completed status
+            await NotifyStatusAsync(sessionId, "MarketIntelAgent", "ExternalVendor", "completed",
+                $"Retrieved {mockCompetitors.Count} competitor prices for {sku}", cancellationToken);
             
             return mockCompetitors;
         }
@@ -87,6 +98,10 @@ public sealed class A2AClient : IA2AClient
             var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
             SquadCommerceTelemetry.A2AHandshakeDuration.Record(duration,
                 new KeyValuePair<string, object?>("a2a.target.agent", "ExternalVendor"));
+
+            // Emit failed status
+            await NotifyStatusAsync(sessionId, "MarketIntelAgent", "ExternalVendor", "failed",
+                $"A2A handshake failed: {ex.Message}", cancellationToken);
             
             throw;
         }
@@ -201,6 +216,22 @@ public sealed class A2AClient : IA2AClient
     }
 
     /// <summary>
+    /// Emits A2A handshake status via the notifier (fire-and-forget, never throws).
+    /// </summary>
+    private async Task NotifyStatusAsync(string sessionId, string sourceAgent, string targetAgent, string status, string details, CancellationToken cancellationToken)
+    {
+        if (_statusNotifier == null) return;
+        try
+        {
+            await _statusNotifier.SendA2AHandshakeStatusAsync(sessionId, sourceAgent, targetAgent, status, details, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to emit A2A status notification");
+        }
+    }
+
+    /// <summary>
     /// Mock implementation: simulates external vendor A2A responses with realistic competitor data.
     /// In production, this would be replaced with real A2A protocol calls.
     /// </summary>
@@ -266,6 +297,7 @@ public sealed class A2AClient : IA2AClient
     public async Task<IReadOnlyList<CompetitorPricing>> GetBulkCompetitorPricingAsync(IReadOnlyList<string> skus, CancellationToken cancellationToken = default)
     {
         var startTime = DateTimeOffset.UtcNow;
+        var sessionId = Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString();
         
         using var activity = SquadCommerceTelemetry.StartA2ASpan("ExternalVendor", "BulkHandshake");
         activity?.SetTag("a2a.target.agent", "ExternalVendor");
@@ -276,6 +308,10 @@ public sealed class A2AClient : IA2AClient
             new KeyValuePair<string, object?>("a2a.target.agent", "ExternalVendor"));
 
         _logger.LogInformation("A2AClient querying competitor pricing for {Count} SKUs", skus.Count);
+
+        // Emit negotiating status
+        await NotifyStatusAsync(sessionId, "MarketIntelAgent", "ExternalVendor", "negotiating",
+            $"Bulk A2A handshake for {skus.Count} SKUs", cancellationToken);
 
         try
         {
@@ -296,6 +332,10 @@ public sealed class A2AClient : IA2AClient
             
             activity?.SetTag("a2a.response.status", "success");
             activity?.SetTag("a2a.response.count", allResults.Count);
+
+            // Emit completed status
+            await NotifyStatusAsync(sessionId, "MarketIntelAgent", "ExternalVendor", "completed",
+                $"Bulk query returned {allResults.Count} prices for {skus.Count} SKUs", cancellationToken);
             
             return allResults;
         }
@@ -311,6 +351,10 @@ public sealed class A2AClient : IA2AClient
             var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
             SquadCommerceTelemetry.A2AHandshakeDuration.Record(duration,
                 new KeyValuePair<string, object?>("a2a.target.agent", "ExternalVendor"));
+
+            // Emit failed status
+            await NotifyStatusAsync(sessionId, "MarketIntelAgent", "ExternalVendor", "failed",
+                $"Bulk A2A handshake failed: {ex.Message}", cancellationToken);
             
             throw;
         }
