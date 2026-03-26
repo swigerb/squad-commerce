@@ -9,6 +9,7 @@ using SquadCommerce.Agents.Domain;
 using SquadCommerce.Agents.Orchestrator;
 using SquadCommerce.Api.Services;
 using SquadCommerce.Contracts.Interfaces;
+using Moq;
 using Xunit;
 
 namespace SquadCommerce.Integration.Tests.Smoke;
@@ -51,6 +52,7 @@ public class SystemSmokeTests
         // Register A2A components
         services.AddHttpClient<IA2AClient, SquadCommerce.A2A.A2AClient>();
         services.AddSingleton<SquadCommerce.A2A.Validation.ExternalDataValidator>();
+        services.AddSingleton<IThinkingStateNotifier>(Mock.Of<IThinkingStateNotifier>());
         
         // Register domain agents
         services.AddScoped<InventoryAgent>();

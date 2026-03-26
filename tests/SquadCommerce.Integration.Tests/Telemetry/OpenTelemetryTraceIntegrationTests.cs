@@ -8,6 +8,8 @@ using SquadCommerce.Mcp.Data;
 using Microsoft.EntityFrameworkCore;
 using SquadCommerce.A2A;
 using SquadCommerce.A2A.Validation;
+using SquadCommerce.Contracts.Interfaces;
+using Moq;
 
 namespace SquadCommerce.Integration.Tests.Telemetry;
 
@@ -132,6 +134,7 @@ public class OpenTelemetryTraceIntegrationTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Create parent activity and execute workflow

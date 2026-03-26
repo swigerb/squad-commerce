@@ -6,8 +6,10 @@ using SquadCommerce.Agents.Domain;
 using SquadCommerce.Mcp.Data;
 using SquadCommerce.A2A;
 using SquadCommerce.A2A.Validation;
+using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Contracts.Models;
 using Microsoft.EntityFrameworkCore;
+using Moq;
 
 namespace SquadCommerce.Agents.Tests.Orchestrator;
 
@@ -36,6 +38,7 @@ public class ChiefSoftwareArchitectAgentCoverageTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act
@@ -71,6 +74,7 @@ public class ChiefSoftwareArchitectAgentCoverageTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act
@@ -104,6 +108,7 @@ public class ChiefSoftwareArchitectAgentCoverageTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act

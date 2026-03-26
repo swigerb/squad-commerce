@@ -52,6 +52,7 @@ public class CompetitorPriceDropScenarioTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Trigger full workflow: competitor drops price by 10%

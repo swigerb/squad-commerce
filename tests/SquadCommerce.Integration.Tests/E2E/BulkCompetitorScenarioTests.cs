@@ -6,8 +6,10 @@ using SquadCommerce.A2A.Validation;
 using SquadCommerce.Agents.Domain;
 using SquadCommerce.Agents.Orchestrator;
 using SquadCommerce.Contracts.A2UI;
+using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Contracts.Models;
 using SquadCommerce.Mcp.Data;
+using Moq;
 using Xunit;
 
 namespace SquadCommerce.Integration.Tests.E2E;
@@ -36,6 +38,7 @@ public class BulkCompetitorScenarioTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Trigger bulk workflow: TechMart drops prices on 3 products
@@ -100,6 +103,7 @@ public class BulkCompetitorScenarioTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act
@@ -246,6 +250,7 @@ public class BulkCompetitorScenarioTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act
@@ -286,6 +291,7 @@ public class BulkCompetitorScenarioTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Large bulk analysis

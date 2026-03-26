@@ -6,7 +6,9 @@ using SquadCommerce.A2A.Validation;
 using SquadCommerce.Agents.Domain;
 using SquadCommerce.Agents.Orchestrator;
 using SquadCommerce.Contracts.A2UI;
+using SquadCommerce.Contracts.Interfaces;
 using SquadCommerce.Mcp.Data;
+using Moq;
 using Xunit;
 
 namespace SquadCommerce.Agents.Tests.Orchestrator;
@@ -36,6 +38,7 @@ public class BulkAnalysisTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Bulk analysis for 3 SKUs
@@ -89,6 +92,7 @@ public class BulkAnalysisTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Bulk analysis for 3 SKUs across 5 stores = 15 inventory entries expected
@@ -131,6 +135,7 @@ public class BulkAnalysisTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Bulk pricing analysis
@@ -174,6 +179,7 @@ public class BulkAnalysisTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Include one valid SKU and one potentially problematic SKU
@@ -218,6 +224,7 @@ public class BulkAnalysisTests
             pricingAgent,
             marketIntelAgent,
             auditRepo,
+            Mock.Of<IThinkingStateNotifier>(),
             NullLogger<ChiefSoftwareArchitectAgent>.Instance);
 
         // Act - Bulk analysis for 4 SKUs
