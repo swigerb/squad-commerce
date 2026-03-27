@@ -9,29 +9,37 @@
 
 User Advocate and AG-UI Expert for squad-commerce. Responsible for Blazor frontend, A2UI components that render agent responses, AG-UI protocol client implementation, and ensuring the entire user experience is polished, accessible, and showcase-worthy.
 
-**Frontend Architecture (2026-03-24):**
+### Frontend Architecture
 - Blazor Web Server with Server-side Interactivity (.NET 10.0)
-- A2UI Component Library: RetailStockHeatmap, PricingImpactChart, MarketComparisonGrid — all typed via A2UIPayload record with RenderAs discriminator
+- A2UI Component Library: RetailStockHeatmap, PricingImpactChart, MarketComparisonGrid, DecisionAuditTrail, AgentPipelineVisualizer
 - Chat/Streaming: AgentChat.razor (SSE streaming), AgentStatusBar.razor (real-time status), ActivityTimeline.razor (agent history)
-- Services: AgUiStreamService (AG-UI SSE client), SignalRStateService (background push updates), FleetStateService (agent status aggregation)
+- Services: AgUiStreamService (AG-UI SSE client), SignalRStateService (background push), AgentActivityService (activity bridge), FleetStateService (status aggregation)
 
-**Established Patterns:**
-- A2UI components only — no raw markdown for complex data. Contract validation ensures type safety.
-- SSE stream (`/api/agui`) is sync request/response for chat; SignalR is async-only for background state
-- Client-side bridge pattern: AgentActivityService connects SSE events to UI components
-- Dark theme support, accessible typography, responsive panels
+### Key Patterns & Decisions
+1. **A2UI Components Only:** No raw markdown for complex data. All A2UI payloads contract-validated with `RenderAs` discriminator
+2. **Dual-Channel Architecture:** SSE handles sync chat requests; SignalR handles async background state. Both channels independently drive UI.
+3. **Activity Bridge:** `AgentActivityService` forwards SSE events to UI components — enables consistent agent activity display across chat and fleet panels
+4. **Animation Parity:** All agent status animations (badges, beacons, pulses) match System Health/Aspire Dashboard aesthetic — CSS keyframes with 300ms+ easing
+5. **Color Tokens:** Per-agent CSS custom properties (`--agent-color`) for Orchestrator (purple), Inventory (green), Pricing (blue-purple), Market Intel (blue)
+6. **Flex Layout Fix:** Nested flex containers require `min-height: 0` on parents to enable child scrolling
+7. **Dark Theme:** #1a1a2e backgrounds, scrollbar theming with both Firefox + Webkit support, accessible contrast ratios
 
-**Design System (2026-03-24-03-26):**
-- Colors: Alert Red (#F14438), Success Green (#12A24F), Disabled Gray (#C5C5C5)
-- Components: Status badges, urgency indicators, activity timeline with color-coded agent states
-- Layouts: Fixed header (24px safe area), sidebar (240px collapsible), main content area (flex 1)
-- Typography: 14px body, 16px labels, 20px headings, Segoe UI font stack
+### Build Status (2026-03-27)
+- ✅ Web project compiles with 0 errors, 0 warnings
+- ✅ All A2UI components rendering with proper data contracts
+- ✅ SSE + SignalR bridging working without conflicts
+- ✅ Activity Timeline, Fleet Panel, Status Bar operational
 
-**Current Status (2026-03-27):**
-- Activity Timeline scroll fixed: min-height:0 on flex parent containers
-- Agent Fleet panel now shows real-time activity from both SSE and SignalR channels
-- AgentActivityService bridges SSE events from chat to fleet panel (no backend changes)
-- Web project compiles with 0 errors
+### Recent Work Summary (2026-03-24 to 2026-03-27)
+**Phase 1-3 (2026-03-24):** A2UI component library (Heatmap, Pricing, Market Grid), AgentChat SSE streaming, Activity Timeline, responsive design
+**Phase 4 (2026-03-24):** Full A2UI component implementation with typed data binding, AgentStatusBar real-time status display, dark theme support
+**Showcase Components (2026-03-24):** DecisionAuditTrail (timeline audit logs), AgentPipelineVisualizer (orchestration flow diagrams) — enterprise-grade polish for demos
+**Infrastructure (2026-03-25 to 2026-03-26):** SignalR integration, price regex parsing, dashboard scroll fixes, header navigation refinement
+**Activity Bridge (2026-03-27):** Fixed agent fleet not showing activity during chat messages; created AgentActivityService to bridge SSE→UI events
+**Mission Control Aesthetic (2026-03-27):** Complete rework of AgentStatusBar with standby/active badge states, unified Status Beacon, System Health animation parity
+
+### Next Phase
+Design review of new AgentStatusBar; integration of new animation states with backend agent telemetry; E2E testing of activity flow through both SSE and SignalR channels.
 
 ## Learnings
 
