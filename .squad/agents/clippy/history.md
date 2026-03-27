@@ -681,3 +681,36 @@ In .NET 10 Blazor with per-page/component render modes, ANY interactive componen
 - Dark-theme scrollbar: use both `scrollbar-width`/`scrollbar-color` (Firefox) and `::-webkit-scrollbar` (Chrome/Edge)
 
 **Build status:** ✅ Web project compiles with 0 errors
+
+---
+
+### 2026-03-27: Activity Bridge Pattern & Timeline Scroll Fix
+
+**What was done:**
+- Fixed Activity Timeline scroll cutoff by adding `min-height: 0` to parent flex containers
+- Added dark-theme scrollbar styling for ActivityTimeline component
+- Created `AgentActivityService` — lightweight client-side event bus singleton
+- Bridged SSE stream events from AgentChat to AgentFleetPanel and AgentStatusBar
+- Both channels (SSE and SignalR) now independently drive UI state
+
+**Why this matters:**
+- Agent Fleet panel was showing "Idle" during active agent processing (only watched SignalR, not SSE)
+- Activity Timeline was cutting off content during vertical scroll
+- Pattern: New activity-aware UI components should inject both `SignalRStateService` AND `AgentActivityService`
+- If SignalR unavailable, UI still receives activity from SSE stream
+- If SignalR adds ThinkingState later, both paths work without conflict
+
+**UI Components Updated:**
+- `Components/Agent/AgentFleetPanel.razor` — Subscribed to both SignalR and AgentActivityService
+- `Components/Chat/AgentStatusBar.razor` — Subscribed to both services
+- `Components/Chat/ActivityTimeline.razor` — Fixed flex container overflow with min-height:0
+
+**Files Changed:**
+- `src/SquadCommerce.Web/Services/AgentActivityService.cs` — New service (singleton)
+- `src/SquadCommerce.Web/Components/Agent/AgentFleetPanel.razor` — Subscriptions added
+- `src/SquadCommerce.Web/Components/Chat/AgentStatusBar.razor` — Subscriptions added
+- `src/SquadCommerce.Web/Components/Chat/ActivityTimeline.razor` — Flex overflow fix
+
+**Build status:** ✅ Web project compiles with 0 errors
+
+**Decision:** [Agent Activity Bridge Pattern](../../decisions.md#2026-07-15-agent-activity-bridge-pattern)

@@ -605,3 +605,45 @@ Lead developer for squad-commerce. Responsible for MAF agent orchestration, A2A 
 - Non-breaking addition — all existing endpoints/tests unaffected
 
 **Build & Test:** ✅ 0 errors, 0 warnings, 191 tests pass (83 Agents + 24 A2A + 30 Mcp + 41 Integration + 13 Web)
+
+### 2026-03-25: Fix Inventory Query Routing (Check Inventory Bug)
+
+**Problem:** "Check Inventory" command in Agent Workspace failed with "Analysis failed: Failed to validate competitor pricing". An inventory-only query was being routed through the CompetitorPriceDrop workflow, which required MarketIntelAgent validation as Step 1.
+
+**Root Cause:** The AG-UI chat bridge in `Program.cs` had no "InventoryCheck" scenario type. The keyword-based intent detection only recognized ViralSpike, SupplyChainShock, ESGAudit, and StoreReadiness. All unrecognized messages (including inventory queries) fell through to the default `CompetitorPriceDrop` scenario.
+
+**Fix (3 changes):**
+1. **Chat bridge routing** (`src/SquadCommerce.Api/Program.cs`): Added `InventoryCheck` scenario detection before other scenarios, matching keywords: inventory, stock level, warehouse, units on hand, reorder, check inventory, show inventory.
+2. **New orchestrator method** (`src/SquadCommerce.Agents/Orchestrator/ChiefSoftwareArchitectAgent.cs`): `ProcessInventoryQueryAsync` — delegates directly to InventoryAgent only (no MarketIntel, no Pricing), with proper telemetry, audit trail, insight cards, and A2UI payload.
+3. **Graceful degradation** in CompetitorPriceDrop: Changed MarketIntelAgent failure from aborting the workflow to continuing with limited data (defense-in-depth).
+
+**Architecture Pattern:** Each user intent should map to a specific workflow pipeline. The orchestrator should never use a pricing workflow as a "catch-all" for unrecognized queries. Intent detection order matters — more specific patterns first.
+
+**Key Files:**
+- `src/SquadCommerce.Api/Program.cs` — Chat bridge intent detection (lines 162-174)
+- `src/SquadCommerce.Agents/Orchestrator/ChiefSoftwareArchitectAgent.cs` — `ProcessInventoryQueryAsync` + helpers
+
+**Build & Test:** ✅ 0 errors, 83 Agent tests pass
+
+---
+
+### 2026-03-27: Inventory Query Routing & Scenario Detection
+
+**What was done:**
+- Implemented `InventoryCheck` scenario detection in chat bridge (keywords: inventory, stock level, warehouse, units on hand, reorder)
+- Created `ProcessInventoryQueryAsync` orchestrator method for lightweight inventory-only pipeline
+- Delegates only to InventoryAgent via MCP, bypassing MarketIntel and Pricing agents
+- Added graceful degradation: MarketIntelAgent failures no longer abort CompetitorPriceDrop workflow
+
+**Why this matters:**
+- Fixes "Failed to validate competitor pricing" error when checking inventory
+- Returns proper `RetailStockHeatmap` A2UI payload with inventory insight cards
+- Establishes pattern: Each user intent (inventory check, pricing queries, trend analysis) gets dedicated scenario type and orchestrator method
+
+**Files Changed:**
+- `src/SquadCommerce.Api/Program.cs` — Chat bridge scenario detection
+- `src/SquadCommerce.Agents/Orchestrator/ChiefSoftwareArchitectAgent.cs` — New ProcessInventoryQueryAsync method
+
+**Build & Test:** ✅ 0 errors, 83 Agent tests pass
+
+**Decision:** [Inventory Query Routing Fix](../../decisions.md#2026-03-25-inventory-query-routing-fix)
