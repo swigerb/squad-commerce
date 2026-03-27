@@ -1,4 +1,5 @@
 @inject Services.SignalRStateService StateService
+@inject Services.AgentActivityService ActivityService
 @implements IDisposable
 
 <div class="agent-status-bar" role="status" aria-live="polite" aria-atomic="true">
@@ -242,6 +243,10 @@
         StateService.OnUrgencyBadge += HandleUrgencyBadge;
         StateService.OnThinkingState += HandleThinkingState;
 
+        ActivityService.OnAgentActivity += HandleActivityBridgeThinking;
+        ActivityService.OnAgentStatusUpdate += HandleActivityBridgeStatus;
+        ActivityService.OnAllAgentsIdle += HandleActivityBridgeIdle;
+
         try
         {
             await StateService.StartAsync();
@@ -300,6 +305,35 @@
         else
             _thinkingAgents.Remove(key);
 
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleActivityBridgeThinking(string agentName, bool isActive)
+    {
+        var key = _agentPersonas.Keys.FirstOrDefault(k =>
+            k.Equals(agentName, StringComparison.OrdinalIgnoreCase) ||
+            agentName.Contains(k, StringComparison.OrdinalIgnoreCase) ||
+            k.Contains(agentName.Replace("Agent", ""), StringComparison.OrdinalIgnoreCase)) ?? agentName;
+
+        if (isActive)
+            _thinkingAgents.Add(key);
+        else
+            _thinkingAgents.Remove(key);
+
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleActivityBridgeStatus(string agentName, string status)
+    {
+        _currentStatus = status;
+        _statusLevel = "info";
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleActivityBridgeIdle()
+    {
+        _thinkingAgents.Clear();
+        _currentStatus = string.Empty;
         InvokeAsync(StateHasChanged);
     }
 
@@ -425,6 +459,9 @@
         StateService.OnStatusUpdate -= HandleStatusUpdate;
         StateService.OnUrgencyBadge -= HandleUrgencyBadge;
         StateService.OnThinkingState -= HandleThinkingState;
+        ActivityService.OnAgentActivity -= HandleActivityBridgeThinking;
+        ActivityService.OnAgentStatusUpdate -= HandleActivityBridgeStatus;
+        ActivityService.OnAllAgentsIdle -= HandleActivityBridgeIdle;
         _badgeCleanupTimer?.Dispose();
     }
 }

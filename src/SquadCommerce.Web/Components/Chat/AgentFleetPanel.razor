@@ -1,5 +1,6 @@
 @using SquadCommerce.Contracts
 @inject Services.SignalRStateService StateService
+@inject Services.AgentActivityService ActivityService
 @implements IDisposable
 
 <div class="agent-fleet-panel" role="region" aria-label="Agent Fleet Status">
@@ -139,6 +140,10 @@
         StateService.OnStatusUpdate += HandleStatusUpdate;
         StateService.OnA2AHandshakeStatus += HandleA2AHandshakeStatus;
 
+        ActivityService.OnAgentActivity += HandleAgentActivity;
+        ActivityService.OnAgentStatusUpdate += HandleAgentStatusFromStream;
+        ActivityService.OnAllAgentsIdle += HandleAllAgentsIdle;
+
         try
         {
             await StateService.StartAsync();
@@ -208,6 +213,39 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private void HandleAgentActivity(string agentName, bool isActive)
+    {
+        var key = ResolveAgentKey(agentName);
+        if (isActive)
+        {
+            _thinkingAgents.Add(key);
+            _errorAgents.Remove(key);
+        }
+        else
+        {
+            _thinkingAgents.Remove(key);
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAgentStatusFromStream(string agentName, string status)
+    {
+        var key = ResolveAgentKey(agentName);
+        _lastActions[key] = Truncate(status);
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleAllAgentsIdle()
+    {
+        _thinkingAgents.Clear();
+        foreach (var agent in _agents)
+        {
+            if (_lastActions.ContainsKey(agent.Key))
+                _lastActions[agent.Key] = "Completed";
+        }
+        InvokeAsync(StateHasChanged);
+    }
+
     private string ResolveAgentKey(string agentName)
     {
         foreach (var a in _agents)
@@ -229,5 +267,8 @@
         StateService.OnReasoningStep -= HandleReasoningStep;
         StateService.OnStatusUpdate -= HandleStatusUpdate;
         StateService.OnA2AHandshakeStatus -= HandleA2AHandshakeStatus;
+        ActivityService.OnAgentActivity -= HandleAgentActivity;
+        ActivityService.OnAgentStatusUpdate -= HandleAgentStatusFromStream;
+        ActivityService.OnAllAgentsIdle -= HandleAllAgentsIdle;
     }
 }

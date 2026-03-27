@@ -649,3 +649,35 @@ In .NET 10 Blazor with per-page/component render modes, ANY interactive componen
 - Removed dead CSS: old .header-brand h1 and duplicate .header-subtitle rules
 
 **Build status:** ✅ Both Web and API projects compile with 0 warnings, 0 errors
+
+### 2026-07-15: Dashboard Scroll Fix + Agent Fleet Activity Bridge
+
+**What was done:**
+- Fixed Analysis Dashboard content being cut off (couldn't scroll to Activity Timeline):
+  - Added `min-height: 0` to `.main-content`, `.content-body`, `.sidebar-left`, `.sidebar-right` in app.css — required for nested flex containers to properly constrain overflow
+  - Added `flex-shrink: 0` to `.content-header` to prevent it collapsing under flex pressure
+  - Added `scrollbar-width: thin` + `scrollbar-color` (Firefox) and `::-webkit-scrollbar` styles (Chrome/Edge) for dark-theme-consistent scrollbars
+- Fixed Agent Fleet panel not showing activity when user sends a chat message:
+  - Created `Services/AgentActivityService.cs` — lightweight singleton event bus bridging SSE stream events to UI components
+  - Modified `AgentChat.razor` to call `ActivityService.NotifyStreamingStarted()`, `NotifyStatusUpdate()`, and `NotifyStreamingCompleted()` during SSE streaming
+  - Modified `AgentFleetPanel.razor` to subscribe to `AgentActivityService` events — agents now show "Thinking" status with pulse glow when processing
+  - Modified `AgentStatusBar.razor` (header bar) to also subscribe — status bar now shows activity instead of "Agents idle" during requests
+  - Registered `AgentActivityService` as singleton in Web `Program.cs`
+
+**Root causes found:**
+- Scroll issue: nested flex containers (FluentStack → main-content → content-body) need explicit `min-height: 0` to break the default `min-height: auto` behavior that prevents overflow scrolling
+- Agent Fleet issue: the system has two parallel data channels — SSE (chat) and SignalR (background updates). The Agent Fleet only listened to SignalR, but the chat bridge sends status via SSE. Created a client-side bridge to forward SSE events to the fleet panel
+
+**Key file paths:**
+- `src/SquadCommerce.Web/wwwroot/app.css` — global layout styles
+- `src/SquadCommerce.Web/Services/AgentActivityService.cs` — SSE→UI activity bridge
+- `src/SquadCommerce.Web/Components/Chat/AgentFleetPanel.razor` — agent status cards
+- `src/SquadCommerce.Web/Components/Chat/AgentStatusBar.razor` — header status bar
+- `src/SquadCommerce.Web/Components/Chat/AgentChat.razor` — chat with SSE streaming
+
+**Key patterns:**
+- Dual-channel bridging: when SSE and SignalR carry overlapping data, use a shared singleton service as event bus
+- Flex scroll fix: always add `min-height: 0` to flex children that need internal scrolling
+- Dark-theme scrollbar: use both `scrollbar-width`/`scrollbar-color` (Firefox) and `::-webkit-scrollbar` (Chrome/Edge)
+
+**Build status:** ✅ Web project compiles with 0 errors

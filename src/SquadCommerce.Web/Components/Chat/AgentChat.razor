@@ -1,5 +1,6 @@
 @inject Services.AgUiStreamService StreamService
 @inject Services.ChatCommandService CommandService
+@inject Services.AgentActivityService ActivityService
 @inject IJSRuntime JS
 @implements IDisposable
 
@@ -183,6 +184,8 @@
         _connectionStatus = "streaming";
         _connectionStatusText = "Streaming...";
 
+        ActivityService.NotifyStreamingStarted();
+
         await InvokeAsync(StateHasChanged);
 
         try
@@ -213,6 +216,7 @@
                         DateTime.Now,
                         IsStatus: true
                     ));
+                    ActivityService.NotifyStatusUpdate(chunk.Status);
                 }
                 else if (!string.IsNullOrEmpty(chunk.Text))
                 {
@@ -248,6 +252,7 @@
         {
             _isStreaming = false;
             _currentStreamingMessage = string.Empty;
+            ActivityService.NotifyStreamingCompleted();
             await InvokeAsync(StateHasChanged);
         }
     }

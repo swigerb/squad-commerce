@@ -33,6 +33,9 @@ builder.Services.AddSingleton<SignalRStateService>();
 // Register chat command service for action card → chat integration
 builder.Services.AddSingleton<ChatCommandService>();
 
+// Register agent activity bridge (SSE stream → Agent Fleet panel)
+builder.Services.AddSingleton<AgentActivityService>();
+
 // Register runtime settings service
 builder.Services.AddSingleton<SettingsService>();
 
