@@ -6,44 +6,25 @@
     <div class="agent-personas-section">
         @foreach (var agent in _agentPersonas)
         {
-            <div class="agent-persona @(IsAgentActive(agent.Key) ? "active" : "")" 
-                 title="@agent.Value.Name">
+            var state = GetAgentState(agent.Key);
+            <div class="agent-persona agent-@agent.Value.ColorClass @state"
+                 title="@agent.Value.Name — @GetAgentStateLabel(state)">
+                <span class="persona-glow" aria-hidden="true"></span>
                 <span class="persona-avatar">@agent.Value.Icon</span>
                 <span class="persona-label">@agent.Value.Label</span>
-                @if (IsAgentActive(agent.Key))
+                @if (state == "active")
                 {
-                    <span class="thinking-dots" aria-label="@agent.Value.Name is thinking">
-                        <span></span>
-                        <span></span>
-                        <span></span>
+                    <span class="thinking-dots" aria-label="@agent.Value.Name is processing">
+                        <span></span><span></span><span></span>
                     </span>
                 }
             </div>
         }
     </div>
 
-    <div class="status-section">
-        @if (!string.IsNullOrEmpty(_currentStatus))
-        {
-            <div class="status-message @_statusLevel">
-                <span class="status-icon-spinner" aria-hidden="true"></span>
-                <span class="status-text">@_currentStatus</span>
-            </div>
-        }
-        else
-        {
-            <div class="status-message idle">
-                <span class="status-icon">💤</span>
-                <span class="status-text">Agents idle</span>
-            </div>
-        }
-    </div>
-
-    <div class="connection-section">
-        <div class="connection-indicator @_connectionState" title="SignalR Connection: @_connectionState">
-            <span class="connection-dot"></span>
-            <span class="connection-text">@GetConnectionText()</span>
-        </div>
+    <div class="status-beacon">
+        <span class="beacon-dot @GetBeaconState()" aria-hidden="true"></span>
+        <span class="beacon-label">@GetBeaconLabel()</span>
     </div>
 
     @if (_urgencyBadges.Any())
@@ -51,7 +32,7 @@
         <div class="urgency-section">
             @foreach (var badge in _urgencyBadges.OrderByDescending(b => b.Level))
             {
-                <span class="urgency-badge urgency-@badge.Level.ToLowerInvariant() @GetPulseClass(badge)" 
+                <span class="urgency-badge urgency-@badge.Level.ToLowerInvariant() @GetPulseClass(badge)"
                       role="alert"
                       aria-label="@badge.Level urgency: @badge.Message">
                     <span class="badge-icon">@GetBadgeIcon(badge.Level)</span>
@@ -65,7 +46,7 @@
     @if (_pipelineProgress != null)
     {
         <div class="pipeline-section">
-            <div class="pipeline-label">Pipeline Progress:</div>
+            <div class="pipeline-label">Pipeline:</div>
             <div class="pipeline-steps">
                 @foreach (var step in _pipelineProgress.Steps)
                 {
@@ -77,11 +58,11 @@
             </div>
             <div class="pipeline-progress-bar">
                 <div class="progress">
-                    <div class="progress-bar @GetProgressClass()" 
-                         role="progressbar" 
+                    <div class="progress-bar @GetProgressClass()"
+                         role="progressbar"
                          style="width: @_pipelineProgress.PercentComplete%"
-                         aria-valuenow="@_pipelineProgress.PercentComplete" 
-                         aria-valuemin="0" 
+                         aria-valuenow="@_pipelineProgress.PercentComplete"
+                         aria-valuemin="0"
                          aria-valuemax="100">
                         @_pipelineProgress.PercentComplete%
                     </div>
@@ -92,10 +73,11 @@
 </div>
 
 <style>
+    /* ── Layout ─────────────────────────────── */
     .agent-status-bar {
         display: flex;
         align-items: center;
-        gap: 0.75rem;
+        gap: 1rem;
         flex-wrap: nowrap;
         white-space: nowrap;
         min-width: 0;
@@ -108,38 +90,220 @@
         flex-shrink: 0;
     }
 
+    /* ── Agent Color Tokens ────────────────── */
+    .agent-orchestrator { --agent-hue: 270; --agent-color: #d2a8ff; --agent-rgb: 210, 168, 255; }
+    .agent-inventory    { --agent-hue: 140; --agent-color: #3fb950; --agent-rgb: 63, 185, 80; }
+    .agent-pricing      { --agent-hue: 230; --agent-color: #667eea; --agent-rgb: 102, 126, 234; }
+    .agent-market       { --agent-hue: 210; --agent-color: #58a6ff; --agent-rgb: 88, 166, 255; }
+
+    /* ── Agent Badge ── base (standby) ─────── */
     .agent-persona {
+        position: relative;
         display: flex;
         align-items: center;
         gap: 0.35rem;
-        padding: 0.25rem 0.6rem;
+        padding: 0.3rem 0.65rem;
         border-radius: 20px;
-        background: rgba(255, 255, 255, 0.06);
-        border: 1px solid rgba(255, 255, 255, 0.08);
+        background: rgba(var(--agent-rgb), 0.06);
+        border: 1px solid rgba(var(--agent-rgb), 0.15);
         font-size: 0.8rem;
-        color: rgba(255, 255, 255, 0.5);
-        transition: all 0.3s ease;
+        color: rgba(255, 255, 255, 0.55);
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        overflow: hidden;
+        cursor: default;
+        animation: standby-breathe 4s ease-in-out infinite;
     }
 
+    /* subtle ambient glow layer behind badge */
+    .persona-glow {
+        position: absolute;
+        inset: 0;
+        border-radius: inherit;
+        background: radial-gradient(ellipse at 50% 50%, rgba(var(--agent-rgb), 0.08), transparent 70%);
+        pointer-events: none;
+        transition: opacity 0.4s ease;
+        opacity: 1;
+    }
+
+    .persona-label {
+        font-weight: 500;
+        white-space: nowrap;
+        position: relative;
+        z-index: 1;
+    }
+
+    .persona-avatar {
+        font-size: 1rem;
+        position: relative;
+        z-index: 1;
+        filter: saturate(0.5) brightness(0.85);
+        transition: filter 0.35s ease;
+    }
+
+    @@keyframes standby-breathe {
+        0%, 100% { border-color: rgba(var(--agent-rgb), 0.12); }
+        50%      { border-color: rgba(var(--agent-rgb), 0.25); }
+    }
+
+    /* ── Agent Badge ── active (processing) ── */
     .agent-persona.active {
-        background: rgba(102, 126, 234, 0.15);
-        border-color: rgba(102, 126, 234, 0.4);
+        background: rgba(var(--agent-rgb), 0.18);
+        border-color: rgba(var(--agent-rgb), 0.55);
         color: rgba(255, 255, 255, 0.95);
-        box-shadow: 0 0 12px rgba(102, 126, 234, 0.2);
+        box-shadow:
+            0 0 8px rgba(var(--agent-rgb), 0.25),
+            0 0 20px rgba(var(--agent-rgb), 0.12);
+        animation: agent-pulse 2s ease-in-out infinite;
     }
 
-    .status-section {
+    .agent-persona.active .persona-avatar {
+        filter: saturate(1.2) brightness(1.1);
+    }
+
+    .agent-persona.active .persona-glow {
+        opacity: 1;
+        background: radial-gradient(ellipse at 50% 50%, rgba(var(--agent-rgb), 0.2), transparent 70%);
+    }
+
+    @@keyframes agent-pulse {
+        0%, 100% {
+            box-shadow:
+                0 0 8px rgba(var(--agent-rgb), 0.25),
+                0 0 20px rgba(var(--agent-rgb), 0.12);
+        }
+        50% {
+            box-shadow:
+                0 0 14px rgba(var(--agent-rgb), 0.4),
+                0 0 32px rgba(var(--agent-rgb), 0.2);
+        }
+    }
+
+    /* ── Thinking Dots ─────────────────────── */
+    .thinking-dots {
+        display: inline-flex;
+        align-items: center;
+        margin-left: 0.2rem;
+        position: relative;
+        z-index: 1;
+    }
+
+    .thinking-dots span {
+        display: inline-block;
+        width: 5px;
+        height: 5px;
+        border-radius: 50%;
+        background: var(--agent-color, #667eea);
+        margin: 0 1.5px;
+        animation: thinking-bounce 1.4s infinite ease-in-out both;
+    }
+
+    .thinking-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .thinking-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+    @@keyframes thinking-bounce {
+        0%, 80%, 100% { transform: scale(0); opacity: 0.4; }
+        40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* ── Status Beacon (replaces status + connection) ── */
+    .status-beacon {
         display: flex;
         align-items: center;
+        gap: 0.45rem;
+        padding: 0.25rem 0.7rem;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         flex-shrink: 0;
+        transition: all 0.35s ease;
     }
 
-    .connection-section {
-        display: flex;
-        align-items: center;
+    .beacon-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
         flex-shrink: 0;
+        transition: all 0.35s ease;
     }
 
+    /* Beacon: standby (system connected, idle) */
+    .beacon-dot.standby {
+        background: #3fb950;
+        box-shadow: 0 0 6px rgba(63, 185, 80, 0.4);
+        animation: beacon-standby 3s ease-in-out infinite;
+    }
+
+    @@keyframes beacon-standby {
+        0%, 100% { box-shadow: 0 0 4px rgba(63, 185, 80, 0.3); opacity: 0.8; }
+        50%      { box-shadow: 0 0 8px rgba(63, 185, 80, 0.5); opacity: 1; }
+    }
+
+    /* Beacon: processing (agents active) */
+    .beacon-dot.processing {
+        background: #58a6ff;
+        box-shadow: 0 0 8px rgba(88, 166, 255, 0.5);
+        animation: beacon-processing 1.6s ease-in-out infinite;
+    }
+
+    @@keyframes beacon-processing {
+        0%, 100% {
+            box-shadow: 0 0 6px rgba(88, 166, 255, 0.4);
+            transform: scale(1);
+        }
+        50% {
+            box-shadow: 0 0 14px rgba(88, 166, 255, 0.7);
+            transform: scale(1.2);
+        }
+    }
+
+    /* Beacon: error */
+    .beacon-dot.error {
+        background: #f85149;
+        box-shadow: 0 0 6px rgba(248, 81, 73, 0.5);
+        animation: beacon-error 1.2s ease-in-out infinite;
+    }
+
+    @@keyframes beacon-error {
+        0%, 100% { opacity: 1; }
+        50%      { opacity: 0.4; }
+    }
+
+    /* Beacon: connecting / reconnecting */
+    .beacon-dot.connecting {
+        background: #d29922;
+        box-shadow: 0 0 6px rgba(210, 153, 34, 0.4);
+        animation: beacon-connecting 1s ease-in-out infinite;
+    }
+
+    @@keyframes beacon-connecting {
+        0%, 100% { opacity: 0.4; }
+        50%      { opacity: 1; }
+    }
+
+    /* Beacon: disconnected */
+    .beacon-dot.disconnected {
+        background: rgba(255, 255, 255, 0.25);
+        box-shadow: none;
+    }
+
+    .beacon-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.6);
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        transition: color 0.3s ease;
+    }
+
+    .status-beacon:has(.processing) .beacon-label {
+        color: rgba(88, 166, 255, 0.9);
+    }
+
+    .status-beacon:has(.error) .beacon-label {
+        color: rgba(248, 81, 73, 0.9);
+    }
+
+    /* ── Urgency Badges ────────────────────── */
     .urgency-section {
         display: flex;
         align-items: center;
@@ -147,46 +311,82 @@
         flex-shrink: 0;
     }
 
+    .urgency-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 12px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .urgency-critical {
+        background: rgba(248, 81, 73, 0.15);
+        border: 1px solid rgba(248, 81, 73, 0.4);
+        color: #f85149;
+    }
+
+    .urgency-critical.pulse {
+        animation: urgency-pulse 1.5s ease-in-out infinite;
+    }
+
+    @@keyframes urgency-pulse {
+        0%, 100% { box-shadow: 0 0 4px rgba(248, 81, 73, 0.2); }
+        50%      { box-shadow: 0 0 12px rgba(248, 81, 73, 0.5); }
+    }
+
+    .urgency-high {
+        background: rgba(210, 153, 34, 0.12);
+        border: 1px solid rgba(210, 153, 34, 0.35);
+        color: #d29922;
+    }
+
+    .urgency-medium {
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.15);
+        color: rgba(255, 255, 255, 0.7);
+    }
+
+    .urgency-low {
+        background: rgba(88, 166, 255, 0.08);
+        border: 1px solid rgba(88, 166, 255, 0.2);
+        color: #58a6ff;
+    }
+
+    .badge-close {
+        cursor: pointer;
+        opacity: 0.5;
+        transition: opacity 0.2s;
+        margin-left: 0.15rem;
+    }
+
+    .badge-close:hover {
+        opacity: 1;
+    }
+
+    /* ── Pipeline (hidden until active) ───── */
     .pipeline-section {
         display: none;
     }
 
-    .persona-label {
-        font-weight: 500;
-        white-space: nowrap;
+    /* ── Hover polish ──────────────────────── */
+    .agent-persona:hover {
+        border-color: rgba(var(--agent-rgb), 0.4);
+        background: rgba(var(--agent-rgb), 0.1);
     }
 
-    .persona-avatar {
-        font-size: 1rem;
+    .agent-persona.active:hover {
+        box-shadow:
+            0 0 16px rgba(var(--agent-rgb), 0.45),
+            0 0 36px rgba(var(--agent-rgb), 0.22);
     }
 
-    .thinking-dots {
-        display: inline-flex;
-        align-items: center;
-        margin-left: 0.25rem;
-    }
-
-    .thinking-dots span {
-        display: inline-block;
-        width: 6px;
-        height: 6px;
-        border-radius: 50%;
-        background: #667eea;
-        margin: 0 2px;
-        animation: thinking-bounce 1.4s infinite ease-in-out both;
-    }
-
-    .thinking-dots span:nth-child(1) {
-        animation-delay: -0.32s;
-    }
-
-    .thinking-dots span:nth-child(2) {
-        animation-delay: -0.16s;
-    }
-
-    @@keyframes thinking-bounce {
-        0%, 80%, 100% { transform: scale(0); }
-        40% { transform: scale(1); }
+    /* ── Responsive ────────────────────────── */
+    @@media (max-width: 900px) {
+        .persona-label { display: none; }
+        .agent-persona { padding: 0.25rem 0.4rem; }
     }
 </style>
 
@@ -200,41 +400,75 @@
     private readonly HashSet<string> _thinkingAgents = new(StringComparer.OrdinalIgnoreCase);
 
     private record UrgencyBadge(string Level, string Message, DateTime Timestamp, Guid Id);
-    
-    private record PipelineProgress(
-        List<PipelineStep> Steps,
-        int PercentComplete
-    );
 
+    private record PipelineProgress(List<PipelineStep> Steps, int PercentComplete);
     private record PipelineStep(string Name, string Status);
-
-    private record AgentPersona(string Icon, string Name, string Label);
+    private record AgentPersona(string Icon, string Name, string Label, string ColorClass);
 
     private readonly Dictionary<string, AgentPersona> _agentPersonas = new()
     {
-        ["ChiefSoftwareArchitect"] = new("🏗️", "Chief Software Architect", "Orchestrator"),
-        ["InventoryAgent"] = new("📦", "Inventory Agent", "Inventory"),
-        ["PricingAgent"] = new("💰", "Pricing Agent", "Pricing"),
-        ["MarketIntelAgent"] = new("📊", "Market Intel Agent", "Market Intel")
+        ["ChiefSoftwareArchitect"] = new("🏗️", "Chief Software Architect", "Orchestrator", "agent-orchestrator"),
+        ["InventoryAgent"]         = new("📦", "Inventory Agent",          "Inventory",    "agent-inventory"),
+        ["PricingAgent"]           = new("💰", "Pricing Agent",            "Pricing",      "agent-pricing"),
+        ["MarketIntelAgent"]       = new("📊", "Market Intel Agent",       "Market Intel",  "agent-market")
     };
 
-    private bool IsAgentActive(string agentKey)
+    // Returns "active" or "standby"
+    private string GetAgentState(string agentKey)
     {
-        // Use real-time ThinkingState from SignalR when available
         if (_thinkingAgents.Contains(agentKey))
-            return true;
+            return "active";
 
-        // Fall back to status text heuristic for backward compatibility
-        if (string.IsNullOrEmpty(_currentStatus)) return false;
-        var lower = _currentStatus.ToLowerInvariant();
-        return agentKey switch
+        if (!string.IsNullOrEmpty(_currentStatus))
         {
-            "ChiefSoftwareArchitect" => lower.Contains("orchestrat") || lower.Contains("routing") || lower.Contains("delegat"),
-            "InventoryAgent" => lower.Contains("inventory") || lower.Contains("stock") || lower.Contains("warehouse"),
-            "PricingAgent" => lower.Contains("pricing") || lower.Contains("margin") || lower.Contains("price"),
-            "MarketIntelAgent" => lower.Contains("market") || lower.Contains("competitor") || lower.Contains("intel"),
-            _ => false
-        };
+            var lower = _currentStatus.ToLowerInvariant();
+            var match = agentKey switch
+            {
+                "ChiefSoftwareArchitect" => lower.Contains("orchestrat") || lower.Contains("routing") || lower.Contains("delegat"),
+                "InventoryAgent" => lower.Contains("inventory") || lower.Contains("stock") || lower.Contains("warehouse"),
+                "PricingAgent" => lower.Contains("pricing") || lower.Contains("margin") || lower.Contains("price"),
+                "MarketIntelAgent" => lower.Contains("market") || lower.Contains("competitor") || lower.Contains("intel"),
+                _ => false
+            };
+            if (match) return "active";
+        }
+
+        return "standby";
+    }
+
+    private static string GetAgentStateLabel(string state) => state switch
+    {
+        "active" => "Processing",
+        _ => "Standby"
+    };
+
+    private bool HasActiveAgents => _thinkingAgents.Count > 0 || !string.IsNullOrEmpty(_currentStatus);
+
+    private string GetBeaconState()
+    {
+        if (_connectionState is "error")
+            return "error";
+        if (_connectionState is "connecting" or "reconnecting")
+            return "connecting";
+        if (_connectionState is "disconnected")
+            return "disconnected";
+
+        // Connected — check if agents are working
+        return HasActiveAgents ? "processing" : "standby";
+    }
+
+    private string GetBeaconLabel()
+    {
+        if (_connectionState is "error")
+            return "Error";
+        if (_connectionState is "connecting")
+            return "Connecting";
+        if (_connectionState is "reconnecting")
+            return "Reconnecting";
+        if (_connectionState is "disconnected")
+            return "Offline";
+
+        return HasActiveAgents ? "Processing" : "System Ready";
     }
 
     protected override async Task OnInitializedAsync()
@@ -270,7 +504,7 @@
     private void HandleStatusUpdate(string status)
     {
         _currentStatus = status;
-        
+
         _statusLevel = status.ToLowerInvariant() switch
         {
             var s when s.Contains("error") || s.Contains("failed") => "error",
@@ -280,46 +514,26 @@
         };
 
         ParsePipelineProgress(status);
-
         InvokeAsync(StateHasChanged);
     }
 
     private void HandleUrgencyBadge(string level, string message)
     {
-        var badge = new UrgencyBadge(level, message, DateTime.Now, Guid.NewGuid());
-        _urgencyBadges.Add(badge);
-
+        _urgencyBadges.Add(new UrgencyBadge(level, message, DateTime.Now, Guid.NewGuid()));
         InvokeAsync(StateHasChanged);
     }
 
     private void HandleThinkingState(string sessionId, string agentName, bool isThinking)
     {
-        // Normalize agent name to match persona keys
-        var key = _agentPersonas.Keys.FirstOrDefault(k =>
-            k.Equals(agentName, StringComparison.OrdinalIgnoreCase) ||
-            agentName.Contains(k, StringComparison.OrdinalIgnoreCase) ||
-            k.Contains(agentName.Replace("Agent", ""), StringComparison.OrdinalIgnoreCase)) ?? agentName;
-
-        if (isThinking)
-            _thinkingAgents.Add(key);
-        else
-            _thinkingAgents.Remove(key);
-
+        var key = ResolveAgentKey(agentName);
+        if (isThinking) _thinkingAgents.Add(key); else _thinkingAgents.Remove(key);
         InvokeAsync(StateHasChanged);
     }
 
     private void HandleActivityBridgeThinking(string agentName, bool isActive)
     {
-        var key = _agentPersonas.Keys.FirstOrDefault(k =>
-            k.Equals(agentName, StringComparison.OrdinalIgnoreCase) ||
-            agentName.Contains(k, StringComparison.OrdinalIgnoreCase) ||
-            k.Contains(agentName.Replace("Agent", ""), StringComparison.OrdinalIgnoreCase)) ?? agentName;
-
-        if (isActive)
-            _thinkingAgents.Add(key);
-        else
-            _thinkingAgents.Remove(key);
-
+        var key = ResolveAgentKey(agentName);
+        if (isActive) _thinkingAgents.Add(key); else _thinkingAgents.Remove(key);
         InvokeAsync(StateHasChanged);
     }
 
@@ -337,6 +551,12 @@
         InvokeAsync(StateHasChanged);
     }
 
+    private string ResolveAgentKey(string agentName) =>
+        _agentPersonas.Keys.FirstOrDefault(k =>
+            k.Equals(agentName, StringComparison.OrdinalIgnoreCase) ||
+            agentName.Contains(k, StringComparison.OrdinalIgnoreCase) ||
+            k.Contains(agentName.Replace("Agent", ""), StringComparison.OrdinalIgnoreCase)) ?? agentName;
+
     private void DismissBadge(UrgencyBadge badge)
     {
         _urgencyBadges.Remove(badge);
@@ -346,68 +566,45 @@
     private void CleanupOldBadges()
     {
         var cutoff = DateTime.Now.AddSeconds(-30);
-        var removed = _urgencyBadges.RemoveAll(b => b.Timestamp < cutoff);
-        if (removed > 0)
-        {
+        if (_urgencyBadges.RemoveAll(b => b.Timestamp < cutoff) > 0)
             InvokeAsync(StateHasChanged);
-        }
     }
 
     private void ParsePipelineProgress(string status)
     {
-        var lowerStatus = status.ToLowerInvariant();
-        
-        if (lowerStatus.Contains("querying") || lowerStatus.Contains("analyzing") || lowerStatus.Contains("calculating"))
+        var lower = status.ToLowerInvariant();
+
+        if (lower.Contains("querying") || lower.Contains("analyzing") || lower.Contains("calculating"))
         {
-            _pipelineProgress = new PipelineProgress(
-                new List<PipelineStep>
-                {
-                    new("Receive Request", "completed"),
-                    new("Query Data", "in-progress"),
-                    new("Analyze", "pending"),
-                    new("Generate Response", "pending")
-                },
-                25
-            );
+            _pipelineProgress = new(new()
+            {
+                new("Receive Request", "completed"), new("Query Data", "in-progress"),
+                new("Analyze", "pending"), new("Generate Response", "pending")
+            }, 25);
         }
-        else if (lowerStatus.Contains("verified") || lowerStatus.Contains("retrieved"))
+        else if (lower.Contains("verified") || lower.Contains("retrieved"))
         {
-            _pipelineProgress = new PipelineProgress(
-                new List<PipelineStep>
-                {
-                    new("Receive Request", "completed"),
-                    new("Query Data", "completed"),
-                    new("Analyze", "in-progress"),
-                    new("Generate Response", "pending")
-                },
-                50
-            );
+            _pipelineProgress = new(new()
+            {
+                new("Receive Request", "completed"), new("Query Data", "completed"),
+                new("Analyze", "in-progress"), new("Generate Response", "pending")
+            }, 50);
         }
-        else if (lowerStatus.Contains("calculated") || lowerStatus.Contains("generated"))
+        else if (lower.Contains("calculated") || lower.Contains("generated"))
         {
-            _pipelineProgress = new PipelineProgress(
-                new List<PipelineStep>
-                {
-                    new("Receive Request", "completed"),
-                    new("Query Data", "completed"),
-                    new("Analyze", "completed"),
-                    new("Generate Response", "in-progress")
-                },
-                75
-            );
+            _pipelineProgress = new(new()
+            {
+                new("Receive Request", "completed"), new("Query Data", "completed"),
+                new("Analyze", "completed"), new("Generate Response", "in-progress")
+            }, 75);
         }
-        else if (lowerStatus.Contains("complete") || lowerStatus.Contains("done"))
+        else if (lower.Contains("complete") || lower.Contains("done"))
         {
-            _pipelineProgress = new PipelineProgress(
-                new List<PipelineStep>
-                {
-                    new("Receive Request", "completed"),
-                    new("Query Data", "completed"),
-                    new("Analyze", "completed"),
-                    new("Generate Response", "completed")
-                },
-                100
-            );
+            _pipelineProgress = new(new()
+            {
+                new("Receive Request", "completed"), new("Query Data", "completed"),
+                new("Analyze", "completed"), new("Generate Response", "completed")
+            }, 100);
 
             Task.Delay(3000).ContinueWith(_ =>
             {
@@ -416,15 +613,6 @@
             });
         }
     }
-
-    private string GetConnectionText() => _connectionState switch
-    {
-        "connected" => "Live",
-        "connecting" => "Connecting...",
-        "reconnecting" => "Reconnecting...",
-        "error" => "Error",
-        _ => "Disconnected"
-    };
 
     private string GetBadgeIcon(string level) => level.ToLowerInvariant() switch
     {

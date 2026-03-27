@@ -56,6 +56,30 @@ For full historical entries, see git log or .squad/orchestration-log/
 
 ---
 
+### 2026-03-27: Agent Status Bar — Mission Control Overhaul
+
+**What was done:** Complete rework of the AgentStatusBar header component per Brian's feedback.
+
+**Problems fixed:**
+- Agent badges were dead-gray when idle — now have per-agent color theming with subtle standby breathing animation
+- "Agents idle" + "Live" text was contradictory — replaced with unified "Status Beacon" showing "System Ready" (idle) or "Processing" (active)
+- No pulse/glow effects matching System Health — now uses matching CSS animation patterns (keyframe pulses, box-shadow glow, scale transitions)
+
+**Design decisions:**
+- Per-agent CSS custom properties (`--agent-color`, `--agent-rgb`) for Orchestrator (purple), Inventory (green), Pricing (blue-purple), Market Intel (blue)
+- Three agent states: `standby` (faint color glow + slow breathe), `active` (bright color + pulse-glow animation + thinking dots)
+- Status beacon replaces split status/connection sections — single coherent indicator with 5 states (standby, processing, error, connecting, disconnected)
+- Thinking dots inherit agent color via CSS variable — not hardcoded `#667eea`
+- All animations use 300ms+ transitions with `cubic-bezier(0.4, 0, 0.2, 1)` easing
+
+**Key files:**
+- `src/SquadCommerce.Web/Components/Chat/AgentStatusBar.razor` — full rewrite of markup, CSS, and code-behind
+- CSS animations: `standby-breathe` (4s), `agent-pulse` (2s), `beacon-standby` (3s), `beacon-processing` (1.6s)
+
+**User preference:** Brian wants "SpaceX mission control" feel — alive dashboard, not a static status page. System Health pulse effect is the gold standard.
+
+---
+
 ### 2026-03-27: Activity Bridge Pattern & Timeline Scroll Fix
 - Added project reference: Web → Contracts
 - Added package: `Microsoft.AspNetCore.SignalR.Client` version 10.0.5
