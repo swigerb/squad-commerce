@@ -171,8 +171,7 @@ public sealed class ChiefSoftwareArchitectAgent
 
             if (!marketIntelResult.Success)
             {
-                _logger.LogWarning("MarketIntelAgent failed - aborting workflow");
-                return await BuildFailureResultAsync(sessionId, results, pipelineStages, "Failed to validate competitor pricing", startTime, cancellationToken);
+                _logger.LogWarning("MarketIntelAgent failed - continuing with limited competitor data (graceful degradation)");
             }
 
             // Step 2: Get inventory snapshot (InventoryAgent)
@@ -355,6 +354,153 @@ public sealed class ChiefSoftwareArchitectAgent
                 new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
             
             return await BuildFailureResultAsync(sessionId, results, pipelineStages, $"Orchestration error: {ex.Message}", startTime, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Orchestrates a direct inventory query workflow. Delegates only to InventoryAgent
+    /// without requiring competitor pricing validation.
+    /// </summary>
+    /// <param name="sku">Product SKU to query inventory for</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Orchestrated result with inventory A2UI payload</returns>
+    public async Task<OrchestratorResult> ProcessInventoryQueryAsync(
+        string sku,
+        CancellationToken cancellationToken = default)
+    {
+        var startTime = DateTimeOffset.UtcNow;
+        var sessionId = $"session-{Guid.NewGuid():N}";
+
+        using var activity = SquadCommerceTelemetry.StartAgentSpan("ChiefSoftwareArchitect", "OrchestrateInventoryQuery");
+        activity?.SetTag("agent.name", "ChiefSoftwareArchitect");
+        activity?.SetTag("agent.protocol", "AGUI");
+        activity?.SetTag("agent.sku", sku);
+        activity?.SetTag("agent.session_id", sessionId);
+
+        SquadCommerceTelemetry.AgentInvocationCount.Add(1,
+            new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+        _logger.LogInformation(
+            "Orchestrator starting inventory query workflow: SKU {Sku}, SessionId {SessionId}",
+            sku, sessionId);
+
+        var results = new List<AgentResult>();
+        var pipelineStages = new List<PipelineStage>();
+
+        var rootStepId = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+            $"Querying inventory levels for {sku} across all stores", cancellationToken: cancellationToken);
+
+        await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Initiated inventory query workflow",
+            "AGUI", startTime, TimeSpan.Zero, "Success", $"User request for inventory levels of SKU {sku}",
+            activity?.TraceId.ToString(), new[] { sku }, null, null, cancellationToken);
+
+        try
+        {
+            // Single step: Get inventory snapshot (InventoryAgent)
+            _logger.LogInformation("Step 1: Delegating to InventoryAgent for inventory snapshot");
+
+            var step1Id = await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Thinking,
+                "Delegating to InventoryAgent for inventory snapshot", rootStepId, cancellationToken: cancellationToken);
+            await EmitTraceAsync(sessionId, "InventoryAgent", ReasoningStepType.ToolCall,
+                $"Calling GetInventoryLevels with SKU={sku}", step1Id, cancellationToken: cancellationToken);
+
+            var stage1Start = DateTimeOffset.UtcNow;
+            var step1Sw = Stopwatch.StartNew();
+            pipelineStages.Add(new PipelineStage
+            {
+                Order = 1,
+                AgentName = "InventoryAgent",
+                StageName = "Inventory Query",
+                Status = "Running",
+                Protocol = "MCP",
+                StartedAt = stage1Start,
+                ToolsUsed = new[] { "GetInventoryLevels" }
+            });
+
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", true, cancellationToken);
+            var inventoryResult = await _inventoryAgent.ExecuteAsync(sku, cancellationToken);
+            await _thinkingNotifier.SendThinkingStateAsync(sessionId, "InventoryAgent", false, cancellationToken);
+            step1Sw.Stop();
+            results.Add(inventoryResult);
+
+            await EmitTraceAsync(sessionId, "InventoryAgent", ReasoningStepType.Observation,
+                $"Received inventory snapshot from InventoryAgent",
+                step1Id, step1Sw.ElapsedMilliseconds, cancellationToken: cancellationToken);
+
+            var stage1Duration = DateTimeOffset.UtcNow - stage1Start;
+            await RecordAuditEntryAsync(sessionId, "InventoryAgent", "Retrieved inventory snapshot",
+                "MCP", stage1Start, stage1Duration, inventoryResult.Success ? "Success" : "Failed",
+                inventoryResult.TextSummary, activity?.TraceId.ToString(), new[] { sku },
+                new[] { "SEA-001", "PDX-002", "SFO-003", "LAX-004", "DEN-005" }, null, cancellationToken);
+
+            pipelineStages[0] = pipelineStages[0] with
+            {
+                Status = inventoryResult.Success ? "Completed" : "Failed",
+                Duration = stage1Duration,
+                CompletedAt = DateTimeOffset.UtcNow,
+                OutputPayloads = inventoryResult.A2UIPayload != null ? new[] { "RetailStockHeatmap" } : null,
+                ErrorMessage = inventoryResult.ErrorMessage
+            };
+
+            if (!inventoryResult.Success)
+            {
+                _logger.LogWarning("InventoryAgent failed for inventory query");
+                return await BuildInventoryQueryFailureResultAsync(sessionId, results, pipelineStages,
+                    inventoryResult.ErrorMessage ?? "Inventory query failed", startTime, cancellationToken);
+            }
+
+            // Build executive summary
+            var executiveSummary = BuildInventoryQueryExecutiveSummary(sku, results);
+
+            var duration = DateTimeOffset.UtcNow - startTime;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration.TotalMilliseconds,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+            var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+            var pipelineData = new AgentPipelineData
+            {
+                SessionId = sessionId,
+                WorkflowName = "InventoryQueryWorkflow",
+                Stages = pipelineStages,
+                OverallStatus = "Completed",
+                TotalDuration = duration,
+                StartedAt = startTime,
+                CompletedAt = DateTimeOffset.UtcNow
+            };
+
+            return new OrchestratorResult
+            {
+                Success = true,
+                ExecutiveSummary = executiveSummary,
+                AgentResults = results,
+                AuditTrailData = auditTrailData,
+                PipelineData = pipelineData,
+                InsightCards = BuildInventoryQueryInsightCards(sku, results),
+                Timestamp = DateTimeOffset.UtcNow,
+                WorkflowDuration = duration
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Inventory query workflow failed");
+
+            activity?.SetStatus(ActivityStatusCode.Error, ex.Message);
+            activity?.SetTag("error.message", ex.Message);
+            activity?.SetTag("error.type", ex.GetType().Name);
+
+            await EmitTraceAsync(sessionId, "ChiefSoftwareArchitect", ReasoningStepType.Error,
+                $"Inventory query workflow failed: {ex.Message}", rootStepId, cancellationToken: cancellationToken);
+
+            await RecordAuditEntryAsync(sessionId, "ChiefSoftwareArchitect", "Inventory query workflow failed",
+                "AGUI", DateTimeOffset.UtcNow, TimeSpan.Zero, "Failed",
+                ex.Message, activity?.TraceId.ToString(), null, null, null, cancellationToken);
+
+            var duration = (DateTimeOffset.UtcNow - startTime).TotalMilliseconds;
+            SquadCommerceTelemetry.AgentInvocationDuration.Record(duration,
+                new KeyValuePair<string, object?>("agent.name", "ChiefSoftwareArchitect"));
+
+            return await BuildInventoryQueryFailureResultAsync(sessionId, results, pipelineStages,
+                $"Orchestration error: {ex.Message}", startTime, cancellationToken);
         }
     }
 
@@ -1391,6 +1537,100 @@ public sealed class ChiefSoftwareArchitectAgent
         {
             Success = false,
             ExecutiveSummary = $"Workflow failed: {errorMessage}",
+            AgentResults = results,
+            AuditTrailData = auditTrailData,
+            PipelineData = pipelineData,
+            ErrorMessage = errorMessage,
+            Timestamp = DateTimeOffset.UtcNow,
+            WorkflowDuration = duration
+        };
+    }
+
+    private static string BuildInventoryQueryExecutiveSummary(string sku, List<AgentResult> results)
+    {
+        var summary = $"## Inventory Query Results for {sku}\n\n";
+
+        foreach (var result in results)
+        {
+            summary += $"{result.TextSummary}\n\n";
+        }
+
+        summary += "**Note:** This is a read-only inventory snapshot. No pricing or competitor analysis was requested.";
+        return summary;
+    }
+
+    private static IReadOnlyList<InsightCardData> BuildInventoryQueryInsightCards(string sku, List<AgentResult> results)
+    {
+        try
+        {
+            var cards = new List<InsightCardData>();
+
+            var inventoryResult = results.FirstOrDefault(r => r.Success);
+            var totalUnitsMatch = inventoryResult != null
+                ? System.Text.RegularExpressions.Regex.Match(inventoryResult.TextSummary, @"(\d+)\s*total\s*units")
+                : System.Text.RegularExpressions.Regex.Match("", @".");
+            var totalUnits = totalUnitsMatch.Success && int.TryParse(totalUnitsMatch.Groups[1].Value, out var tu) ? tu : 0;
+
+            var lowStockMatch = inventoryResult != null
+                ? System.Text.RegularExpressions.Regex.Match(inventoryResult.TextSummary, @"(\d+)\s*store\(s\)\s*below")
+                : System.Text.RegularExpressions.Regex.Match("", @".");
+            var lowStockCount = lowStockMatch.Success && int.TryParse(lowStockMatch.Groups[1].Value, out var ls) ? ls : 0;
+
+            cards.Add(new InsightCardData
+            {
+                Title = "Stock Overview",
+                KeyMetric = $"{totalUnits} units",
+                MetricLabel = "total across all stores",
+                TrendDirection = totalUnits > 100 ? "up" : totalUnits > 30 ? "neutral" : "down",
+                Summary = $"SKU {sku} has {totalUnits} total units distributed across all retail locations.",
+                Severity = totalUnits < 30 ? "critical" : totalUnits < 100 ? "warning" : "success"
+            });
+
+            cards.Add(new InsightCardData
+            {
+                Title = "Reorder Alerts",
+                KeyMetric = $"{lowStockCount} stores",
+                MetricLabel = "below reorder point",
+                TrendDirection = lowStockCount > 0 ? "down" : "up",
+                Summary = lowStockCount > 0
+                    ? $"{lowStockCount} store(s) have stock below the reorder point for {sku}. Consider initiating replenishment."
+                    : $"All stores have adequate stock levels for {sku}. No replenishment needed.",
+                Severity = lowStockCount > 2 ? "critical" : lowStockCount > 0 ? "warning" : "success"
+            });
+
+            return cards;
+        }
+        catch
+        {
+            return Array.Empty<InsightCardData>();
+        }
+    }
+
+    private async Task<OrchestratorResult> BuildInventoryQueryFailureResultAsync(
+        string sessionId,
+        List<AgentResult> results,
+        List<PipelineStage> stages,
+        string errorMessage,
+        DateTimeOffset startTime,
+        CancellationToken cancellationToken)
+    {
+        var duration = DateTimeOffset.UtcNow - startTime;
+        var auditTrailData = await BuildAuditTrailDataAsync(sessionId, cancellationToken);
+        var pipelineData = new AgentPipelineData
+        {
+            SessionId = sessionId,
+            WorkflowName = "InventoryQueryWorkflow",
+            Stages = stages,
+            OverallStatus = "Failed",
+            TotalDuration = duration,
+            StartedAt = startTime,
+            CompletedAt = DateTimeOffset.UtcNow
+        };
+
+        return new OrchestratorResult
+        {
+            Success = false,
+            ExecutiveSummary = $"Inventory query failed: {errorMessage}",
             AgentResults = results,
             AuditTrailData = auditTrailData,
             PipelineData = pipelineData,

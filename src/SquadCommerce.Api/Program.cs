@@ -161,7 +161,9 @@ app.MapPost("/api/agui/chat", async (ChatRequest chatRequest, IAgUiStreamWriter 
 
     // Detect scenario type from message keywords
     var scenarioType = "CompetitorPriceDrop"; // default
-    if (Regex.IsMatch(message, @"\b(delayed|shipment|storm|supply\s*chain|reroute)\b", RegexOptions.IgnoreCase))
+    if (Regex.IsMatch(message, @"\b(inventory|stock\s*level|warehouse|units?\s*on\s*hand|reorder|check\s*inventory|show\s*(me\s+)?inventory)\b", RegexOptions.IgnoreCase))
+        scenarioType = "InventoryCheck";
+    else if (Regex.IsMatch(message, @"\b(delayed|shipment|storm|supply\s*chain|reroute)\b", RegexOptions.IgnoreCase))
         scenarioType = "SupplyChainShock";
     else if (Regex.IsMatch(message, @"\b(viral|TikTok|trending|spike|demand|influencer)\b", RegexOptions.IgnoreCase))
         scenarioType = "ViralSpike";
@@ -186,10 +188,17 @@ app.MapPost("/api/agui/chat", async (ChatRequest chatRequest, IAgUiStreamWriter 
             using var scope = serviceProvider.CreateScope();
             var orchestrator = scope.ServiceProvider.GetRequiredService<ChiefSoftwareArchitectAgent>();
 
-            await streamWriter.WriteStatusUpdateAsync(sessionId, $"Analyzing: {sku} vs {competitorName} at ${competitorPrice:F2}...", bgCts.Token);
+            if (scenarioType == "InventoryCheck")
+                await streamWriter.WriteStatusUpdateAsync(sessionId, $"Checking inventory levels for {sku}...", bgCts.Token);
+            else
+                await streamWriter.WriteStatusUpdateAsync(sessionId, $"Analyzing: {sku} vs {competitorName} at ${competitorPrice:F2}...", bgCts.Token);
 
             OrchestratorResult result;
-            if (scenarioType == "ViralSpike")
+            if (scenarioType == "InventoryCheck")
+            {
+                result = await orchestrator.ProcessInventoryQueryAsync(sku, bgCts.Token);
+            }
+            else if (scenarioType == "ViralSpike")
             {
                 // Extract demand multiplier from message (default 4.0x for viral spikes)
                 var multiplierMatch = Regex.Match(message, @"(\d+(?:\.\d+)?)\s*[x%]", RegexOptions.IgnoreCase);
