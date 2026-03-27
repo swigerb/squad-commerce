@@ -1,9 +1,0 @@
-Scribe: Log Satya and Clippy completions
-
-- Added orchestration logs for Satya (inventory routing fix) and Clippy (activity bridge)
-- Logged session: UI and Agent Fixes (2026-03-27T12:05Z)
-- Merged inbox decisions into decisions.md: Inventory Query Routing + Agent Activity Bridge
-- Updated agent history: satya-nadella and clippy with orchestration outcomes
-- All 83 agent tests passing
-
-Co-authored-by: Copilot <223556219+Copilot@users.noreply.github.com>
