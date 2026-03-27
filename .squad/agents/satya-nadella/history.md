@@ -9,69 +9,54 @@
 
 Lead developer for squad-commerce. Responsible for MAF agent orchestration, A2A protocol integration, MCP server/client implementation, and ASP.NET Core backend services. This is a Microsoft showcase demonstrating best practices in AI development.
 
+**Architecture Decisions (2026-03-24):**
+- Four MAF agents: ChiefSoftwareArchitectAgent (orchestrator), InventoryAgent, PricingAgent, MarketIntelAgent
+- Orchestrator delegates only — never calls MCP tools directly
+- AgentPolicy pattern: immutable `record` with EnforceA2UI, RequireTelemetryTrace, PreferredProtocol, AllowedTools, EntraIdScope
+- AG-UI (SSE) is primary request/response channel; SignalR is async-only sidecar
+- Demo data: 5 stores × 8 SKUs = 40 inventory + 40 pricing records
+- Phase delivery: scaffolding → MCP → A2A → AG-UI/A2UI → observability/security → E2E testing
+
+**Implementation Complete (2026-03-24):**
+- MCP Server: GetInventoryLevelsTool, UpdateStorePricingTool with SQLite backing via EF Core
+- A2A Protocol: AgentCard, A2AClient, A2AServer, ExternalDataValidator for cross-validation
+- Orchestrator: ChiefSoftwareArchitectAgent with MAF Graph Workflow, RetailWorkflow with scenario routing
+- OpenTelemetry: Activity factory, structured logging, distributed tracing on every agent action
+- A2UI Expansion: AuditTrail, PipelineVisualization, inventory/pricing/competitor components
+
+**Test Coverage (2026-03-24):**
+- All projects: xUnit with 80%+ coverage, 100% on critical paths
+- Integration tests with real protocol implementations (not mocks)
+- OpenTelemetry validation with TestTelemetryExporter
+- Naming: Should_<ExpectedBehavior>_When_<Condition>
+
+**Current Status (2026-03-27):**
+- All 83 agent tests passing
+- Inventory query routing fixed: new InventoryCheck scenario type, ProcessInventoryQueryAsync orchestrator method
+- Graceful degradation: MarketIntelAgent failures no longer abort CompetitorPriceDrop workflow
+
 ## Learnings
 
-<!-- Append new learnings below. Each entry is something lasting about the project. -->
+### ARCHIVE: Development History 2026-03-24 to 2026-03-26
 
-### 2026-03-24: Agent Projects Scaffolded
+[Archived 12 learning entries covering:
+- Agent project scaffolding (3 projects)
+- Full MCP + A2A + Orchestrator implementation
+- SQLite migration with EF Core
+- Phase 6 OpenTelemetry instrumentation
+- A2UI expansion (audit trail, pipeline visualization)
+- Retail workflow & scenario routing
+- Test infrastructure & coverage gates
+- Infrastructure (protocols, security, observability)
+- Web service & SignalR integration
+- 83 agent tests passing at 2026-03-26
 
-**What:** Scaffolded three core agent-related projects for Squad-Commerce
+For full historical entries, see git log or .squad/orchestration-log/
+]
 
-**Projects Created:**
-1. **SquadCommerce.Agents** — MAF agent implementations
-   - `src/SquadCommerce.Agents/Orchestrator/ChiefSoftwareArchitectAgent.cs` — Orchestrator using MAF Graph-based Workflow
-   - `src/SquadCommerce.Agents/Orchestrator/RetailWorkflow.cs` — Workflow definition with nodes and edges
-   - `src/SquadCommerce.Agents/Domain/InventoryAgent.cs` — Read-only inventory queries (MCP)
-   - `src/SquadCommerce.Agents/Domain/PricingAgent.cs` — Pricing calculations and updates (MCP)
-   - `src/SquadCommerce.Agents/Domain/MarketIntelAgent.cs` — Competitor intelligence (A2A)
-   - `src/SquadCommerce.Agents/Policies/AgentPolicy.cs` — Immutable policy record
-   - `src/SquadCommerce.Agents/Policies/AgentPolicyRegistry.cs` — Central policy registry for all 4 agents
-   - `src/SquadCommerce.Agents/Policies/PolicyEnforcementFilter.cs` — MAF filter for runtime policy enforcement
-   - `src/SquadCommerce.Agents/Registration/AgentServiceExtensions.cs` — DI registration extension
+---
 
-2. **SquadCommerce.Mcp** — MCP server, tools, and repositories
-   - `src/SquadCommerce.Mcp/Tools/GetInventoryLevelsTool.cs` — MCP tool for inventory queries
-   - `src/SquadCommerce.Mcp/Tools/UpdateStorePricingTool.cs` — MCP tool for price updates
-   - `src/SquadCommerce.Mcp/Data/InventoryRepository.cs` — In-memory repository with demo data (5 stores, 8 SKUs, 40 inventory records)
-   - `src/SquadCommerce.Mcp/Data/PricingRepository.cs` — In-memory repository with realistic pricing and margins (5 stores, 8 SKUs, 40 pricing records)
-   - `src/SquadCommerce.Mcp/McpServerSetup.cs` — DI registration extension
-
-3. **SquadCommerce.A2A** — A2A protocol implementation
-   - `src/SquadCommerce.A2A/AgentCard.cs` — Agent Card definition and factory methods
-   - `src/SquadCommerce.A2A/A2AClient.cs` — Client for querying external vendor agents
-   - `src/SquadCommerce.A2A/A2AServer.cs` — Server for handling incoming A2A requests
-   - `src/SquadCommerce.A2A/Validation/ExternalDataValidator.cs` — Validates external data against internal sources
-
-**Patterns:**
-- All agents have meaningful stubs with XML docs explaining their role, allowed tools, and required scopes
-- Policy enforcement is immutable and centralized (AgentPolicyRegistry)
-- Orchestrator delegates only — never calls MCP tools directly
-- Demo data is realistic: 5 stores (Seattle, Portland, SF, LA, Denver), 8 SKUs (tech peripherals), prices with margins
-- All three projects build successfully with Contracts project reference
-- TODO comments indicate where MAF and MCP NuGet packages will be integrated
-
-**Dependencies:**
-- Microsoft.Extensions.Logging.Abstractions 10.0.5
-- Microsoft.Extensions.DependencyInjection.Abstractions 10.0.5
-- Project references: All three projects → Contracts
-
-**File Paths:**
-- Agents project: `src/SquadCommerce.Agents/`
-- MCP project: `src/SquadCommerce.Mcp/`
-- A2A project: `src/SquadCommerce.A2A/`
-
-### 2026-03-24: Phase 2 (MCP) + Phase 3 (A2A + Orchestrator) — FULL IMPLEMENTATION
-
-**What:** Implemented complete, production-quality MCP server, A2A protocol, domain agents, and orchestrator workflow. This is NOT scaffolding — every component is fully functional.
-
-**Phase 2 — MCP Server + Inventory/Pricing Tools:**
-
-1. **McpServerSetup.cs** — Fully implemented MCP tool registry abstraction
-   - `IMcpToolRegistry` interface for tool discovery and invocation
-   - `ToolSchema` and `ToolParameter` records for describing tool signatures
-   - `McpToolRegistry` implementation that routes to GetInventoryLevelsTool and UpdateStorePricingTool
-   - `AddSquadCommerceMcp()` extension method for DI registration
-   - Clean abstraction layer ready to swap for real ModelContextProtocol package
+### 2026-03-27: Inventory Query Routing & Scenario Detection
 
 2. **GetInventoryLevelsTool** — Fully implemented with proper error handling
    - Accepts `sku` and `storeId` parameters (both optional)

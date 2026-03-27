@@ -9,25 +9,54 @@
 
 User Advocate and AG-UI Expert for squad-commerce. Responsible for Blazor frontend, A2UI components that render agent responses, AG-UI protocol client implementation, and ensuring the entire user experience is polished, accessible, and showcase-worthy.
 
+**Frontend Architecture (2026-03-24):**
+- Blazor Web Server with Server-side Interactivity (.NET 10.0)
+- A2UI Component Library: RetailStockHeatmap, PricingImpactChart, MarketComparisonGrid — all typed via A2UIPayload record with RenderAs discriminator
+- Chat/Streaming: AgentChat.razor (SSE streaming), AgentStatusBar.razor (real-time status), ActivityTimeline.razor (agent history)
+- Services: AgUiStreamService (AG-UI SSE client), SignalRStateService (background push updates), FleetStateService (agent status aggregation)
+
+**Established Patterns:**
+- A2UI components only — no raw markdown for complex data. Contract validation ensures type safety.
+- SSE stream (`/api/agui`) is sync request/response for chat; SignalR is async-only for background state
+- Client-side bridge pattern: AgentActivityService connects SSE events to UI components
+- Dark theme support, accessible typography, responsive panels
+
+**Design System (2026-03-24-03-26):**
+- Colors: Alert Red (#F14438), Success Green (#12A24F), Disabled Gray (#C5C5C5)
+- Components: Status badges, urgency indicators, activity timeline with color-coded agent states
+- Layouts: Fixed header (24px safe area), sidebar (240px collapsible), main content area (flex 1)
+- Typography: 14px body, 16px labels, 20px headings, Segoe UI font stack
+
+**Current Status (2026-03-27):**
+- Activity Timeline scroll fixed: min-height:0 on flex parent containers
+- Agent Fleet panel now shows real-time activity from both SSE and SignalR channels
+- AgentActivityService bridges SSE events from chat to fleet panel (no backend changes)
+- Web project compiles with 0 errors
+
 ## Learnings
 
-<!-- Append new learnings below. Each entry is something lasting about the project. -->
+### ARCHIVE: Development History 2026-03-24 to 2026-03-26
 
-### 2026-03-24: Blazor Web Frontend Scaffolding
+[Archived 14 learning entries covering:
+- Blazor web frontend scaffolding (A2UI components, chat services)
+- A2UI component expansion (all 3 renderers + services)
+- SignalR integration for background state updates
+- Streaming chat with SSE protocol client
+- Design system (colors, typography, layouts)
+- Activity timeline component with color-coded states
+- Agent fleet panel with status aggregation
+- Blazor rendering optimization (event binding, UI updates)
+- Advanced scenarios (drill-down, real-time data sync)
+- Web infrastructure & testing (route guards, loader states)
+- Accessibility & dark theme support
+- Web project compiling with 0 errors at 2026-03-26
 
-**What was done:**
-- Scaffolded `src/SquadCommerce.Web` project using `dotnet new blazor -n SquadCommerce.Web -o src/SquadCommerce.Web --interactivity Server --framework net10.0`
-- Created A2UI component architecture:
-  - `Components/A2UI/A2UIRenderer.razor` — Dispatcher component using switch expression on `RenderAs` field
-  - `Components/A2UI/RetailStockHeatmap.razor` — Inventory heatmap with color-coded cells (red/yellow/green based on % of target)
-  - `Components/A2UI/PricingImpactChart.razor` — Pricing impact cards showing current → proposed price flows and margin deltas
-  - `Components/A2UI/MarketComparisonGrid.razor` — Sortable competitor comparison table with trend indicators
-- Created chat/streaming components:
-  - `Components/Chat/AgentChat.razor` — Real-time streaming chat panel with A2UI rendering support
-  - `Components/Chat/AgentStatusBar.razor` — Real-time status updates and urgency badges
-- Created services:
-  - `Services/AgUiStreamService.cs` — AG-UI SSE client that consumes `/api/agui` endpoint and parses streamed JSON chunks
-  - `Services/SignalRStateService.cs` — SignalR client for background state updates (status and urgency badges)
+For full historical entries, see git log or .squad/orchestration-log/
+]
+
+---
+
+### 2026-03-27: Activity Bridge Pattern & Timeline Scroll Fix
 - Added project reference: Web → Contracts
 - Added package: `Microsoft.AspNetCore.SignalR.Client` version 10.0.5
 - Updated `Components/_Imports.razor` to include A2UI and Chat component namespaces
