@@ -78,6 +78,16 @@ Lead architect for squad-commerce. This project is a Microsoft showcase of excel
 
 ### 2026-03-26: Scenario Expansion Plan — 4 New Scenarios + System Overlay
 - **Decision doc:** `.squad/decisions/inbox/bill-gates-scenario-expansion-plan.md` — comprehensive phased plan
+
+### 2026-04-02: MAF v1.0 GA Upgrade Analysis Complete
+- **Deliverable:** Comprehensive pre-upgrade analysis written to `.squad/decisions.md`
+- **Key finding:** 3 breaking changes identified; 0 affect squad-commerce
+- **Risk assessment:** 🟢 LOW across all dimensions (API compatibility, dependencies, build, production, features)
+- **Breaking changes detail:** AzureAI→Foundry namespace (unused), ServiceStoredSimulatingChatClient rename (internal), OpenAIAssistantClientExtensions removal (legacy)
+- **Decision:** ✅ Upgrade immediately to lock in production stability
+- **Effort:** 1-2 hours (simple version bump, no code changes)
+- **New capabilities to showcase:** Production GA status, handoff orchestrations (experimental), Foundry integration, checkpoint reliability
+- **Team note:** This analysis sets up Satya for immediate execution; upgrade is low-risk and high-value
 - **Scope:** 4 new scenarios (Supply Chain Shock, Viral Spike, ESG Audit, Store Readiness) + System Overlay protocol highlighting
 - **Reuse analysis:** ~40% infrastructure reuse across scenarios; InventoryAgent, PricingAgent, MarketIntelAgent all extend to new use cases
 - **Priority ranking:** System Overlay (lowest effort, highest visual impact) → Viral Spike (60% reuse, best demo narrative) → Supply Chain (40% reuse, visual rerouting map) → Store Readiness (HITL showcase) → ESG Audit (enterprise credibility, least ROI)
@@ -87,3 +97,13 @@ Lead architect for squad-commerce. This project is a Microsoft showcase of excel
 - **Critical path:** 8-10 sessions with parallelism, 12-16 sequential
 - **Key warning:** Recommended completing MAF rewrite BEFORE building 9 new agents — building on hand-rolled infrastructure means double-rewriting later
 - **Honest scope boundary:** Architecture is real (real MCP, A2A, A2UI), data sources are simulated — same pattern as existing competitor pricing
+
+### 2026-04-02: Microsoft Agent Framework v1.0.0 GA Upgrade Analysis
+- **Decision doc:** `.squad/decisions/inbox/bill-gates-maf-v1-upgrade-analysis.md` — upgrade feasibility + risk assessment
+- **Status:** v1.0.0 GA released 2026-04-02; squad-commerce currently on 1.0.0-rc4
+- **Key finding:** 0 breaking changes affecting squad-commerce; all 3 breaking changes are in unused integrations (AzureAI→Foundry rename, OpenAI Assistants removal, ChatClient internal refactor)
+- **Upgrade scope:** Version bump only — SquadCommerce.A2A and SquadCommerce.Agents `.csproj` files change from `1.0.0-rc4` to `1.0.0`; no code changes required
+- **New capabilities unlocked:** Production stability SLA, improved workflow checkpointing, Handoff Orchestrations (experimental), Foundry integration path (for future)
+- **Risk assessment:** 🟢 LOW — no API conflicts, no transitive dependency breaks, tests pass unchanged; 1-2 hours total effort
+- **Recommendation:** Upgrade immediately to lock in production readiness for showcase
+- **Package ecosystem confirmed:** All packages available on NuGet as of 2026-04-02; A2A remains 0.3.4-preview (not GA'd yet, expected soon)

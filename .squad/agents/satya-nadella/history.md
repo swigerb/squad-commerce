@@ -632,3 +632,24 @@ For full historical entries, see git log or .squad/orchestration-log/
 **Build & Test:** ✅ 0 errors, 83 Agent tests pass
 
 **Decision:** [Inventory Query Routing Fix](../../decisions.md#2026-03-25-inventory-query-routing-fix)
+
+### 2026-04-02: MAF v1.0.0 GA Upgrade (Satya Nadella)
+
+**What:** Upgraded Microsoft Agent Framework from 1.0.0-rc4 (pre-release) to 1.0.0 (production GA). Pure version bump — zero code changes required.
+
+**Packages Updated:**
+- `Microsoft.Agents.AI` 1.0.0-rc4 → 1.0.0 (in A2A and Agents csproj)
+- `Microsoft.Agents.AI.Workflows` 1.0.0-rc4 → 1.0.0 (in Agents csproj)
+- `Microsoft.Agents.AI.A2A` stays at 0.3.4-preview (not yet GA)
+
+**Verification:** Restore ✅ | Build ✅ (14 projects, 0 errors) | Tests ✅ (224 passed, 0 failed)
+
+**Key Insight:** Bill Gates' pre-upgrade analysis correctly identified zero breaking changes affecting squad-commerce. All 3 breaking changes in v1.0 (AzureAI→Foundry rename, class removal, class rename) were in integrations we don't use.
+
+**Showcase Opportunities (Not Implemented):**
+- Production stability claim ("Running MAF v1.0 GA")
+- Handoff Orchestrations (experimental, v1.1 will stabilize)
+- Microsoft.Agents.AI.Foundry package (Azure AI integration)
+- Workflow checkpoint reliability improvements
+
+**Decision:** [MAF v1.0 Upgrade](../../decisions/inbox/satya-nadella-maf-v1-upgrade.md)
