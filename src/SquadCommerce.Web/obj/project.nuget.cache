@@ -1,10 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "rndUp5mGO4c=",
+  "dgSpecHash": "YNV0qfpug/A=",
   "success": true,
   "projectFilePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\src\\SquadCommerce.Web\\SquadCommerce.Web.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.4\\microsoft.aspnetcore.app.internal.assets.10.0.4.nupkg.sha512",
+    "C:\\Users\\brswig\\.nuget\\packages\\microsoft.aspnetcore.app.internal.assets\\10.0.5\\microsoft.aspnetcore.app.internal.assets.10.0.5.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.aspnetcore.http.connections.client\\10.0.5\\microsoft.aspnetcore.http.connections.client.10.0.5.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.aspnetcore.signalr.client\\10.0.5\\microsoft.aspnetcore.signalr.client.10.0.5.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\microsoft.aspnetcore.signalr.client.core\\10.0.5\\microsoft.aspnetcore.signalr.client.core.10.0.5.nupkg.sha512",

@@ -18,12 +18,10 @@ C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\De
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.AI.Abstractions.dll
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.AmbientMetadata.Application.dll
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.Compliance.Abstractions.dll
-C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.DependencyInjection.AutoActivation.dll
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.Diagnostics.ExceptionSummarization.dll
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.Http.Diagnostics.dll
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.Http.Resilience.dll
-C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.Logging.Abstractions.dll
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.Resilience.dll
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.ServiceDiscovery.dll
 C:\Users\brswig\source\repos\squad-commerce\tests\SquadCommerce.A2A.Tests\bin\Debug\net10.0\Microsoft.Extensions.ServiceDiscovery.Abstractions.dll

@@ -15,14 +15,15 @@
           }
         }
       },
-      "Microsoft.Agents.AI/1.0.0-rc4": {
+      "Microsoft.Agents.AI/1.0.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Agents.AI.Abstractions": "1.0.0-rc4",
-          "Microsoft.Extensions.AI": "10.3.0",
-          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.3",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.3",
+          "Microsoft.Agents.AI.Abstractions": "1.0.0",
+          "Microsoft.Extensions.AI": "10.4.0",
+          "Microsoft.Extensions.AI.Abstractions": "10.4.0",
+          "Microsoft.Extensions.Compliance.Abstractions": "10.4.0",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.4",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.4",
           "Microsoft.Extensions.VectorData.Abstractions": "9.7.0",
           "Microsoft.ML.Tokenizers": "2.0.0"
         },
@@ -37,12 +38,10 @@
           }
         }
       },
-      "Microsoft.Agents.AI.Abstractions/1.0.0-rc4": {
+      "Microsoft.Agents.AI.Abstractions/1.0.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.3",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.3"
+          "Microsoft.Extensions.AI.Abstractions": "10.4.0"
         },
         "compile": {
           "lib/net10.0/Microsoft.Agents.AI.Abstractions.dll": {
@@ -55,14 +54,14 @@
           }
         }
       },
-      "Microsoft.Extensions.AI/10.3.0": {
+      "Microsoft.Extensions.AI/10.4.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
-          "Microsoft.Extensions.Caching.Abstractions": "10.0.3",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.3",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.3",
-          "System.Numerics.Tensors": "10.0.3"
+          "Microsoft.Extensions.AI.Abstractions": "10.4.0",
+          "Microsoft.Extensions.Caching.Abstractions": "10.0.4",
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.4",
+          "Microsoft.Extensions.Logging.Abstractions": "10.0.4",
+          "System.Numerics.Tensors": "10.0.4"
         },
         "compile": {
           "lib/net10.0/Microsoft.Extensions.AI.dll": {
@@ -75,7 +74,7 @@
           }
         }
       },
-      "Microsoft.Extensions.AI.Abstractions/10.3.0": {
+      "Microsoft.Extensions.AI.Abstractions/10.4.0": {
         "type": "package",
         "compile": {
           "lib/net10.0/Microsoft.Extensions.AI.Abstractions.dll": {
@@ -109,10 +108,10 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
-      "Microsoft.Extensions.Caching.Abstractions/10.0.3": {
+      "Microsoft.Extensions.Caching.Abstractions/10.0.4": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Extensions.Primitives": "10.0.3"
+          "Microsoft.Extensions.Primitives": "10.0.4"
         },
         "compile": {
           "lib/net10.0/Microsoft.Extensions.Caching.Abstractions.dll": {
@@ -128,11 +127,11 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
-      "Microsoft.Extensions.Compliance.Abstractions/10.1.0": {
+      "Microsoft.Extensions.Compliance.Abstractions/10.4.0": {
         "type": "package",
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.1",
-          "Microsoft.Extensions.ObjectPool": "10.0.1"
+          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.4",
+          "Microsoft.Extensions.ObjectPool": "10.0.4"
         },
         "compile": {
           "lib/net10.0/Microsoft.Extensions.Compliance.Abstractions.dll": {
@@ -504,7 +503,7 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
-      "Microsoft.Extensions.ObjectPool/10.0.1": {
+      "Microsoft.Extensions.ObjectPool/10.0.4": {
         "type": "package",
         "compile": {
           "lib/net10.0/Microsoft.Extensions.ObjectPool.dll": {
@@ -560,7 +559,7 @@
           "buildTransitive/net8.0/_._": {}
         }
       },
-      "Microsoft.Extensions.Primitives/10.0.3": {
+      "Microsoft.Extensions.Primitives/10.0.4": {
         "type": "package",
         "compile": {
           "lib/net10.0/Microsoft.Extensions.Primitives.dll": {
@@ -899,7 +898,7 @@
           }
         }
       },
-      "System.Numerics.Tensors/10.0.3": {
+      "System.Numerics.Tensors/10.0.4": {
         "type": "package",
         "compile": {
           "lib/net10.0/System.Numerics.Tensors.dll": {
@@ -989,10 +988,10 @@
         "lib/netstandard2.0/Google.Protobuf.xml"
       ]
     },
-    "Microsoft.Agents.AI/1.0.0-rc4": {
-      "sha512": "fDsowhBBbWjJmm7kT0RJG4ED3I5X5xqsOg4R4gW2eR/ptzT2OLqsOJiO0rCPUrqWsPcpL0hbCD0heD4oMfirFQ==",
+    "Microsoft.Agents.AI/1.0.0": {
+      "sha512": "28Ykw80s6oKMer91exn4pKpCyZjp3Phvtv2uuIYY9224PLphzb4zS6bzvGqy1cCJGzIV/dSo2sYk6zklCm9F5w==",
       "type": "package",
-      "path": "microsoft.agents.ai/1.0.0-rc4",
+      "path": "microsoft.agents.ai/1.0.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1008,14 +1007,14 @@
         "lib/net9.0/Microsoft.Agents.AI.xml",
         "lib/netstandard2.0/Microsoft.Agents.AI.dll",
         "lib/netstandard2.0/Microsoft.Agents.AI.xml",
-        "microsoft.agents.ai.1.0.0-rc4.nupkg.sha512",
+        "microsoft.agents.ai.1.0.0.nupkg.sha512",
         "microsoft.agents.ai.nuspec"
       ]
     },
-    "Microsoft.Agents.AI.Abstractions/1.0.0-rc4": {
-      "sha512": "3/5gnZxpod0WUyeQtLmgXDoa7HFKLau4pp6+cHcd9A5wYuZmIXlIltonp9kw0akBbPF/0X6dYIFCq2r+yHduOw==",
+    "Microsoft.Agents.AI.Abstractions/1.0.0": {
+      "sha512": "xvQkgKyKk/9uvaejku15MF7kQHDCCslSWgb7YQShWxivtgjgFS5NivTDAVcwXAL5MKakLmDAyUCKzzI6h8Xvzg==",
       "type": "package",
-      "path": "microsoft.agents.ai.abstractions/1.0.0-rc4",
+      "path": "microsoft.agents.ai.abstractions/1.0.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1031,14 +1030,14 @@
         "lib/net9.0/Microsoft.Agents.AI.Abstractions.xml",
         "lib/netstandard2.0/Microsoft.Agents.AI.Abstractions.dll",
         "lib/netstandard2.0/Microsoft.Agents.AI.Abstractions.xml",
-        "microsoft.agents.ai.abstractions.1.0.0-rc4.nupkg.sha512",
+        "microsoft.agents.ai.abstractions.1.0.0.nupkg.sha512",
         "microsoft.agents.ai.abstractions.nuspec"
       ]
     },
-    "Microsoft.Extensions.AI/10.3.0": {
-      "sha512": "zJYAHVM+zA74MNHifAyYE/jnfilI5WOnyQqnYobQZ5JW1VRSMGfQl/oqYdK3p2AdQOX8VcxSW6C+UsZYnpFB+A==",
+    "Microsoft.Extensions.AI/10.4.0": {
+      "sha512": "7kKIuaUMFWikveZUjSrs53XfMVV7IDGSDaGp6/y/hV0HXsA7N2oIODZWxtEkEj8Q4cd/Oc/VlsVlg8efof7gFA==",
       "type": "package",
-      "path": "microsoft.extensions.ai/10.3.0",
+      "path": "microsoft.extensions.ai/10.4.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1054,14 +1053,14 @@
         "lib/net9.0/Microsoft.Extensions.AI.xml",
         "lib/netstandard2.0/Microsoft.Extensions.AI.dll",
         "lib/netstandard2.0/Microsoft.Extensions.AI.xml",
-        "microsoft.extensions.ai.10.3.0.nupkg.sha512",
+        "microsoft.extensions.ai.10.4.0.nupkg.sha512",
         "microsoft.extensions.ai.nuspec"
       ]
     },
-    "Microsoft.Extensions.AI.Abstractions/10.3.0": {
-      "sha512": "hDjDvUERvUH3HBMs2MDusOcGJBjAHOG5pJIU2x/HZEa4e1UthNKt89cwMi3B+ogJo6skki1XFjfgGN3ksnVqvQ==",
+    "Microsoft.Extensions.AI.Abstractions/10.4.0": {
+      "sha512": "t3S2H4do4YeNheIfE3GEl3MnKIrnxpbLu7a88spfApYR3in9ddhIq/GMtxgMaFjn/PUMTCFv5YH7Y6Q91dsDXQ==",
       "type": "package",
-      "path": "microsoft.extensions.ai.abstractions/10.3.0",
+      "path": "microsoft.extensions.ai.abstractions/10.4.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1077,7 +1076,7 @@
         "lib/net9.0/Microsoft.Extensions.AI.Abstractions.xml",
         "lib/netstandard2.0/Microsoft.Extensions.AI.Abstractions.dll",
         "lib/netstandard2.0/Microsoft.Extensions.AI.Abstractions.xml",
-        "microsoft.extensions.ai.abstractions.10.3.0.nupkg.sha512",
+        "microsoft.extensions.ai.abstractions.10.4.0.nupkg.sha512",
         "microsoft.extensions.ai.abstractions.nuspec"
       ]
     },
@@ -1106,10 +1105,10 @@
         "microsoft.extensions.ambientmetadata.application.nuspec"
       ]
     },
-    "Microsoft.Extensions.Caching.Abstractions/10.0.3": {
-      "sha512": "5dtXBvI8t3z8pF4tB38JYgi/enCL/DwSXxpqShgFz3SHJ7IzqFIMs6Gu5ik8sNZzcO9qQs3xIDpB3vDamkYG+Q==",
+    "Microsoft.Extensions.Caching.Abstractions/10.0.4": {
+      "sha512": "uDRooaV6N3WZ0kdlNPMB68/MdGn/in1Fs7Db7DnIm85RBTPy4P321WO+daAImiYpH5dekjNggDqy1N44WaIlMA==",
       "type": "package",
-      "path": "microsoft.extensions.caching.abstractions/10.0.3",
+      "path": "microsoft.extensions.caching.abstractions/10.0.4",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1130,15 +1129,15 @@
         "lib/net9.0/Microsoft.Extensions.Caching.Abstractions.xml",
         "lib/netstandard2.0/Microsoft.Extensions.Caching.Abstractions.dll",
         "lib/netstandard2.0/Microsoft.Extensions.Caching.Abstractions.xml",
-        "microsoft.extensions.caching.abstractions.10.0.3.nupkg.sha512",
+        "microsoft.extensions.caching.abstractions.10.0.4.nupkg.sha512",
         "microsoft.extensions.caching.abstractions.nuspec",
         "useSharedDesignerContext.txt"
       ]
     },
-    "Microsoft.Extensions.Compliance.Abstractions/10.1.0": {
-      "sha512": "M3JWrgZMkVzyEybZzNkTiC/e8U1ipXTi8xm8bj+PHHp4AcEmhmIEqnxRS0VHVCKZjLkOPt2hY2CIisUFQ6gqLA==",
+    "Microsoft.Extensions.Compliance.Abstractions/10.4.0": {
+      "sha512": "4WkknDbVrHNf+S6fwSt1OAXlGJ/G/QrtJlqx4aNzOLmeT3GRyxpGLZn+Q3UV+RMRAF6FfsijEZBg2ZAW8bTAkg==",
       "type": "package",
-      "path": "microsoft.extensions.compliance.abstractions/10.1.0",
+      "path": "microsoft.extensions.compliance.abstractions/10.4.0",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1152,7 +1151,7 @@
         "lib/net9.0/Microsoft.Extensions.Compliance.Abstractions.xml",
         "lib/netstandard2.0/Microsoft.Extensions.Compliance.Abstractions.dll",
         "lib/netstandard2.0/Microsoft.Extensions.Compliance.Abstractions.xml",
-        "microsoft.extensions.compliance.abstractions.10.1.0.nupkg.sha512",
+        "microsoft.extensions.compliance.abstractions.10.4.0.nupkg.sha512",
         "microsoft.extensions.compliance.abstractions.nuspec"
       ]
     },
@@ -1712,10 +1711,10 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "Microsoft.Extensions.ObjectPool/10.0.1": {
-      "sha512": "HqAEbtoAhgvH53c54IV5e4vQ60PYvl7Z/WIHsbet+UGGE7n+7dwVNXw1mb9LZlWbsxnupCevvtgIne5P//ZKpQ==",
+    "Microsoft.Extensions.ObjectPool/10.0.4": {
+      "sha512": "2pufIFOgNl/yWTOoIC9XgBnO9VxgfAjdRCnVwpE2+ICfcroGnjuEAGzJ5lTdZeAe0HvA31vMBWXtcmGB7TOq3g==",
       "type": "package",
-      "path": "microsoft.extensions.objectpool/10.0.1",
+      "path": "microsoft.extensions.objectpool/10.0.4",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1727,7 +1726,7 @@
         "lib/net462/Microsoft.Extensions.ObjectPool.xml",
         "lib/netstandard2.0/Microsoft.Extensions.ObjectPool.dll",
         "lib/netstandard2.0/Microsoft.Extensions.ObjectPool.xml",
-        "microsoft.extensions.objectpool.10.0.1.nupkg.sha512",
+        "microsoft.extensions.objectpool.10.0.4.nupkg.sha512",
         "microsoft.extensions.objectpool.nuspec"
       ]
     },
@@ -1806,10 +1805,10 @@
         "useSharedDesignerContext.txt"
       ]
     },
-    "Microsoft.Extensions.Primitives/10.0.3": {
-      "sha512": "GEcpTwo7sUoLGGNTqV1FZEuL+tTD9m81NX/mh099dqGNna07/UGZShKQNZRw4hv6nlliSUwYQgSYc7OR99Jufg==",
+    "Microsoft.Extensions.Primitives/10.0.4": {
+      "sha512": "lABYqiRH9HgYJsjzO3W7+cucUwWXhEkiyrRylANdIubnzcESlkIsLowXpQ4E+sc7kjMLbk1hk5oxw4qTKowTEg==",
       "type": "package",
-      "path": "microsoft.extensions.primitives/10.0.3",
+      "path": "microsoft.extensions.primitives/10.0.4",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -1830,7 +1829,7 @@
         "lib/net9.0/Microsoft.Extensions.Primitives.xml",
         "lib/netstandard2.0/Microsoft.Extensions.Primitives.dll",
         "lib/netstandard2.0/Microsoft.Extensions.Primitives.xml",
-        "microsoft.extensions.primitives.10.0.3.nupkg.sha512",
+        "microsoft.extensions.primitives.10.0.4.nupkg.sha512",
         "microsoft.extensions.primitives.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -2305,10 +2304,10 @@
         "polly.ratelimiting.nuspec"
       ]
     },
-    "System.Numerics.Tensors/10.0.3": {
-      "sha512": "calKQ5nqV98lVRSCV7KFrlmw7nE7z6qIBWnMP+f7xAzY9H1cO15zJmkuZYM9RxYXDzQyI60/+dXd65UUY4HZFQ==",
+    "System.Numerics.Tensors/10.0.4": {
+      "sha512": "EK8wJVxnVfeCzchnEqVjIfZDpVIcmjfjUs9x1nzI41X2naPGT57QjoHlQJma2vDQUxEtPQiGv/v90mwcflx6mQ==",
       "type": "package",
-      "path": "system.numerics.tensors/10.0.3",
+      "path": "system.numerics.tensors/10.0.4",
       "files": [
         ".nupkg.metadata",
         ".signature.p7s",
@@ -2329,7 +2328,7 @@
         "lib/net9.0/System.Numerics.Tensors.xml",
         "lib/netstandard2.0/System.Numerics.Tensors.dll",
         "lib/netstandard2.0/System.Numerics.Tensors.xml",
-        "system.numerics.tensors.10.0.3.nupkg.sha512",
+        "system.numerics.tensors.10.0.4.nupkg.sha512",
         "system.numerics.tensors.nuspec",
         "useSharedDesignerContext.txt"
       ]
@@ -2376,7 +2375,7 @@
   },
   "projectFileDependencyGroups": {
     "net10.0": [
-      "Microsoft.Agents.AI >= 1.0.0-rc4",
+      "Microsoft.Agents.AI >= 1.0.0",
       "Microsoft.Extensions.Logging.Abstractions >= 10.0.5",
       "SquadCommerce.Contracts >= 1.0.0",
       "SquadCommerce.ServiceDefaults >= 1.0.0"
@@ -2441,7 +2440,7 @@
         "dependencies": {
           "Microsoft.Agents.AI": {
             "target": "Package",
-            "version": "[1.0.0-rc4, )"
+            "version": "[1.0.0, )"
           },
           "Microsoft.Extensions.Logging.Abstractions": {
             "target": "Package",
@@ -2464,7 +2463,7 @@
             "privateAssets": "all"
           }
         },
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.200/PortableRuntimeIdentifierGraph.json",
+        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\10.0.201/PortableRuntimeIdentifierGraph.json",
         "packagesToPrune": {
           "Microsoft.CSharp": "(,4.7.32767]",
           "Microsoft.VisualBasic": "(,10.4.32767]",

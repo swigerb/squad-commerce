@@ -38,24 +38,12 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXEluc2lnaHRDYXJkUmVuZGVyZXIucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/MarketComparisonGrid.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXE1hcmtldENvbXBhcmlzb25HcmlkLnJhem9y
-build_metadata.AdditionalFiles.CssScope = 
-
 [C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/PipelineNodeGraph.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFBpcGVsaW5lTm9kZUdyYXBoLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
-[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/PricingImpactChart.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFByaWNpbmdJbXBhY3RDaGFydC5yYXpvcg==
-build_metadata.AdditionalFiles.CssScope = 
-
 [C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/ReasoningTracePanel.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFJlYXNvbmluZ1RyYWNlUGFuZWwucmF6b3I=
-build_metadata.AdditionalFiles.CssScope = 
-
-[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/RetailStockHeatmap.razor]
-build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFJldGFpbFN0b2NrSGVhdG1hcC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
 [C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/ToolCallTimeline.razor]
@@ -106,6 +94,42 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xfSW1wb3J0cy5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = 
 
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/CampaignPreview.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXENhbXBhaWduUHJldmlldy5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-l6qqylq13z
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/InteractiveFloorplan.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXEludGVyYWN0aXZlRmxvb3JwbGFuLnJhem9y
+build_metadata.AdditionalFiles.CssScope = b-drmkz0i8t3
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/MarketComparisonGrid.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXE1hcmtldENvbXBhcmlzb25HcmlkLnJhem9y
+build_metadata.AdditionalFiles.CssScope = b-5rqob0ugrl
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/PricingImpactChart.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFByaWNpbmdJbXBhY3RDaGFydC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-3kg6ai24s2
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/ProtocolBadge.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFByb3RvY29sQmFkZ2UucmF6b3I=
+build_metadata.AdditionalFiles.CssScope = b-w2zkdqrxjm
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/ReroutingMap.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFJlcm91dGluZ01hcC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-myjbstvu1b
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/RetailStockHeatmap.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFJldGFpbFN0b2NrSGVhdG1hcC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-bwthwdk3y4
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/SocialSentimentGraph.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFNvY2lhbFNlbnRpbWVudEdyYXBoLnJhem9y
+build_metadata.AdditionalFiles.CssScope = b-o1wtmipx9p
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/SupplierRiskMatrix.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFN1cHBsaWVyUmlza01hdHJpeC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-ad9q4rp5cp
+
 [C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/A2UI/TelemetryDashboard.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xBMlVJXFRlbGVtZXRyeURhc2hib2FyZC5yYXpvcg==
 build_metadata.AdditionalFiles.CssScope = b-29r4fpmgno
@@ -141,3 +165,7 @@ build_metadata.AdditionalFiles.CssScope = b-ndhzrvi8me
 [C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/Layout/ReconnectModal.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcUmVjb25uZWN0TW9kYWwucmF6b3I=
 build_metadata.AdditionalFiles.CssScope = b-r3zk8461pw
+
+[C:/Users/brswig/source/repos/squad-commerce/src/SquadCommerce.Web/Components/Layout/SettingsPanel.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50c1xMYXlvdXRcU2V0dGluZ3NQYW5lbC5yYXpvcg==
+build_metadata.AdditionalFiles.CssScope = b-vbaxz5nr0o

@@ -43,13 +43,12 @@
           }
         }
       },
-      "Microsoft.Agents.AI/1.0.0-rc4": {
+      "Microsoft.Agents.AI/1.0.0": {
         "dependencies": {
-          "Microsoft.Agents.AI.Abstractions": "1.0.0-rc4",
-          "Microsoft.Extensions.AI": "10.3.0",
-          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "Microsoft.Agents.AI.Abstractions": "1.0.0",
+          "Microsoft.Extensions.AI": "10.4.0",
+          "Microsoft.Extensions.AI.Abstractions": "10.4.0",
+          "Microsoft.Extensions.Compliance.Abstractions": "10.4.0",
           "Microsoft.Extensions.VectorData.Abstractions": "9.7.0",
           "Microsoft.ML.Tokenizers": "2.0.0"
         },
@@ -60,11 +59,9 @@
           }
         }
       },
-      "Microsoft.Agents.AI.Abstractions/1.0.0-rc4": {
+      "Microsoft.Agents.AI.Abstractions/1.0.0": {
         "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.5"
+          "Microsoft.Extensions.AI.Abstractions": "10.4.0"
         },
         "runtime": {
           "lib/net10.0/Microsoft.Agents.AI.Abstractions.dll": {
@@ -81,25 +78,23 @@
           }
         }
       },
-      "Microsoft.Extensions.AI/10.3.0": {
+      "Microsoft.Extensions.AI/10.4.0": {
         "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "10.3.0",
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
-          "System.Numerics.Tensors": "10.0.3"
+          "Microsoft.Extensions.AI.Abstractions": "10.4.0",
+          "System.Numerics.Tensors": "10.0.4"
         },
         "runtime": {
           "lib/net10.0/Microsoft.Extensions.AI.dll": {
-            "assemblyVersion": "10.3.0.0",
-            "fileVersion": "10.300.26.10911"
+            "assemblyVersion": "10.4.0.0",
+            "fileVersion": "10.400.26.16002"
           }
         }
       },
-      "Microsoft.Extensions.AI.Abstractions/10.3.0": {
+      "Microsoft.Extensions.AI.Abstractions/10.4.0": {
         "runtime": {
           "lib/net10.0/Microsoft.Extensions.AI.Abstractions.dll": {
-            "assemblyVersion": "10.3.0.0",
-            "fileVersion": "10.300.26.10911"
+            "assemblyVersion": "10.4.0.0",
+            "fileVersion": "10.400.26.16002"
           }
         }
       },
@@ -111,22 +106,11 @@
           }
         }
       },
-      "Microsoft.Extensions.Compliance.Abstractions/10.1.0": {
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5"
-        },
+      "Microsoft.Extensions.Compliance.Abstractions/10.4.0": {
         "runtime": {
           "lib/net10.0/Microsoft.Extensions.Compliance.Abstractions.dll": {
-            "assemblyVersion": "10.1.0.0",
-            "fileVersion": "10.100.25.60801"
-          }
-        }
-      },
-      "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.5": {
-        "runtime": {
-          "lib/net10.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll": {
-            "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.526.15411"
+            "assemblyVersion": "10.4.0.0",
+            "fileVersion": "10.400.26.16002"
           }
         }
       },
@@ -139,9 +123,6 @@
         }
       },
       "Microsoft.Extensions.Diagnostics.ExceptionSummarization/10.1.0": {
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5"
-        },
         "runtime": {
           "lib/net10.0/Microsoft.Extensions.Diagnostics.ExceptionSummarization.dll": {
             "assemblyVersion": "10.1.0.0",
@@ -172,17 +153,6 @@
           }
         }
       },
-      "Microsoft.Extensions.Logging.Abstractions/10.0.5": {
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5"
-        },
-        "runtime": {
-          "lib/net10.0/Microsoft.Extensions.Logging.Abstractions.dll": {
-            "assemblyVersion": "10.0.0.0",
-            "fileVersion": "10.0.526.15411"
-          }
-        }
-      },
       "Microsoft.Extensions.Resilience/10.1.0": {
         "dependencies": {
           "Microsoft.Extensions.Diagnostics.ExceptionSummarization": "10.1.0",
@@ -209,10 +179,6 @@
         }
       },
       "Microsoft.Extensions.ServiceDiscovery.Abstractions/10.1.0": {
-        "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.5"
-        },
         "runtime": {
           "lib/net10.0/Microsoft.Extensions.ServiceDiscovery.Abstractions.dll": {
             "assemblyVersion": "10.1.0.0",
@@ -235,8 +201,7 @@
       },
       "Microsoft.Extensions.Telemetry.Abstractions/10.1.0": {
         "dependencies": {
-          "Microsoft.Extensions.Compliance.Abstractions": "10.1.0",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.5"
+          "Microsoft.Extensions.Compliance.Abstractions": "10.4.0"
         },
         "runtime": {
           "lib/net10.0/Microsoft.Extensions.Telemetry.Abstractions.dll": {
@@ -247,7 +212,7 @@
       },
       "Microsoft.Extensions.VectorData.Abstractions/9.7.0": {
         "dependencies": {
-          "Microsoft.Extensions.AI.Abstractions": "10.3.0"
+          "Microsoft.Extensions.AI.Abstractions": "10.4.0"
         },
         "runtime": {
           "lib/net8.0/Microsoft.Extensions.VectorData.Abstractions.dll": {
@@ -556,7 +521,6 @@
       },
       "OpenTelemetry.Api.ProviderBuilderExtensions/1.14.0": {
         "dependencies": {
-          "Microsoft.Extensions.DependencyInjection.Abstractions": "10.0.5",
           "OpenTelemetry.Api": "1.14.0"
         },
         "runtime": {
@@ -631,7 +595,6 @@
       },
       "Polly.Extensions/8.4.2": {
         "dependencies": {
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
           "Polly.Core": "8.4.2"
         },
         "runtime": {
@@ -652,11 +615,11 @@
           }
         }
       },
-      "System.Numerics.Tensors/10.0.3": {
+      "System.Numerics.Tensors/10.0.4": {
         "runtime": {
           "lib/net10.0/System.Numerics.Tensors.dll": {
-            "assemblyVersion": "10.0.0.3",
-            "fileVersion": "10.0.326.7603"
+            "assemblyVersion": "10.0.0.4",
+            "fileVersion": "10.0.426.12010"
           }
         }
       },
@@ -712,8 +675,7 @@
       },
       "SquadCommerce.A2A/1.0.0": {
         "dependencies": {
-          "Microsoft.Agents.AI": "1.0.0-rc4",
-          "Microsoft.Extensions.Logging.Abstractions": "10.0.5",
+          "Microsoft.Agents.AI": "1.0.0",
           "SquadCommerce.Contracts": "1.0.0",
           "SquadCommerce.ServiceDefaults": "1.0.0"
         },
@@ -778,19 +740,19 @@
       "path": "google.protobuf/3.30.2",
       "hashPath": "google.protobuf.3.30.2.nupkg.sha512"
     },
-    "Microsoft.Agents.AI/1.0.0-rc4": {
+    "Microsoft.Agents.AI/1.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-fDsowhBBbWjJmm7kT0RJG4ED3I5X5xqsOg4R4gW2eR/ptzT2OLqsOJiO0rCPUrqWsPcpL0hbCD0heD4oMfirFQ==",
-      "path": "microsoft.agents.ai/1.0.0-rc4",
-      "hashPath": "microsoft.agents.ai.1.0.0-rc4.nupkg.sha512"
+      "sha512": "sha512-28Ykw80s6oKMer91exn4pKpCyZjp3Phvtv2uuIYY9224PLphzb4zS6bzvGqy1cCJGzIV/dSo2sYk6zklCm9F5w==",
+      "path": "microsoft.agents.ai/1.0.0",
+      "hashPath": "microsoft.agents.ai.1.0.0.nupkg.sha512"
     },
-    "Microsoft.Agents.AI.Abstractions/1.0.0-rc4": {
+    "Microsoft.Agents.AI.Abstractions/1.0.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-3/5gnZxpod0WUyeQtLmgXDoa7HFKLau4pp6+cHcd9A5wYuZmIXlIltonp9kw0akBbPF/0X6dYIFCq2r+yHduOw==",
-      "path": "microsoft.agents.ai.abstractions/1.0.0-rc4",
-      "hashPath": "microsoft.agents.ai.abstractions.1.0.0-rc4.nupkg.sha512"
+      "sha512": "sha512-xvQkgKyKk/9uvaejku15MF7kQHDCCslSWgb7YQShWxivtgjgFS5NivTDAVcwXAL5MKakLmDAyUCKzzI6h8Xvzg==",
+      "path": "microsoft.agents.ai.abstractions/1.0.0",
+      "hashPath": "microsoft.agents.ai.abstractions.1.0.0.nupkg.sha512"
     },
     "Microsoft.CodeCoverage/17.14.1": {
       "type": "package",
@@ -799,19 +761,19 @@
       "path": "microsoft.codecoverage/17.14.1",
       "hashPath": "microsoft.codecoverage.17.14.1.nupkg.sha512"
     },
-    "Microsoft.Extensions.AI/10.3.0": {
+    "Microsoft.Extensions.AI/10.4.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-zJYAHVM+zA74MNHifAyYE/jnfilI5WOnyQqnYobQZ5JW1VRSMGfQl/oqYdK3p2AdQOX8VcxSW6C+UsZYnpFB+A==",
-      "path": "microsoft.extensions.ai/10.3.0",
-      "hashPath": "microsoft.extensions.ai.10.3.0.nupkg.sha512"
+      "sha512": "sha512-7kKIuaUMFWikveZUjSrs53XfMVV7IDGSDaGp6/y/hV0HXsA7N2oIODZWxtEkEj8Q4cd/Oc/VlsVlg8efof7gFA==",
+      "path": "microsoft.extensions.ai/10.4.0",
+      "hashPath": "microsoft.extensions.ai.10.4.0.nupkg.sha512"
     },
-    "Microsoft.Extensions.AI.Abstractions/10.3.0": {
+    "Microsoft.Extensions.AI.Abstractions/10.4.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-hDjDvUERvUH3HBMs2MDusOcGJBjAHOG5pJIU2x/HZEa4e1UthNKt89cwMi3B+ogJo6skki1XFjfgGN3ksnVqvQ==",
-      "path": "microsoft.extensions.ai.abstractions/10.3.0",
-      "hashPath": "microsoft.extensions.ai.abstractions.10.3.0.nupkg.sha512"
+      "sha512": "sha512-t3S2H4do4YeNheIfE3GEl3MnKIrnxpbLu7a88spfApYR3in9ddhIq/GMtxgMaFjn/PUMTCFv5YH7Y6Q91dsDXQ==",
+      "path": "microsoft.extensions.ai.abstractions/10.4.0",
+      "hashPath": "microsoft.extensions.ai.abstractions.10.4.0.nupkg.sha512"
     },
     "Microsoft.Extensions.AmbientMetadata.Application/10.1.0": {
       "type": "package",
@@ -820,19 +782,12 @@
       "path": "microsoft.extensions.ambientmetadata.application/10.1.0",
       "hashPath": "microsoft.extensions.ambientmetadata.application.10.1.0.nupkg.sha512"
     },
-    "Microsoft.Extensions.Compliance.Abstractions/10.1.0": {
+    "Microsoft.Extensions.Compliance.Abstractions/10.4.0": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-M3JWrgZMkVzyEybZzNkTiC/e8U1ipXTi8xm8bj+PHHp4AcEmhmIEqnxRS0VHVCKZjLkOPt2hY2CIisUFQ6gqLA==",
-      "path": "microsoft.extensions.compliance.abstractions/10.1.0",
-      "hashPath": "microsoft.extensions.compliance.abstractions.10.1.0.nupkg.sha512"
-    },
-    "Microsoft.Extensions.DependencyInjection.Abstractions/10.0.5": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-iVMtq9eRvzyhx8949EGT0OCYJfXi737SbRVzWXE5GrOgGj5AaZ9eUuxA/BSUfmOMALKn/g8KfFaNQw0eiB3lyA==",
-      "path": "microsoft.extensions.dependencyinjection.abstractions/10.0.5",
-      "hashPath": "microsoft.extensions.dependencyinjection.abstractions.10.0.5.nupkg.sha512"
+      "sha512": "sha512-4WkknDbVrHNf+S6fwSt1OAXlGJ/G/QrtJlqx4aNzOLmeT3GRyxpGLZn+Q3UV+RMRAF6FfsijEZBg2ZAW8bTAkg==",
+      "path": "microsoft.extensions.compliance.abstractions/10.4.0",
+      "hashPath": "microsoft.extensions.compliance.abstractions.10.4.0.nupkg.sha512"
     },
     "Microsoft.Extensions.DependencyInjection.AutoActivation/10.1.0": {
       "type": "package",
@@ -861,13 +816,6 @@
       "sha512": "sha512-rwDoQBB93yQjd1XtcZBnOLRX23LW7Z49TIAp1sn7i2r/pW3y4iB8E+EEL0ZyOPuEZxT9xEVN9y39KWlG1FDPkQ==",
       "path": "microsoft.extensions.http.resilience/10.1.0",
       "hashPath": "microsoft.extensions.http.resilience.10.1.0.nupkg.sha512"
-    },
-    "Microsoft.Extensions.Logging.Abstractions/10.0.5": {
-      "type": "package",
-      "serviceable": true,
-      "sha512": "sha512-9HOdqlDtPptVcmKAjsQ/Nr5Rxfq6FMYLdhvZh1lVmeKR738qeYecQD7+ldooXf+u2KzzR1kafSphWngIM3C6ug==",
-      "path": "microsoft.extensions.logging.abstractions/10.0.5",
-      "hashPath": "microsoft.extensions.logging.abstractions.10.0.5.nupkg.sha512"
     },
     "Microsoft.Extensions.Resilience/10.1.0": {
       "type": "package",
@@ -1030,12 +978,12 @@
       "path": "polly.ratelimiting/8.4.2",
       "hashPath": "polly.ratelimiting.8.4.2.nupkg.sha512"
     },
-    "System.Numerics.Tensors/10.0.3": {
+    "System.Numerics.Tensors/10.0.4": {
       "type": "package",
       "serviceable": true,
-      "sha512": "sha512-calKQ5nqV98lVRSCV7KFrlmw7nE7z6qIBWnMP+f7xAzY9H1cO15zJmkuZYM9RxYXDzQyI60/+dXd65UUY4HZFQ==",
-      "path": "system.numerics.tensors/10.0.3",
-      "hashPath": "system.numerics.tensors.10.0.3.nupkg.sha512"
+      "sha512": "sha512-EK8wJVxnVfeCzchnEqVjIfZDpVIcmjfjUs9x1nzI41X2naPGT57QjoHlQJma2vDQUxEtPQiGv/v90mwcflx6mQ==",
+      "path": "system.numerics.tensors/10.0.4",
+      "hashPath": "system.numerics.tensors.10.0.4.nupkg.sha512"
     },
     "xunit/2.9.3": {
       "type": "package",
