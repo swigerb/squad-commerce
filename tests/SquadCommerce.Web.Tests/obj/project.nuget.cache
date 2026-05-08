@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "S4WRpRN8RAk=",
+  "dgSpecHash": "h1x3Zfph7Do=",
   "success": true,
   "projectFilePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\tests\\SquadCommerce.Web.Tests\\SquadCommerce.Web.Tests.csproj",
   "expectedPackageFiles": [
@@ -80,5 +80,54 @@
     "C:\\Users\\brswig\\.nuget\\packages\\xunit.extensibility.execution\\2.9.3\\xunit.extensibility.execution.2.9.3.nupkg.sha512",
     "C:\\Users\\brswig\\.nuget\\packages\\xunit.runner.visualstudio\\3.1.4\\xunit.runner.visualstudio.3.1.4.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'OpenTelemetry.Api' 1.14.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-g94r-2vxg-569j",
+      "projectPath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\tests\\SquadCommerce.Web.Tests\\SquadCommerce.Web.Tests.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\tests\\SquadCommerce.Web.Tests\\SquadCommerce.Web.Tests.csproj",
+      "libraryId": "OpenTelemetry.Api",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'OpenTelemetry.Exporter.OpenTelemetryProtocol' 1.14.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-4625-4j76-fww9",
+      "projectPath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\tests\\SquadCommerce.Web.Tests\\SquadCommerce.Web.Tests.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\tests\\SquadCommerce.Web.Tests\\SquadCommerce.Web.Tests.csproj",
+      "libraryId": "OpenTelemetry.Exporter.OpenTelemetryProtocol",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'OpenTelemetry.Exporter.OpenTelemetryProtocol' 1.14.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-mr8r-92fq-pj8p",
+      "projectPath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\tests\\SquadCommerce.Web.Tests\\SquadCommerce.Web.Tests.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\tests\\SquadCommerce.Web.Tests\\SquadCommerce.Web.Tests.csproj",
+      "libraryId": "OpenTelemetry.Exporter.OpenTelemetryProtocol",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    },
+    {
+      "code": "NU1902",
+      "level": "Warning",
+      "message": "Package 'OpenTelemetry.Exporter.OpenTelemetryProtocol' 1.14.0 has a known moderate severity vulnerability, https://github.com/advisories/GHSA-q834-8qmm-v933",
+      "projectPath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\tests\\SquadCommerce.Web.Tests\\SquadCommerce.Web.Tests.csproj",
+      "warningLevel": 1,
+      "filePath": "C:\\Users\\brswig\\source\\repos\\squad-commerce\\tests\\SquadCommerce.Web.Tests\\SquadCommerce.Web.Tests.csproj",
+      "libraryId": "OpenTelemetry.Exporter.OpenTelemetryProtocol",
+      "targetGraphs": [
+        "net10.0"
+      ]
+    }
+  ]
 }
