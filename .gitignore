@@ -6,3 +6,4 @@
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
 .azure
+.squad/.cache/
