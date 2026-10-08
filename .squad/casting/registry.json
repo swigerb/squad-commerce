@@ -1,44 +1,59 @@
 {
+  "schema": "squad-agent-provenance/v1",
+  "schema_version": 1,
+  "revision": 1,
+  "generated_at": "2026-03-24T12:36:41.000Z",
   "agents": {
     "bill-gates": {
+      "display_name": "Bill Gates",
       "persistent_name": "Bill Gates",
-      "universe": "Microsoft Legends",
       "role": "Lead",
-      "created_at": "2026-03-24T12:36:41Z",
-      "legacy_named": false,
-      "status": "active"
+      "universe": "Microsoft Legends",
+      "status": "active",
+      "created_at": "2026-03-24T12:36:41.000Z",
+      "updated_at": "2026-03-24T12:36:41.000Z",
+      "legacy_named": false
     },
     "satya-nadella": {
+      "display_name": "Satya Nadella",
       "persistent_name": "Satya Nadella",
-      "universe": "Microsoft Legends",
       "role": "Lead Dev",
-      "created_at": "2026-03-24T12:36:41Z",
-      "legacy_named": false,
-      "status": "active"
+      "universe": "Microsoft Legends",
+      "status": "active",
+      "created_at": "2026-03-24T12:36:41.000Z",
+      "updated_at": "2026-03-24T12:36:41.000Z",
+      "legacy_named": false
     },
     "steve-ballmer": {
+      "display_name": "Steve Ballmer",
       "persistent_name": "Steve Ballmer",
-      "universe": "Microsoft Legends",
       "role": "Tester",
-      "created_at": "2026-03-24T12:36:41Z",
-      "legacy_named": false,
-      "status": "active"
+      "universe": "Microsoft Legends",
+      "status": "active",
+      "created_at": "2026-03-24T12:36:41.000Z",
+      "updated_at": "2026-03-24T12:36:41.000Z",
+      "legacy_named": false
     },
     "clippy": {
+      "display_name": "Clippy",
       "persistent_name": "Clippy",
-      "universe": "Microsoft Legends",
       "role": "User Advocate / AG-UI Expert",
-      "created_at": "2026-03-24T12:36:41Z",
-      "legacy_named": false,
-      "status": "active"
+      "universe": "Microsoft Legends",
+      "status": "active",
+      "created_at": "2026-03-24T12:36:41.000Z",
+      "updated_at": "2026-03-24T12:36:41.000Z",
+      "legacy_named": false
     },
     "anders": {
+      "display_name": "Anders",
       "persistent_name": "Anders",
-      "universe": "Microsoft Legends",
       "role": "Backend Dev",
-      "created_at": "2026-03-24T12:36:41Z",
-      "legacy_named": false,
-      "status": "active"
+      "universe": "Microsoft Legends",
+      "status": "active",
+      "created_at": "2026-03-24T12:36:41.000Z",
+      "updated_at": "2026-03-24T12:36:41.000Z",
+      "legacy_named": false
     }
-  }
+  },
+  "transaction_id": "ce387fe8-811b-450b-b1ff-560a66ab1f5b"
 }
