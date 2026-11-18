@@ -134,16 +134,26 @@ When agent-to-agent activity fires, the UI surfaces protocol-level cues so execu
 | **Runtime** | .NET 10 | 10.0 |
 | **Web Framework** | ASP.NET Core | 10.0 |
 | **Real-time** | SignalR | 10.0 |
-| **Frontend** | Blazor Server + Fluent UI Blazor | v4.14 |
-| **Agent Framework** | Microsoft Agent Framework (MAF) | 1.0.0-rc4 |
-| **Orchestration** | MAF `WorkflowBuilder` Graph-based Workflows | 1.0.0-rc4 |
-| **Tool Protocol** | Model Context Protocol (MCP) — Official C# SDK | 1.1.0 |
+| **Frontend** | Blazor Server + Fluent UI Blazor | v4.14.5 |
+| **Agent Framework** | Microsoft Agent Framework (MAF) | 1.28.0 |
+| **Orchestration** | MAF `WorkflowBuilder` Graph-based Workflows | 1.28.0 |
+| **Tool Protocol** | Model Context Protocol (MCP) — Official C# SDK | 2.4.0 |
 | **Agent Communication** | Agent-to-Agent (A2A) | MAF A2A |
 | **UI Streaming** | Agent-to-UI (AG-UI) via SSE | Custom |
 | **Generative UI** | A2UI JSON payloads → Blazor components | Custom |
-| **Observability** | OpenTelemetry + .NET Aspire Dashboard | Aspire 13.2.0 |
+| **Observability** | OpenTelemetry + .NET Aspire Dashboard | OTel 1.21.0 / Aspire 17.0.0 |
 | **Identity** | Microsoft Entra ID (scope-based) | — |
-| **Database** | SQLite (via EF Core + MCP tools) | EF Core 10.0 |
+| **Database** | SQLite (via EF Core + MCP tools) | EF Core 10.0.15 |
+
+The AppHost now implements the **Aspire 17 resource model** with
+`Microsoft.NET.Sdk`, explicit AppHost/Dotnet 17.0.0 packages and path-based
+`AddDotnetProject` registrations. Resource names, default launch profiles,
+external endpoints, and web's API reference/wait dependency are preserved.
+Compile validation used the signed released CLI and **unsigned Debug NuGets from
+the same release commit, for LOCAL development/compile validation only**.
+Signed-package/production validation remains held; the approved feed was not
+bypassed with a public NuGet source.
+See [dependency versions, holds, and validation](docs/dependency-refresh-2026-11-18.md).
 
 ---
 
@@ -151,8 +161,9 @@ When agent-to-agent activity fires, the UI surfaces protocol-level cues so execu
 
 ### Prerequisites
 
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [.NET Aspire workload](https://learn.microsoft.com/dotnet/aspire)
+- [.NET 10 SDK 10.0.404](https://dotnet.microsoft.com/download) (pinned in `global.json`)
+- [Aspire CLI 17.0.0](https://aspire.dev/get-started/install-cli/) with its matching dashboard/DCP bundle on PATH
+- No Aspire workload installation is required
 - Docker Desktop is **optional** — Aspire Dashboard runs natively
 
 ### Quick Start
@@ -168,6 +179,17 @@ dotnet run --project src/SquadCommerce.AppHost
 ```
 
 The Aspire Dashboard will open automatically, giving you full visibility into agent orchestration, traces, and metrics.
+The commands require approved signed packages and the matching CLI; local
+validation artifacts are not production dependencies. No AppHost was launched
+during this migration.
+
+For EF migration tooling, run `dotnet tool restore` at the repository root.
+The local manifest pins `dotnet-ef` 10.0.15; do not install the incompatible
+.NET 11 tool globally.
+
+This repository contains tracked `bin`/`obj` files. For an isolated build that
+does not refresh them, use the commands in the
+[validation record](docs/dependency-refresh-2026-11-18.md#validation).
 
 ### ☁️ Deploying to Azure
 

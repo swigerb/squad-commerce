@@ -1,8 +1,8 @@
-<Project Sdk="Aspire.AppHost.Sdk/13.3.0">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\SquadCommerce.Api\SquadCommerce.Api.csproj" />
-    <ProjectReference Include="..\SquadCommerce.Web\SquadCommerce.Web.csproj" />
+    <PackageReference Include="Aspire.Hosting.AppHost" Version="17.0.0" />
+    <PackageReference Include="Aspire.Hosting.Dotnet" Version="17.0.0" />
   </ItemGroup>
 
   <PropertyGroup>
