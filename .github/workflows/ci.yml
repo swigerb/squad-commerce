@@ -4,7 +4,7 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, dev ]
 
 env:
   DOTNET_VERSION: '10.0.404'
@@ -16,6 +16,10 @@ env:
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
+    env:
+      DOTNET_NUGET_SIGNATURE_VERIFICATION: "true"
+      NUGET_PACKAGES: ${{ github.workspace }}/.ci/nuget/packages
+      NUGET_HTTP_CACHE_PATH: ${{ github.workspace }}/.ci/nuget/http
     permissions:
       contents: read
       pull-requests: write
@@ -30,11 +34,20 @@ jobs:
       with:
         dotnet-version: ${{ env.DOTNET_VERSION }}
 
-    - name: Restore dependencies
-      run: dotnet restore SquadCommerce.slnx
+    - name: Setup checksum-pinned Aspire 17 CLI bundle
+      run: bash scripts/install-aspire-ci.sh "$GITHUB_WORKSPACE/.ci/aspire"
 
-    - name: Build
-      run: dotnet build SquadCommerce.slnx --no-restore --configuration Release
+    - name: Show configured NuGet sources
+      run: dotnet nuget list source --format Detailed
+
+    - name: Restore dependencies
+      run: dotnet restore SquadCommerce.slnx --force --no-http-cache
+
+    - name: Verify restored Aspire 17 application package signatures and sources
+      run: python3 scripts/verify-aspire-packages.py src/SquadCommerce.AppHost/obj/project.assets.json
+
+    - name: Build solution including Aspire 17 AppHost
+      run: dotnet build SquadCommerce.slnx --no-restore --configuration Release --no-incremental
 
     - name: Run tests
       run: |
